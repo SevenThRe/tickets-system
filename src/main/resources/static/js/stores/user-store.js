@@ -1,4 +1,4 @@
-import EventBus, {eventBus} from "../utils/event-bus";
+import {eventBus} from "../utils/event-bus";
 
 /**
  * Created by SevenThRe

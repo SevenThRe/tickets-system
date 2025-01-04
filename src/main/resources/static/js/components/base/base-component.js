@@ -1,22 +1,43 @@
 /**
- * Created by SevenThRe
- * 组件基类
- * 提供组件的基本生命周期管理和事件处理功能
+ * base-component.js
+ * 组件基类 - 提供基础组件功能和生命周期管理
+ * @author SeventhRe
+ * @version 1.0.0
  */
 class BaseComponent {
     /**
      * 组件构造函数
-     * @param {Object} options 组件配置项
-     * @param {String|jQuery} options.container 组件容器选择器或jQuery对象
-     * @param {Object} [options.events] 事件配置
-     * @param {Object} [options.data] 初始数据
+     * @param {Object} options - 组件配置项
+     * @param {String|jQuery} options.container - 组件容器选择器或jQuery对象
+     * @param {Object} [options.events] - 事件配置
+     * @param {Object} [options.data] - 初始数据
      */
     constructor(options) {
-        this.container = typeof options.container === 'string' ? 
+        /**
+         * 组件容器
+         * @type {jQuery}
+         */
+        this.container = typeof options.container === 'string' ?
             $(options.container) : options.container;
+
+        /**
+         * 事件配置
+         * @type {Object}
+         */
         this.events = options.events || {};
+
+        /**
+         * 组件数据
+         * @type {Object}
+         */
         this.data = options.data || {};
-        this._eventHandlers = new Map(); // 存储事件处理函数的映射
+
+        /**
+         * 存储事件处理函数的映射
+         * @type {Map}
+         * @private
+         */
+        this._eventHandlers = new Map();
     }
 
     /**
@@ -31,7 +52,7 @@ class BaseComponent {
             await this.afterInit();
             return true;
         } catch (error) {
-            console.error('Component initialization failed:', error);
+            console.error('组件初始化失败:', error);
             throw error;
         }
     }
@@ -58,7 +79,7 @@ class BaseComponent {
      */
     async render() {
         // 子类必须实现此方法
-        throw new Error('Component must implement render method');
+        throw new Error('组件必须实现render方法');
     }
 
     /**
@@ -68,10 +89,10 @@ class BaseComponent {
         Object.entries(this.events).forEach(([eventKey, handler]) => {
             const [eventName, selector] = eventKey.split(' ');
             const boundHandler = handler.bind(this);
-            
+
             // 存储事件处理函数以便后续解绑
             this._eventHandlers.set(eventKey, boundHandler);
-            
+
             if (selector) {
                 this.container.on(eventName, selector, boundHandler);
             } else {
@@ -97,15 +118,15 @@ class BaseComponent {
 
     /**
      * 更新组件数据
-     * @param {Object} newData 新数据
-     * @param {Boolean} [render=true] 是否重新渲染
+     * @param {Object} newData - 新数据
+     * @param {Boolean} [render=true] - 是否重新渲染
      */
     async updateData(newData, render = true) {
         this.data = {
             ...this.data,
             ...newData
         };
-        
+
         if (render) {
             await this.render();
         }
@@ -128,12 +149,12 @@ class BaseComponent {
 
     /**
      * 显示错误信息
-     * @param {String} message 错误信息
+     * @param {String} message - 错误信息
      */
     showError(message) {
         const errorHtml = `<div class="component-error">${message}</div>`;
         this.container.append(errorHtml);
-        
+
         // 3秒后自动清除错误提示
         setTimeout(() => {
             this.container.find('.component-error').remove();
@@ -151,8 +172,8 @@ class BaseComponent {
 
     /**
      * 触发自定义事件
-     * @param {String} eventName 事件名称
-     * @param {*} data 事件数据
+     * @param {String} eventName - 事件名称
+     * @param {*} data - 事件数据
      */
     trigger(eventName, data) {
         this.container.trigger(eventName, data);
@@ -160,8 +181,8 @@ class BaseComponent {
 
     /**
      * 监听自定义事件
-     * @param {String} eventName 事件名称
-     * @param {Function} callback 回调函数
+     * @param {String} eventName - 事件名称
+     * @param {Function} callback - 回调函数
      */
     on(eventName, callback) {
         this.container.on(eventName, callback);
@@ -169,12 +190,13 @@ class BaseComponent {
 
     /**
      * 取消监听自定义事件
-     * @param {String} eventName 事件名称
-     * @param {Function} [callback] 回调函数，不传则取消该事件所有监听
+     * @param {String} eventName - 事件名称
+     * @param {Function} [callback] - 回调函数，不传则取消该事件所有监听
      */
     off(eventName, callback) {
         this.container.off(eventName, callback);
     }
-
 }
 
+// 导出组件类
+export default BaseComponent;

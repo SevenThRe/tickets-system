@@ -37,6 +37,7 @@ module.exports = {
 
     // 外部依赖声明
     externals: {
+        '$': 'jQuery',
         'jquery': 'jQuery',
         'bootstrap': 'bootstrap'
     },

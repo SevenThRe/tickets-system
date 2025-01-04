@@ -1,38 +1,41 @@
-import {eventBus} from "./event-bus";
+import { CONFIG } from '../../config/index';
+import { eventBus } from './event-bus';
 
 /**
  * HTTP请求工具类
- * 基于jQuery ajax的封装
- * @constructor RequestUtil 默认携带一个baseURL属性，用于存储请求的基础URL
- * @method request(options) 发起请求，options参数为请求配置对象，包含url、method、data等属性
- * @method get(url, params) 发起GET请求，url为请求URL，params为请求参数对象
- * @method post(url, data) 发起POST请求，url为请求URL，data为请求数据对象
- * @method put(url, data) 发起PUT请求，url为请求URL，data为请求数据对象
- * @method delete(url) 发起DELETE请求，url为请求URL
- * @method _getRequestKey(options) 生成请求唯一标识
- * @method _initAjaxSetup() 初始化全局Ajax设置
- * @method _debug() 打印调试信息
- * @method _warn() 打印警告信息
- * @method _error() 打印错误信息
+ * 基于jQuery ajax的封装，提供请求拦截、防重复提交等功能
  */
 class RequestUtil {
     constructor() {
-        this.baseURL = '/api';
+        /**
+         * 基础URL配置
+         * @private
+         */
+        this.baseURL = CONFIG.BASE_URL;
+
+        /**
+         * 存储进行中的请求
+         * @private
+         * @type {Map<string, boolean>}
+         */
         this._pendingRequests = new Map();
+
+        // 初始化全局Ajax配置
         this._initAjaxSetup();
     }
 
     /**
      * 初始化全局Ajax设置
+     * @private
      */
     _initAjaxSetup() {
         $.ajaxSetup({
             timeout: 10000,
             contentType: 'application/json',
             beforeSend: (xhr) => {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem(CONFIG.JWT.TOKEN_KEY);
                 if (token) {
-                    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+                    xhr.setRequestHeader(CONFIG.JWT.HEADER_KEY, `Bearer ${token}`);
                 }
             }
         });
@@ -42,46 +45,75 @@ class RequestUtil {
             if (jqXHR.status === 401) {
                 eventBus.emit('auth:logout');
                 window.location.href = '/login.html';
+            } else {
+                console.error('请求失败:', jqXHR.responseJSON?.message || CONFIG.MESSAGE.ERROR.SERVER);
             }
-
         });
     }
 
     /**
-     * 请求方法
+     * 生成请求唯一标识
+     * @private
+     * @param {Object} options 请求配置
+     * @returns {string} 请求标识
      */
-    request(options) {
+    _getRequestKey(options) {
+        const { method, url, data } = options;
+        let key = `${method}:${url}`;
+        if (data) {
+            key += `:${JSON.stringify(data)}`;
+        }
+        return key;
+    }
+
+    /**
+     * 发送请求
+     * @param {Object} options 请求配置
+     * @returns {Promise} 请求Promise
+     */
+    async request(options) {
         const requestKey = this._getRequestKey(options);
 
+        // 防重复提交检查
         if (this._pendingRequests.has(requestKey)) {
             return Promise.reject(new Error('重复请求'));
         }
 
         this._pendingRequests.set(requestKey, true);
 
-        return new Promise((resolve, reject) => {
-            $.ajax({
+        try {
+            const response = await $.ajax({
                 url: this.baseURL + options.url,
                 method: options.method,
                 data: options.data ? JSON.stringify(options.data) : null,
-                success: (response) => {
-                    if (response.code === 200) {
-                        resolve(response.data);
-                    } else {
-                        reject(new Error(response.message || '请求失败'));
-                    }
-                },
-                error: (jqXHR) => {
-                    reject(new Error(jqXHR.responseJSON?.message || '网络错误'));
-                },
-                complete: () => {
-                    this._pendingRequests.delete(requestKey);
-                }
+                headers: options.headers,
+                timeout: options.timeout
             });
-        });
+
+            // 处理响应
+            if (response.code === 200) {
+                return response.data;
+            } else {
+                throw new Error(response.message || CONFIG.MESSAGE.ERROR.SERVER);
+            }
+        } catch (error) {
+            // 处理超时
+            if (error.statusText === 'timeout') {
+                throw new Error(CONFIG.MESSAGE.ERROR.TIMEOUT);
+            }
+            throw error;
+        } finally {
+            // 清理请求标记
+            this._pendingRequests.delete(requestKey);
+        }
     }
 
-    // GET请求
+    /**
+     * GET请求
+     * @param {string} url 请求地址
+     * @param {Object} params 请求参数
+     * @returns {Promise} 请求Promise
+     */
     get(url, params) {
         const queryString = params ? '?' + $.param(params) : '';
         return this.request({
@@ -90,7 +122,12 @@ class RequestUtil {
         });
     }
 
-    // POST请求
+    /**
+     * POST请求
+     * @param {string} url 请求地址
+     * @param {Object} data 请求数据
+     * @returns {Promise} 请求Promise
+     */
     post(url, data) {
         return this.request({
             method: 'POST',
@@ -99,7 +136,12 @@ class RequestUtil {
         });
     }
 
-    // PUT请求
+    /**
+     * PUT请求
+     * @param {string} url 请求地址
+     * @param {Object} data 请求数据
+     * @returns {Promise} 请求Promise
+     */
     put(url, data) {
         return this.request({
             method: 'PUT',
@@ -108,7 +150,11 @@ class RequestUtil {
         });
     }
 
-    // DELETE请求
+    /**
+     * DELETE请求
+     * @param {string} url 请求地址
+     * @returns {Promise} 请求Promise
+     */
     delete(url) {
         return this.request({
             method: 'DELETE',
@@ -117,12 +163,24 @@ class RequestUtil {
     }
 
     /**
-     * 生成请求唯一标识
+     * 上传文件
+     * @param {string} url 上传地址
+     * @param {FormData} formData 表单数据
+     * @returns {Promise} 上传Promise
      */
-    _getRequestKey(options) {
-        return `${options.method}:${options.url}`;
+    upload(url, formData) {
+        return $.ajax({
+            url: this.baseURL + url,
+            method: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            headers: {
+                [CONFIG.JWT.HEADER_KEY]: `Bearer ${localStorage.getItem(CONFIG.JWT.TOKEN_KEY)}`
+            }
+        });
     }
 }
 
+// 导出工具类实例
 export const request = new RequestUtil();
-export default RequestUtil;

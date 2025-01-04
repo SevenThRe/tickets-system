@@ -382,6 +382,4 @@ class EventBus {
 
 }
 
-// 导出单例实例
 export const eventBus = new EventBus();
-export default EventBus;
