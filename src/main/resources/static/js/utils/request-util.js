@@ -1,22 +1,27 @@
-import { CONFIG } from '../../config/index';
-import { eventBus } from './event-bus';
-
 /**
+ * RequestUtil.js
  * HTTP请求工具类
- * 基于jQuery ajax的封装，提供请求拦截、防重复提交等功能
+ *
+ * 主要功能:
+ * 1. 统一的请求封装和错误处理
+ * 2. 请求拦截器(JWT令牌注入)
+ * 3. 防重复提交
+ * 4. 响应数据预处理
+ * 5. 统一的错误提示
  */
 class RequestUtil {
     constructor() {
         /**
-         * 基础URL配置
+         * 基础请求URL
+         * @type {string}
          * @private
          */
-        this.baseURL = CONFIG.BASE_URL;
+        this.baseURL = window.CONFIG?.BASE_URL || '';
 
         /**
          * 存储进行中的请求
-         * @private
          * @type {Map<string, boolean>}
+         * @private
          */
         this._pendingRequests = new Map();
 
@@ -30,12 +35,13 @@ class RequestUtil {
      */
     _initAjaxSetup() {
         $.ajaxSetup({
-            timeout: 10000,
+            timeout: 10000,  // 默认10秒超时
             contentType: 'application/json',
             beforeSend: (xhr) => {
-                const token = localStorage.getItem(CONFIG.JWT.TOKEN_KEY);
+                // 注入JWT令牌
+                const token = localStorage.getItem('token');
                 if (token) {
-                    xhr.setRequestHeader(CONFIG.JWT.HEADER_KEY, `Bearer ${token}`);
+                    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
                 }
             }
         });
@@ -43,11 +49,13 @@ class RequestUtil {
         // 全局错误处理
         $(document).ajaxError((event, jqXHR) => {
             if (jqXHR.status === 401) {
-                eventBus.emit('auth:logout');
+                // 未授权,跳转登录
+                window.eventBus.emit('auth:logout');
                 window.location.href = '/login.html';
-            } else {
-                console.error('请求失败:', jqXHR.responseJSON?.message || CONFIG.MESSAGE.ERROR.SERVER);
+                return;
             }
+            // 其他错误处理
+            console.error('请求失败:', jqXHR.responseJSON?.message || '服务器错误');
         });
     }
 
@@ -67,8 +75,12 @@ class RequestUtil {
     }
 
     /**
-     * 发送请求
+     * 发送HTTP请求
      * @param {Object} options 请求配置
+     * @param {string} options.method 请求方法
+     * @param {string} options.url 请求地址
+     * @param {Object} [options.data] 请求数据
+     * @param {Object} [options.headers] 请求头
      * @returns {Promise} 请求Promise
      */
     async request(options) {
@@ -76,9 +88,10 @@ class RequestUtil {
 
         // 防重复提交检查
         if (this._pendingRequests.has(requestKey)) {
-            return Promise.reject(new Error('重复请求'));
+            return Promise.reject(new Error('重复请求已被阻止'));
         }
 
+        // 标记请求开始
         this._pendingRequests.set(requestKey, true);
 
         try {
@@ -87,19 +100,19 @@ class RequestUtil {
                 method: options.method,
                 data: options.data ? JSON.stringify(options.data) : null,
                 headers: options.headers,
-                timeout: options.timeout
+                timeout: options.timeout || 10000
             });
 
             // 处理响应
             if (response.code === 200) {
                 return response.data;
             } else {
-                throw new Error(response.message || CONFIG.MESSAGE.ERROR.SERVER);
+                throw new Error(response.message || '请求失败');
             }
         } catch (error) {
             // 处理超时
             if (error.statusText === 'timeout') {
-                throw new Error(CONFIG.MESSAGE.ERROR.TIMEOUT);
+                throw new Error('请求超时,请稍后重试');
             }
             throw error;
         } finally {
@@ -109,9 +122,9 @@ class RequestUtil {
     }
 
     /**
-     * GET请求
+     * 发送GET请求
      * @param {string} url 请求地址
-     * @param {Object} params 请求参数
+     * @param {Object} [params] 请求参数
      * @returns {Promise} 请求Promise
      */
     get(url, params) {
@@ -123,7 +136,7 @@ class RequestUtil {
     }
 
     /**
-     * POST请求
+     * 发送POST请求
      * @param {string} url 请求地址
      * @param {Object} data 请求数据
      * @returns {Promise} 请求Promise
@@ -137,7 +150,7 @@ class RequestUtil {
     }
 
     /**
-     * PUT请求
+     * 发送PUT请求
      * @param {string} url 请求地址
      * @param {Object} data 请求数据
      * @returns {Promise} 请求Promise
@@ -151,7 +164,7 @@ class RequestUtil {
     }
 
     /**
-     * DELETE请求
+     * 发送DELETE请求
      * @param {string} url 请求地址
      * @returns {Promise} 请求Promise
      */
@@ -163,7 +176,7 @@ class RequestUtil {
     }
 
     /**
-     * 上传文件
+     * 文件上传
      * @param {string} url 上传地址
      * @param {FormData} formData 表单数据
      * @returns {Promise} 上传Promise
@@ -176,11 +189,21 @@ class RequestUtil {
             contentType: false,
             processData: false,
             headers: {
-                [CONFIG.JWT.HEADER_KEY]: `Bearer ${localStorage.getItem(CONFIG.JWT.TOKEN_KEY)}`
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
     }
+
+    /**
+     * 批量请求
+     * @param {Array<Object>} requests 请求配置数组
+     * @returns {Promise} Promise.all包装的请求数组
+     */
+    batch(requests) {
+        const promises = requests.map(req => this.request(req));
+        return Promise.all(promises);
+    }
 }
 
-// 导出工具类实例
-export const request = new RequestUtil();
+// 创建全局单例
+window.requestUtil = new RequestUtil();

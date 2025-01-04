@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<data>
+  <object-set>
+    <table path="ticket_system.sys_theme">
+      <table path="ticket_system.t_user" name="创建人ID" from="create_by" to="user_id"/>
+    </table>
+    <table path="ticket_system.sys_user_theme">
+      <table path="ticket_system.sys_theme" name="主题ID" from="theme_id" to="theme_id"/>
+      <table path="ticket_system.t_user" name="用户ID" from="user_id" to="user_id"/>
+    </table>
+    <table path="ticket_system.t_attachment">
+      <table path="ticket_system.t_ticket" name="工单ID" from="ticket_id" to="ticket_id"/>
+      <table path="ticket_system.t_user" name="上传人ID" from="create_by" to="user_id"/>
+    </table>
+    <table path="ticket_system.t_department">
+      <table path="ticket_system.t_department" name="上级部门ID" from="parent_id" to="department_id"/>
+      <table path="ticket_system.t_user" name="部门负责人ID" from="manager_id" to="user_id"/>
+    </table>
+    <table path="ticket_system.t_notification">
+      <table path="ticket_system.t_ticket" name="相关工单ID" from="ticket_id" to="ticket_id"/>
+      <table path="ticket_system.t_user" name="接收用户ID" from="user_id" to="user_id"/>
+    </table>
+    <table path="ticket_system.t_permission">
+      <table path="ticket_system.t_user" name="创建人ID" from="create_by" to="user_id"/>
+      <table path="ticket_system.t_user" name="创建人ID" from="update_by" to="user_id"/>
+    </table>
+    <table path="ticket_system.t_role">
+      <table path="ticket_system.t_user" name="创建人" from="create_by" to="user_id"/>
+    </table>
+    <table path="ticket_system.t_role_permission">
+      <table path="ticket_system.t_permission" name="权限ID" from="permission_id" to="permission_id"/>
+      <table path="ticket_system.t_role" name="角色ID" from="role_id" to="role_id"/>
+    </table>
+    <table path="ticket_system.t_ticket">
+      <table path="ticket_system.t_department" name="部门ID" from="department_id" to="department_id"/>
+      <table path="ticket_system.t_ticket_type" name="工单类型ID" from="type_id" to="type_id"/>
+      <table path="ticket_system.t_user" name="处理人ID" from="processor_id" to="user_id"/>
+    </table>
+    <table path="ticket_system.t_ticket_record">
+      <table path="ticket_system.t_ticket" name="工单ID" from="ticket_id" to="ticket_id"/>
+      <table path="ticket_system.t_user" name="操作人ID" from="operator_id" to="user_id"/>
+    </table>
+    <table path="ticket_system.t_user">
+      <table path="ticket_system.t_department" name="所属部门ID" from="department_id" to="department_id"/>
+    </table>
+    <table path="ticket_system.t_user_role">
+      <table path="ticket_system.t_role" name="角色ID" from="role_id" to="role_id"/>
+      <table path="ticket_system.t_user" name="用户ID" from="user_id" to="user_id"/>
+    </table>
+  </object-set>
+</data>
