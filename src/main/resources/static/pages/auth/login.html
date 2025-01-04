@@ -1,0 +1,183 @@
+<!-- /auth/login.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工单系统 - 登录</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(234, 217, 217, 0.05);
+            --text-color: #ffffff;
+            --placeholder-color: rgba(255, 255, 255, 0.5);
+            font-feature-settings: "pnum" on, "lnum" on, "tnum" on, "onum" on, "liga" on, "dlig" on, "hlig" on, "calt" on;
+        }
+
+        body {
+            font-family: "Open Sans", Tahoma, Geneva, Verdana, "Segoe UI Emoji", sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 装饰圆形 */
+        .decoration-circle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+        }
+
+        .circle-1 {
+            width: 300px;
+            height: 300px;
+            background: #0066ff;
+            top: -100px;
+            left: -100px;
+        }
+
+        .circle-2 {
+            width: 250px;
+            height: 250px;
+            background: rgb(255, 115, 0);
+            bottom: -50px;
+            right: -50px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h2 {
+            font-size: 24px;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        .form-floating input {
+            background: var(--input-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            height: 55px;
+        }
+
+        .form-floating input:focus {
+            background: var(--input-bg);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: none;
+        }
+
+        .form-floating label {
+            color: var(--placeholder-color);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: linear-gradient(45deg, #0066ff, #5c9dff);
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+        }
+
+        .social-login {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-social {
+            flex: 1;
+            padding: 10px;
+            background: var(--input-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-social:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+        }
+        .btn-social:hover svg {
+            fill: var(--text-color);
+        }
+        .text-muted {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<!-- 装饰圆形 -->
+<div class="decoration-circle circle-1"></div>
+<div class="decoration-circle circle-2"></div>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h2>登录系统</h2>
+            <p class="text-muted">欢迎回来，请登录您的账号</p>
+        </div>
+
+        <form id="loginForm" novalidate>
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="username" name="username"
+                       placeholder="用户名" required>
+                <label for="username">用户名</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control" id="password" name="password"
+                       placeholder="密码" required>
+                <label for="password">密码</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-login">登录</button>
+        </form>
+    </div>
+</div>
+
+<!-- 引入必要的JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="/js/utils/request-util.js"></script>
+<script src="/js/utils/validator-util.js"></script>
+<script src="/static/pages/auth/js/login.js"></script>
+</body>
+</html>

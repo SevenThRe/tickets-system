@@ -1,0 +1,59 @@
+/* 统计卡片样式 */
+.stat-card {
+    border: none;
+    border-radius: 15px;
+    background: linear-gradient(145deg, #ffffff, #f5f5f5);
+    box-shadow: 5px 5px 10px #e6e6e6, -5px -5px 10px #ffffff;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 7px 7px 15px #d9d9d9, -7px -7px 15px #ffffff;
+}
+
+/* 优先级指示点 */
+.priority-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.priority-high { background-color: #dc3545; }
+.priority-medium { background-color: #ffc107; }
+.priority-low { background-color: #28a745; }
+
+/* 图表容器样式 */
+.chart-container {
+    position: relative;
+    min-height: 300px;
+    padding: 1rem;
+}
+
+/* 表格样式优化 */
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+
+    .chart-container {
+        min-height: 200px;
+    }
+}
