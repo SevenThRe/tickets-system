@@ -1,4 +1,4 @@
-import EventBus from "./event-bus";
+import {eventBus} from "./event-bus";
 
 /**
  * 缓存管理组件
@@ -160,7 +160,7 @@ class CacheManager {
         }
 
         // 触发缓存更新事件
-        EventBus.emit('cache:updated', { key, type, value });
+        eventBus.emit('cache:updated', { key, type, value });
     }
 
     /**

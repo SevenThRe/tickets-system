@@ -1,4 +1,5 @@
 import ThemeManager from "./theme-manager";
+import BaseComponent from "@components/base/base-component";
 
 /**
  * ThemeSelector.js

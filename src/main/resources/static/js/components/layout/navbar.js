@@ -3,6 +3,9 @@
  * 导航栏组件 (Navbar.js)
  * 继承自BaseComponent,提供完整的导航菜单管理
  */
+import BaseComponent from "@components/base/base-component";
+
+
 class Navbar extends BaseComponent {
     constructor(options) {
         super({

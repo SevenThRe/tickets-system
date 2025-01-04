@@ -8,7 +8,9 @@ module.exports = {
     // 入口配置 - 直接对应现有js文件
     entry: {
         admin: path.resolve(__dirname, 'static/pages/admin/js/dashboard.js'),
-        components: path.resolve(__dirname, 'static/js/components/base/base-component.js')
+        components: path.resolve(__dirname, 'static/js/components/base/base-component.js'),
+        auth: path.resolve(__dirname, 'static/pages/auth/js/login.js')
+
     },
 
     // 输出配置 - 保持在原有目录结构中

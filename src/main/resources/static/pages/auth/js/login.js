@@ -1,7 +1,5 @@
-// /js/pages/auth/login.js
-
-import {request} from "../../../js/utils/request-util";
 import Validator from "../../../js/utils/validator-util";
+import {request} from "../../../js/utils";
 
 /**
  * 登录页面逻辑控制

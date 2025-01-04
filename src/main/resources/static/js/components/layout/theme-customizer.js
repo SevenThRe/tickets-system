@@ -1,10 +1,12 @@
 import ThemeManager from "./theme-manager";
+import BaseComponent from "@components/base/base-component";
 
 /**
  * ThemeCustomizer.js
  * 主题定制器组件
  * 提供主题预览、编辑、导入导出等功能
  */
+
 class ThemeCustomizer extends BaseComponent {
     constructor(options) {
         super({
