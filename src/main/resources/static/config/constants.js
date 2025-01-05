@@ -118,6 +118,91 @@ window.Const = {
                     0: 'text-danger'
                 }
             }
+        },
+        BASE_ROLE: Object.freeze({
+            ADMIN: 'ADMIN',    // 系统管理员
+            DEPT: 'DEPT',      // 部门主管
+            USER: 'USER'       // 普通用户
+        }),
+        // 角色相关配置
+        ROLE: {
+            // 角色状态
+            STATUS: Object.freeze({
+                ENABLED: 1,   // 启用
+                DISABLED: 0   // 禁用
+            }),
+            STATUS_MAP: {
+                text: {
+                    1: '启用',
+                    0: '禁用'
+                },
+                class: {
+                    1: 'text-success',
+                    0: 'text-danger'
+                }
+            },
+            // 角色编码规则
+            CODE_PATTERN: /^[A-Z][A-Z0-9_]{2,19}$/,  // 大写字母开头,允许大写字母、数字和下划线
+            CODE_MAX_LENGTH: 20,
+            NAME_MAX_LENGTH: 50,
+            DESCRIPTION_MAX_LENGTH: 200
+        },
+
+        // 权限相关配置
+        PERMISSION: {
+            // 权限类型
+            TYPE: Object.freeze({
+                MENU: 'MENU',        // 菜单权限
+                FUNCTION: 'FUNCTION', // 功能权限
+                DATA: 'DATA'         // 数据权限
+            }),
+            TYPE_MAP: {
+                text: {
+                    'MENU': '菜单权限',
+                    'FUNCTION': '功能权限',
+                    'DATA': '数据权限'
+                }
+            },
+            // 权限编码定义
+            CODE: {
+                // 系统管理权限
+                SYSTEM: {
+                    VIEW: 'SYSTEM_VIEW',           // 系统管理查看
+                    SETTINGS: 'SYSTEM_SETTINGS',   // 系统设置管理
+                    MONITOR: 'SYSTEM_MONITOR'      // 系统监控
+                },
+                // 用户管理权限
+                USER: {
+                    VIEW: 'USER_VIEW',            // 用户查看
+                    CREATE: 'USER_CREATE',        // 用户创建
+                    UPDATE: 'USER_UPDATE',        // 用户更新
+                    DELETE: 'USER_DELETE',        // 用户删除
+                    IMPORT: 'USER_IMPORT',        // 用户导入
+                    EXPORT: 'USER_EXPORT'         // 用户导出
+                },
+                // 部门管理权限
+                DEPT: {
+                    VIEW: 'DEPT_VIEW',           // 部门查看
+                    CREATE: 'DEPT_CREATE',       // 部门创建
+                    UPDATE: 'DEPT_UPDATE',       // 部门更新
+                    DELETE: 'DEPT_DELETE',       // 部门删除
+                    ASSIGN: 'DEPT_ASSIGN'        // 部门人员分配
+                },
+                // 工单管理权限
+                TICKET: {
+                    VIEW: 'TICKET_VIEW',         // 工单查看
+                    CREATE: 'TICKET_CREATE',     // 工单创建
+                    PROCESS: 'TICKET_PROCESS',   // 工单处理
+                    TRANSFER: 'TICKET_TRANSFER', // 工单转交
+                    CLOSE: 'TICKET_CLOSE',       // 工单关闭
+                    DELETE: 'TICKET_DELETE'      // 工单删除
+                },
+                // 权限管理权限
+                PERMISSION: {
+                    VIEW: 'PERMISSION_VIEW',     // 权限查看
+                    ASSIGN: 'PERMISSION_ASSIGN'  // 权限分配
+                }
+            }
         }
     },
 
@@ -193,6 +278,22 @@ window.Const = {
             POST_SAVE_THEME: '/system/theme/save',
             GET_DEPARTMENT_LIST: '/system/departments',
             GET_ROLE_LIST: '/system/roles'
+        },
+        ROLE: {
+            GET_LIST: '/roles',                    // 获取角色列表
+            GET_DETAIL: id => `/roles/${id}`,      // 获取角色详情
+            POST_CREATE: '/roles',                 // 创建角色
+            PUT_UPDATE: id => `/roles/${id}`,      // 更新角色
+            DELETE: id => `/roles/${id}`,          // 删除角色
+            GET_PERMISSIONS: id => `/roles/${id}/permissions`,  // 获取角色权限
+            PUT_PERMISSIONS: id => `/roles/${id}/permissions`,  // 更新角色权限
+            GET_USERS: id => `/roles/${id}/users`  // 获取角色下的用户
+        },
+
+        PERMISSION: {
+            GET_LIST: '/permissions',              // 获取权限列表
+            GET_TREE: '/permissions/tree',         // 获取权限树
+            GET_USER_PERMISSIONS: '/permissions/user'  // 获取当前用户权限
         }
     },
 
@@ -263,6 +364,27 @@ window.Const = {
                 CLOSE_REASON_REQUIRED: '请输入关闭原因',
                 FILE_SIZE_LIMIT: '文件大小不能超过10MB',
                 FILE_TYPE_ERROR: '不支持的文件类型'
+            },
+            ROLE: {
+                NOT_FOUND: '角色不存在',
+                CREATE_FAILED: '创建角色失败',
+                UPDATE_FAILED: '更新角色失败',
+                DELETE_FAILED: '删除角色失败',
+                PERMISSION_UPDATE_FAILED: '更新角色权限失败',
+                // 表单验证错误
+                CODE_REQUIRED: '请输入角色编码',
+                NAME_REQUIRED: '请输入角色名称',
+                CODE_FORMAT: '角色编码只能包含大写字母、数字和下划线，且必须以字母开头',
+                CODE_LENGTH: '角色编码长度必须在3-20个字符之间',
+                NAME_LENGTH: '角色名称长度必须在2-50个字符之间',
+                DESCRIPTION_LENGTH: '角色描述长度不能超过200个字符',
+                BASE_ROLE_REQUIRED: '请选择基础角色类型'
+            },
+
+            PERMISSION: {
+                LOAD_FAILED: '加载权限列表失败',
+                UPDATE_FAILED: '更新权限失败',
+                UNAUTHORIZED: '没有相关操作权限'
             }
         },
         SUCCESS: {
@@ -292,7 +414,13 @@ window.Const = {
                 DELETE: '主题删除成功',
                 SAVE: '主题保存成功',
                 APPLY: '主题应用成功'
-            }
+            },
+            ROLE: {
+                CREATE: '角色创建成功',
+                UPDATE: '角色更新成功',
+                DELETE: '角色删除成功',
+                PERMISSION_UPDATE: '角色权限更新成功'
+            },
         }
     },
 

@@ -1,137 +1,58 @@
 /* department-management.css */
 
-/* 页面布局 */
-.department-management {
-    display: flex;
-    min-height: 100vh;
-    background-color: var(--background-color, #f3f4f6);
-}
-
-.main-content {
-    flex: 1;
-    padding: 2rem;
-    margin-left: 5rem;
-}
-
-/* 卡片样式 */
-.card {
-    background: var(--card-background, white);
-    border: none;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    margin-bottom: 1.5rem;
-}
-
-.card-header {
-    background: none;
-    border-bottom: 1px solid var(--border-color, #e5e7eb);
-    padding: 1rem;
-}
-
-.card-body {
-    padding: 1.5rem;
-}
-
-/* 部门树样式 */
-.department-tree-card {
-    height: calc(100vh - 8rem);
-}
-
+/* 部门树形结构样式 */
 .department-tree {
-    height: calc(100% - 1rem);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    min-height: 400px;
+    max-height: 600px;
     overflow-y: auto;
 }
 
-.tree-node {
-    display: flex;
-    align-items: center;
+.department-node {
     padding: 0.5rem;
     cursor: pointer;
-    border-radius: 0.25rem;
-    margin-bottom: 0.25rem;
+    transition: all 0.2s ease;
 }
 
-.tree-node:hover {
-    background-color: var(--hover-background, #f3f4f6);
+.department-node:hover {
+    background-color: var(--background-color);
 }
 
-.tree-node.active {
-    background-color: var(--primary-light, #dbeafe);
-    color: var(--primary, #2563eb);
+.department-node.active {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-left: 2px solid var(--primary-color);
 }
 
-.tree-node-icon {
-    margin-right: 0.5rem;
-    width: 1.5rem;
-    text-align: center;
+.department-node.expanded > .department-node-content .toggle-icon i {
+    transform: rotate(90deg);
 }
 
-.tree-node-content {
-    flex: 1;
+.department-node-content {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 0.5rem;
 }
 
-.tree-node-actions {
+.toggle-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+}
+
+.toggle-icon.hidden {
     visibility: hidden;
 }
 
-.tree-node:hover .tree-node-actions {
-    visibility: visible;
-}
-
-/* 部门详情样式 */
-.department-detail-card {
-    height: calc(100vh - 8rem);
-    overflow-y: auto;
-}
-
-/* 表单样式优化 */
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.form-control:focus,
-.form-select:focus {
-    border-color: var(--primary, #3b82f6);
-    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
-}
-
-/* 按钮样式 */
-.btn-icon {
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-}
-
-.btn-icon i {
-    font-size: 1.1em;
-}
-
-/* 部门成员表格 */
+/* 部门成员列表样式 */
 .department-members {
     margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border-color, #e5e7eb);
 }
 
-.table {
-    margin-bottom: 0;
-}
-
-.table th {
-    background-color: var(--table-header-bg, #f9fafb);
-    font-weight: 600;
-    padding: 0.75rem;
-}
-
-.table td {
-    padding: 0.75rem;
-    vertical-align: middle;
-}
-
-/* 成员搜索结果样式 */
 .member-list {
     max-height: 300px;
     overflow-y: auto;
@@ -141,54 +62,70 @@
     display: flex;
     align-items: center;
     padding: 0.75rem;
-    border-radius: 0.25rem;
+    border-radius: 0.375rem;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .member-item:hover {
-    background-color: var(--hover-background, #f3f4f6);
+    background-color: var(--background-color);
 }
 
 .member-item.selected {
-    background-color: var(--primary-light, #dbeafe);
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.member-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 1rem;
 }
 
 .member-info {
-    margin-left: 1rem;
+    flex: 1;
 }
 
 .member-name {
     font-weight: 500;
+    margin-bottom: 0.25rem;
 }
 
-.member-email {
+.member-meta {
     font-size: 0.875rem;
-    color: var(--text-secondary, #6b7280);
+    color: var(--text-secondary);
 }
 
-/* 状态标签 */
-.status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    font-size: 0.875rem;
-    font-weight: 500;
+/* 表单优化 */
+.form-label.required::after {
+    content: '*';
+    color: var(--danger-color);
+    margin-left: 0.25rem;
 }
 
-.status-active {
-    background-color: var(--success-light, #d1fae5);
-    color: var(--success, #059669);
+.department-tree-card,
+.department-detail-card {
+    height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
 }
 
-.status-inactive {
-    background-color: var(--danger-light, #fee2e2);
-    color: var(--danger, #dc2626);
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .department-tree-card,
+    .department-detail-card {
+        height: auto;
+        margin-bottom: 1rem;
+    }
 }
 
-/* 滚动条美化 */
-::-webkit-scrollbar {
-    width: 6px;
-}
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+    .department-node.active {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
 
-::-webkit-scrollbar-track {
-    background: var(--scrollbar-track, #f3f4f6);
+    .member-item.selected {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
 }
