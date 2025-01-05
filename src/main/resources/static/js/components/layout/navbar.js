@@ -1,56 +1,12 @@
 /**
- * Navbar.js
- * 导航栏组件
- *
- * 功能特性:
- * 1. 响应式菜单展示
- * 2. 动态权限控制
- * 3. 菜单状态管理
- * 4. 主题样式适配
- * 5. 用户状态集成
+ * navbar.js
+ * 导航栏组件配置和实现
  */
 class Navbar extends BaseComponent {
-    /**
-     * 导航栏构造函数
-     * @param {Object} options 配置选项
-     * @param {String|jQuery} options.container 容器选择器或jQuery对象
-     * @param {Object} options.currentUser 当前用户信息
-     * @param {String} [options.activeMenu] 当前激活的菜单项
-     */
     constructor(options) {
         super(options);
 
-        if (!options.currentUser) {
-            throw new Error('currentUser为必要参数');
-        }
-
-        // 组件配置
-        this.config = {
-            // 颜色变量
-            colors: {
-                primary: '237, 94%, 81%',
-                background: '266, 16%, 92%',
-                backgroundSecondary: '256, 12%, 12%',
-                backgroundSecondaryDark: '256, 10%, 10%',
-                backgroundSecondaryLight: '257, 11%, 16%',
-                textPrimary: '0, 0%, 0%',
-                white: '0, 0%, 100%',
-                quiteGray: '0, 0%, 50%'
-            },
-            // 尺寸配置
-            sizes: {
-                expandedWidth: '16em',
-                collapsedWidth: '5em',
-                itemHeight: '3.5em'
-            },
-            // 动画配置
-            animation: {
-                duration: 350,
-                easing: 'cubic-bezier(.175, .885, .32, 1)'
-            }
-        };
-
-        // 组件状态
+        // 状态管理
         this.state = {
             expanded: false,              // 是否展开
             activeMenu: null,             // 当前激活菜单
@@ -67,21 +23,117 @@ class Navbar extends BaseComponent {
     }
 
     /**
-     * 绑定事件处理
+     * 加载用户菜单配置
      * @private
      */
-    _bindEvents() {
-        this.events = {
-            'mouseenter @navbar': '_handleMouseEnter',
-            'mouseleave @navbar': '_handleMouseLeave',
-            'click @menuItem': '_handleMenuClick',
-            'click @logoutBtn': '_handleLogout'
+    async _loadUserMenus() {
+        const roleCode = this.state.currentUser.role.roleCode;
+
+        // 公共菜单项 - 不需要权限验证
+        const commonMenus = [{
+            id: 'my-profile',
+            title: '个人中心',
+            icon: 'person-outline',
+            url: '/common/profile.html'
+        }, {
+            id: 'my-tickets',
+            title: '我的工单',
+            icon: 'document-text-outline',
+            url: '/common/my-tickets.html'
+        }];
+
+        // 角色特定菜单映射
+        const menuGroups = {
+            'ADMIN': [
+                {
+                    id: 'dashboard',
+                    title: '控制台',
+                    icon: 'speedometer-outline',
+                    url: '/admin/dashboard.html',
+                    permissions: ['ADMIN_DASHBOARD']
+                },
+                {
+                    id: 'tickets',
+                    title: '工单管理',
+                    icon: 'ticket-outline',
+                    url: '/admin/ticket-management.html',
+                    permissions: ['TICKET_MANAGE']
+                },
+                {
+                    id: 'users',
+                    title: '用户管理',
+                    icon: 'people-outline',
+                    url: '/admin/user-management.html',
+                    permissions: ['USER_MANAGE']
+                },
+                {
+                    id: 'departments',
+                    title: '部门管理',
+                    icon: 'git-branch-outline',
+                    url: '/admin/department-management.html',
+                    permissions: ['DEPT_MANAGE']
+                },
+                {
+                    id: 'system',
+                    title: '系统设置',
+                    icon: 'settings-outline',
+                    url: '/admin/system-settings.html',
+                    permissions: ['SYSTEM_MANAGE']
+                }
+            ],
+            'DEPT': [
+                {
+                    id: 'dept-dashboard',
+                    title: '部门统计',
+                    icon: 'bar-chart-outline',
+                    url: '/dept/dashboard.html',
+                    permissions: ['DEPT_DASHBOARD']
+                },
+                {
+                    id: 'dept-tickets',
+                    title: '部门工单',
+                    icon: 'documents-outline',
+                    url: '/dept/ticket-management.html',
+                    permissions: ['DEPT_TICKET_MANAGE']
+                },
+                {
+                    id: 'dept-members',
+                    title: '成员管理',
+                    icon: 'people-circle-outline',
+                    url: '/dept/member-management.html',
+                    permissions: ['DEPT_MEMBER_MANAGE']
+                }
+            ],
+            'USER': [
+                {
+                    id: 'user-dashboard',
+                    title: '工作台',
+                    icon: 'grid-outline',
+                    url: '/user/dashboard.html'
+                }
+            ]
         };
+
+        // 获取角色特定菜单
+        const roleMenus = menuGroups[roleCode] || [];
+
+        // 过滤需要权限验证的菜单项
+        const filteredRoleMenus = roleMenus.filter(menu => {
+            if (!menu.permissions) return true;
+            return menu.permissions.some(permission =>
+                this.state.currentUser.permissions.includes(permission)
+            );
+        });
+
+        // 合并公共菜单和角色菜单
+        this.state.userMenus = [...filteredRoleMenus, ...commonMenus];
+
+        // 根据当前页面设置活动菜单
+        this._setActiveMenu();
     }
 
     /**
-     * 组件初始化
-     * @override
+     * 初始化
      */
     async init() {
         try {
@@ -90,8 +142,8 @@ class Navbar extends BaseComponent {
             await this._loadUserInfo();
             // 加载用户菜单
             await this._loadUserMenus();
-            // 设置当前菜单
-            this._setActiveMenu();
+            // 渲染导航栏
+            await this.render();
         } catch (error) {
             console.error('导航栏初始化失败:', error);
             this.showError('加载失败，请刷新重试');
@@ -101,97 +153,19 @@ class Navbar extends BaseComponent {
     }
 
     /**
-     * 加载用户菜单配置
-     * @private
+     * 加载用户信息
      */
-    async _loadUserMenus() {
-        const roleCode = this.state.currentUser.role.roleCode;
-
-        // 角色菜单映射
-        const menuGroups = {
-            'ADMIN': [{
-                id: 'dashboard',
-                title: '控制台',
-                icon: 'speedometer-outline',
-                url: '/admin/dashboard.html',
-                permissions: ['ADMIN_DASHBOARD']
-            }, {
-                id: 'tickets',
-                title: '工单管理',
-                icon: 'document-text-outline',
-                url: '/admin/ticket-management.html',
-                permissions: ['TICKET_MANAGE']
-            }],
-            'USER': [{
-                id: 'tickets',
-                title: '我的工单',
-                icon: 'document-text-outline',
-                url: '/user/ticket-list.html'
-            }]
-        };
-
-        // 获取角色菜单
-        const baseMenus = menuGroups[roleCode] || [];
-
-        // 过滤权限菜单
-        this.state.userMenus = baseMenus.filter(menu => {
-            if (!menu.permissions) return true;
-            return menu.permissions.some(permission =>
-                this.state.currentUser.permissions.includes(permission)
-            );
-        });
-    }
-
-    /**
-     * 设置当前激活菜单
-     * @private
-     */
-    _setActiveMenu() {
-        const path = window.location.pathname;
-        const menu = this.state.userMenus.find(item =>
-            item.url.includes(path.split('/').pop().split('.')[0])
-        );
-        this.state.activeMenu = menu ? menu.id : null;
-    }
-
-    /**
-     * 渲染导航栏
-     * @override
-     */
-    render() {
-        if (this.state.loading) {
-            return this._renderLoading();
+    async _loadUserInfo() {
+        try {
+            const userInfo = localStorage.getItem('userInfo');
+            if (!userInfo) {
+                throw new Error('未登录');
+            }
+            this.state.currentUser = JSON.parse(userInfo);
+        } catch (error) {
+            console.error('加载用户信息失败:', error);
+            window.location.href = '/login.html';
         }
-
-        const html = `
-            <nav id="navbar" class="navbar${this.state.expanded ? ' expanded' : ''}"
-                 style="width: ${this.state.expanded ? this.config.sizes.expandedWidth : this.config.sizes.collapsedWidth}">
-                <ul class="navbar-items">
-                    ${this._renderLogo()}
-                    ${this._renderMenuItems()}
-                    ${this._renderLogoutButton()}
-                </ul>
-            </nav>
-        `;
-
-        this.container.html(html);
-        this._cacheDomRefs();
-    }
-
-    /**
-     * 渲染Logo
-     * @private
-     */
-    _renderLogo() {
-        return `
-            <li class="navbar-logo">
-                <a class="navbar-item-inner">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-                    </svg>
-                </a>
-            </li>
-        `;
     }
 
     /**
@@ -212,41 +186,71 @@ class Navbar extends BaseComponent {
         `).join('');
     }
 
-    // ... 其他私有方法实现 ...
-
     /**
-     * 处理鼠标进入
+     * 设置当前激活菜单
      * @private
      */
-    _handleMouseEnter() {
-        this.state.expanded = true;
-        this._updateExpandState();
+    _setActiveMenu() {
+        const path = window.location.pathname;
+        const menu = this.state.userMenus.find(item =>
+            path.includes(item.url.split('/').pop().split('.')[0])
+        );
+        this.state.activeMenu = menu ? menu.id : null;
     }
 
     /**
-     * 处理鼠标离开
-     * @private
+     * 渲染导航栏
      */
-    _handleMouseLeave() {
-        this.state.expanded = false;
-        this._updateExpandState();
-    }
-
-    /**
-     * 更新展开状态
-     * @private
-     */
-    _updateExpandState() {
-        const { navbar } = this._domRefs;
-        if (this.state.expanded) {
-            navbar.addClass('expanded')
-                .css('width', this.config.sizes.expandedWidth);
-        } else {
-            navbar.removeClass('expanded')
-                .css('width', this.config.sizes.collapsedWidth);
+    render() {
+        if (this.state.loading) {
+            return this._renderLoading();
         }
+
+        const html = `
+            <nav id="navbar" class="navbar${this.state.expanded ? ' expanded' : ''}">
+                <ul class="navbar-items">
+                    ${this._renderLogo()}
+                    ${this._renderMenuItems()}
+                    ${this._renderLogoutButton()}
+                </ul>
+            </nav>
+        `;
+
+        this.container.html(html);
+        this._cacheDomRefs();
+    }
+
+    /**
+     * 渲染Logo
+     */
+    _renderLogo() {
+        return `
+            <li class="navbar-logo">
+                <a class="navbar-item-inner">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                    </svg>
+                </a>
+            </li>
+        `;
+    }
+
+    /**
+     * 渲染退出按钮
+     */
+    _renderLogoutButton() {
+        return `
+            <li class="navbar-item mt-auto">
+                <a class="navbar-item-inner" href="#" id="logoutBtn">
+                    <div class="navbar-item-icon">
+                        <i class="icon log-out-outline"></i>
+                    </div>
+                    <span class="navbar-item-text">退出登录</span>
+                </a>
+            </li>
+        `;
     }
 }
 
-// 添加到全局命名空间
+// 导出组件
 window.Navbar = Navbar;

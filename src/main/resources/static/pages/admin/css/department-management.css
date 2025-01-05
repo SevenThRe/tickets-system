@@ -1,0 +1,194 @@
+/* department-management.css */
+
+/* 页面布局 */
+.department-management {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--background-color, #f3f4f6);
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem;
+    margin-left: 5rem;
+}
+
+/* 卡片样式 */
+.card {
+    background: var(--card-background, white);
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background: none;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    padding: 1rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* 部门树样式 */
+.department-tree-card {
+    height: calc(100vh - 8rem);
+}
+
+.department-tree {
+    height: calc(100% - 1rem);
+    overflow-y: auto;
+}
+
+.tree-node {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.tree-node:hover {
+    background-color: var(--hover-background, #f3f4f6);
+}
+
+.tree-node.active {
+    background-color: var(--primary-light, #dbeafe);
+    color: var(--primary, #2563eb);
+}
+
+.tree-node-icon {
+    margin-right: 0.5rem;
+    width: 1.5rem;
+    text-align: center;
+}
+
+.tree-node-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tree-node-actions {
+    visibility: hidden;
+}
+
+.tree-node:hover .tree-node-actions {
+    visibility: visible;
+}
+
+/* 部门详情样式 */
+.department-detail-card {
+    height: calc(100vh - 8rem);
+    overflow-y: auto;
+}
+
+/* 表单样式优化 */
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary, #3b82f6);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+/* 按钮样式 */
+.btn-icon {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.btn-icon i {
+    font-size: 1.1em;
+}
+
+/* 部门成员表格 */
+.department-members {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    background-color: var(--table-header-bg, #f9fafb);
+    font-weight: 600;
+    padding: 0.75rem;
+}
+
+.table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+/* 成员搜索结果样式 */
+.member-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+.member-item:hover {
+    background-color: var(--hover-background, #f3f4f6);
+}
+
+.member-item.selected {
+    background-color: var(--primary-light, #dbeafe);
+}
+
+.member-info {
+    margin-left: 1rem;
+}
+
+.member-name {
+    font-weight: 500;
+}
+
+.member-email {
+    font-size: 0.875rem;
+    color: var(--text-secondary, #6b7280);
+}
+
+/* 状态标签 */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-active {
+    background-color: var(--success-light, #d1fae5);
+    color: var(--success, #059669);
+}
+
+.status-inactive {
+    background-color: var(--danger-light, #fee2e2);
+    color: var(--danger, #dc2626);
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-track, #f3f4f6);
+}

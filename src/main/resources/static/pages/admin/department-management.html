@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工单系统 - 部门管理</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/navbar.css" rel="stylesheet">
+    <link href="/static/pages/admin/css/department-management.css" rel="stylesheet">
+</head>
+<body class="department-management">
+    <!-- 导航栏 -->
+    <nav id="navbar" class="navbar-container"></nav>
+
+    <!-- 主内容区 -->
+    <main id="main" class="main-content">
+        <div class="page-header">
+            <h4>部门管理</h4>
+        </div>
+
+        <div class="row">
+            <!-- 左侧部门树 -->
+            <div class="col-md-4">
+                <div class="card department-tree-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>部门结构</span>
+                        <button class="btn btn-sm btn-primary" id="addDepartmentBtn">
+                            <i class="bi bi-plus-lg"></i> 新增部门
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="departmentTree" class="department-tree">
+                            <!-- 部门树将通过JS动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧部门详情 -->
+            <div class="col-md-8">
+                <div class="card department-detail-card">
+                    <div class="card-header">
+                        <h5 class="card-title" id="departmentTitle">部门详情</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- 部门信息表单 -->
+                        <form id="departmentForm" class="mb-4">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">部门名称</label>
+                                    <input type="text" class="form-control" id="departmentName" name="name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">部门编码</label>
+                                    <input type="text" class="form-control" id="departmentCode" name="code" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">上级部门</label>
+                                <select class="form-select" id="parentDepartment" name="parentId">
+                                    <option value="">无上级部门</option>
+                                </select>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">部门主管</label>
+                                    <select class="form-select" id="departmentManager" name="managerId">
+                                        <option value="">请选择部门主管</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">排序号</label>
+                                    <input type="number" class="form-control" id="departmentOrder" name="orderNum" value="0">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">部门描述</label>
+                                <textarea class="form-control" id="departmentDesc" name="description" rows="3"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="saveDepartmentBtn">保存</button>
+                                <button type="button" class="btn btn-danger ms-2" id="deleteDepartmentBtn">删除</button>
+                            </div>
+                        </form>
+
+                        <!-- 部门成员管理 -->
+                        <div class="department-members">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>部门成员</h6>
+                                <button class="btn btn-sm btn-outline-primary" id="addMemberBtn">
+                                    <i class="bi bi-person-plus"></i> 添加成员
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>姓名</th>
+                                            <th>工号</th>
+                                            <th>职位</th>
+                                            <th>邮箱</th>
+                                            <th>状态</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="membersList">
+                                        <!-- 成员列表将通过JS动态生成 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 新增/编辑部门模态框 -->
+    <div class="modal fade" id="departmentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">新增部门</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="departmentModalForm">
+                        <!-- 表单内容与部门详情表单相同 -->
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveDepartmentModalBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加成员模态框 -->
+    <div class="modal fade" id="addMemberModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加部门成员</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="memberSearch" 
+                               placeholder="搜索用户">
+                    </div>
+                    <div class="member-list" id="memberSearchResults">
+                        <!-- 搜索结果将通过JS动态生成 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmAddMemberBtn">确认添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/utils/event-bus.js"></script>
+    <script src="/static/js/utils/pagination-util.js"></script>
+    <script src="/static/js/utils/request-util.js"></script>
+    <script src="/static/js/utils/validator-util.js"></script>
+    <script src="/static/js/components/base/base-component.js"></script>
+    <script src="/static/js/components/layout/navbar.js"></script>
+    <script src="/static/pages/admin/js/department-management.js"></script>
+</body>
+</html>

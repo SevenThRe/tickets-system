@@ -1,40 +1,66 @@
-<!-- /admin/dashboard.html -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>工单系统 - 管理控制台</title>
-    <link href="/static/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/navbar.css" rel="stylesheet">
     <link href="/static/pages/admin/css/admin-dashboard.css" rel="stylesheet">
-    <!-- 引入必要的JS -->
-    <script src="/static/lib/jquery/jquery-3.6.0.min.js"></script>
-    <script src="/static/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <!-- 引入打包后的JS -->
-    <script src="/static/dist/admin.bundle.js"></script>
 </head>
 <body>
-<!-- 侧边导航栏 -->
-<nav id="navbar"></nav>
+<!-- 导航栏 -->
+<nav id="navbar" class="navbar-container"></nav>
 
 <!-- 主内容区 -->
 <main id="main" class="main-content">
     <!-- 顶部统计卡片区 -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="stat-icon">
-                        <i class="bi bi-ticket-detailed"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 class="stat-value" id="pendingTickets">0</h3>
-                        <p class="stat-label">待处理工单</p>
-                    </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-ticket-detailed"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="pendingTickets">0</h3>
+                    <p class="stat-label">待处理工单</p>
                 </div>
             </div>
         </div>
-        <!-- 其他统计卡片 -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="processingTickets">0</h3>
+                    <p class="stat-label">处理中工单</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="completedTickets">0</h3>
+                    <p class="stat-label">已完成工单</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-star"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="avgSatisfaction">0</h3>
+                    <p class="stat-label">平均满意度</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- 图表区域 -->
@@ -65,7 +91,14 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title">最近工单</h5>
-            <button class="btn btn-primary btn-sm">查看全部</button>
+            <div>
+                <button class="btn btn-outline-secondary me-2" id="refreshBtn">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                </button>
+                <button class="btn btn-primary" id="viewAllBtn">
+                    查看全部
+                </button>
+            </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -76,6 +109,7 @@
                         <th>标题</th>
                         <th>提交人</th>
                         <th>状态</th>
+                        <th>优先级</th>
                         <th>创建时间</th>
                         <th>操作</th>
                     </tr>
@@ -89,6 +123,15 @@
     </div>
 </main>
 
-
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+<script src="/static/js/utils/event-bus.js"></script>
+<script src="/static/js/utils/request-util.js"></script>
+<script src="/static/js/utils/utils.js"></script>
+<script src="/static/js/components/base/base-component.js"></script>
+<script src="/static/js/components/layout/navbar.js"></script>
+<script src="/static/pages/admin/js/dashboard.js"></script>
 </body>
 </html>

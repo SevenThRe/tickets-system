@@ -1,13 +1,55 @@
-/*
-/pages/admin/css/admin-dashboard.css
-*/
+/* admin-dashboard.css */
 
+/* 布局基础样式 */
+.dashboard-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--background-color);
+}
+
+/* 导航栏容器样式 */
+.navbar-container {
+    flex: 0 0 auto;
+    width: 250px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+}
+
+/* 主内容区样式 */
+.main-content {
+    flex: 1;
+    margin-left: 250px;  /* 与导航栏宽度对应 */
+    padding: 2rem;
+    min-height: 100vh;
+    background-color: var(--background-color);
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+    .navbar-container {
+        width: 64px;  /* 收缩状态的宽度 */
+    }
+
+    .main-content {
+        margin-left: 64px;  /* 对应收缩后的导航栏宽度 */
+    }
+}
+
+/* 导航栏展开/收起时的过渡效果 */
+.navbar-container,
+.main-content {
+    transition: all 0.3s ease-in-out;
+}
 /* 统计卡片样式 */
 .stat-card {
     border: none;
     border-radius: 15px;
     background: linear-gradient(145deg, #ffffff, #f5f5f5);
     box-shadow: 5px 5px 10px #e6e6e6, -5px -5px 10px #ffffff;
+    padding: 20px;
     transition: all 0.3s ease;
 }
 
@@ -16,48 +58,150 @@
     box-shadow: 7px 7px 15px #d9d9d9, -7px -7px 15px #ffffff;
 }
 
-/* 优先级指示点 */
-.priority-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 8px;
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
 }
 
-.priority-high { background-color: #dc3545; }
-.priority-medium { background-color: #ffc107; }
-.priority-low { background-color: #28a745; }
+.stat-icon i {
+    font-size: 24px;
+    color: var(--primary-color, #3b82f6);
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: #6b7280;
+    margin: 0;
+}
 
 /* 图表容器样式 */
-.chart-container {
-    position: relative;
-    min-height: 300px;
-    padding: 1rem;
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
 }
 
-/* 表格样式优化 */
+.card-header {
+    background: none;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 15px 20px;
+}
+
+.card-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* 表格样式 */
 .table {
-    border-collapse: separate;
-    border-spacing: 0;
+    margin: 0;
 }
 
 .table th {
-    background-color: #f8f9fa;
-    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #374151;
+    border-top: none;
+    padding: 12px;
 }
 
 .table td {
     vertical-align: middle;
-    padding: 1rem 0.75rem;
+    color: #4b5563;
+    padding: 12px;
+}
+
+/* 状态标签样式 */
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-pending {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.status-processing {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+.status-completed {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+/* 优先级指示器样式 */
+.priority-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.priority-high {
+    background-color: #ef4444;
+}
+
+.priority-medium {
+    background-color: #f59e0b;
+}
+
+.priority-low {
+    background-color: #10b981;
 }
 
 /* 响应式调整 */
 @media (max-width: 768px) {
     .stat-card {
-        margin-bottom: 1rem;
+        margin-bottom: 15px;
     }
 
     .chart-container {
-        min-height: 200px;
+        height: 300px;
     }
+}
+
+/* 主题适配 */
+:root {
+    --primary-color: #3b82f6;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --background-color: #f3f4f6;
+    --card-background: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --border-color: #e5e7eb;
+}
+
+/* 深色主题 */
+[data-theme="dark"] {
+    --primary-color: #60a5fa;
+    --success-color: #34d399;
+    --warning-color: #fbbf24;
+    --danger-color: #f87171;
+    --background-color: #1f2937;
+    --card-background: #374151;
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --border-color: #4b5563;
 }

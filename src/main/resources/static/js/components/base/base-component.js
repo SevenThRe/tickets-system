@@ -76,6 +76,7 @@ class BaseComponent {
         }
     }
 
+
     /**
      * 初始化前钩子
      * @returns {Promise}

@@ -1,368 +1,322 @@
-/**
- * login.js
- * 登录页面业务逻辑处理
- *
- * 功能：
- * 1. 登录表单验证与提交
- * 2. 错误信息统一处理
- * 3. 登录状态管理
- * 4. 防重复提交
- *
- * @author SeventhRe
- * @version 1.0.0
- */
-
-import { CONFIG } from '/static/config/index.js';
-import { request } from '/static/js/utils/request-util.js';
-import { eventBus } from '/static/js/utils/event-bus.js';
-import  BaseComponent  from '/static/js/components/base/base-component.js';
-
-class LoginPage extends BaseComponent {
-    /**
-     * 构造函数
-     * 初始化页面组件和状态
-     */
-
+// login.js
+class LoginPage {
     constructor() {
-        super({
-            container: '#loginContainer', // 添加容器选择器
-            events: {
-                'submit #loginForm': '_handleSubmit',
-                'input #username': '_handleUsernameInput',
-                'input #password': '_handlePasswordInput',
-                'keypress #password': '_handleEnterPress'
+        // 缓存DOM元素
+        this.form = $('#loginForm');
+        this.username = $('#username');
+        this.password = $('#password');
+        this.rememberMe = $('#rememberMe');
+        this.submitBtn = $('#submitBtn');
+        this.errorAlert = $('#errorAlert');
+        this.togglePasswordBtn = $('#togglePassword');
+
+        // 验证规则
+        this.validationRules = {
+            username: {
+                required: true,
+                minLength: 3,
+                maxLength: 20,
+                pattern: /^[a-zA-Z0-9_]+$/
+            },
+            password: {
+                required: true,
+                minLength: 6,
+                maxLength: 20
             }
-        });
-        // 缓存DOM引用
-        this._initDomRefs();
+        };
 
         // 状态标志
         this.isSubmitting = false;
 
-        // 初始化组件
+        // 防抖处理
+        this.debounceValidate = window.utils.debounce(
+            (field) => this.validateField(field),
+            300
+        );
+
+        // 绑定事件
+        this.bindEvents();
+
+        // 初始化
         this.init();
     }
 
-    /**
-     * 缓存DOM引用
-     * @private
-     */
-    _initDomRefs() {
-        this.$form = $('#loginForm');
-        this.$username = $('#username');
-        this.$password = $('#password');
-        this.$rememberMe = $('#rememberMe');
-        this.$submitBtn = $('#submitBtn');
-    }
-
-    /**
-     * 组件初始化
-     * @override
-     */
+    // 初始化
     async init() {
         try {
-            await this._restoreUsername();
-            this._initValidation();
+            // 检查是否已登录
+            if (this.checkLoggedIn()) {
+                this.redirectToDashboard();
+                return;
+            }
 
-            // 初始化防抖处理
-            this._debouncedValidate = _.debounce(
-                (field) => this._validateField(field),
-                300
-            );
+            await this.restoreUsername();
+            this.initValidation();
         } catch (error) {
-            console.error('登录页面初始化失败:', error);
+            console.error('初始化失败:', error);
+            this.showError('系统初始化失败，请刷新页面重试');
         }
     }
 
-    /**
-     * 处理表单提交
-     * @param {Event} e - 事件对象
-     * @private
-     */
-    async _handleSubmit(e) {
+    // 检查是否已登录
+    checkLoggedIn() {
+        const token = localStorage.getItem('token');
+        return !!token;
+    }
+
+    // 重定向到仪表板
+    redirectToDashboard() {
+        const roleRedirectMap = {
+            'ADMIN': '/admin/dashboard.html',
+            'DEPT': '/dept/dashboard.html',
+            'USER': '/user/dashboard.html'
+        };
+
+        // 获取角色对应的重定向URL，如果未找到则默认跳转到个人中心
+        window.location.href = roleRedirectMap[data.userInfo.role.roleCode] || '/common/profile.html';
+    }
+
+    // 绑定事件处理
+    bindEvents() {
+        // 表单提交
+        this.form.on('submit', (e) => this.handleSubmit(e));
+
+        // 密码可见性切换
+        this.togglePasswordBtn.on('click', () => this.togglePasswordVisibility());
+
+        // 输入验证
+        this.username.on('input', () => this.debounceValidate('username'));
+        this.password.on('input', () => this.debounceValidate('password'));
+
+        // 按下回车时提交
+        this.password.on('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.form.submit();
+            }
+        });
+    }
+
+    // 初始化验证
+    initValidation() {
+        this.form.find('input[required]').each((_, input) => {
+            $(input).on('blur', () => {
+                this.validateField(input.name);
+            });
+        });
+    }
+
+    // 表单提交处理
+    async handleSubmit(e) {
         e.preventDefault();
 
         if (this.isSubmitting) return;
 
-        if (!this._validateForm()) return;
-
-        this.isSubmitting = true;
-        this._setLoading(true);
+        if (!this.validateForm()) return;
 
         try {
-            const formData = this._getFormData();
-            // 使用request工具类发送请求
-            const response = await request.post(
-                CONFIG.API.AUTH.LOGIN,
-                formData
-            );
+            this.isSubmitting = true;
+            this.setLoading(true);
+            this.clearError();
+
+            const formData = this.getFormData();
+
+            // 使用请求工具类发送请求
+            const response = await window.requestUtil.post('/api/auth/login', formData);
 
             if (response.code === 200) {
-                this._handleLoginSuccess(response.data);
-                // 使用事件总线触发登录成功事件
-                eventBus.emit('auth:login', response.data);
+                this.handleLoginSuccess(response.data);
+            } else {
+                throw new Error(response.message || '登录失败');
             }
         } catch (error) {
-            this._handleError(error);
+            console.error('登录错误:', error);
+            this.handleLoginError(error);
         } finally {
             this.isSubmitting = false;
-            this._setLoading(false);
+            this.setLoading(false);
         }
     }
 
-    /**
-     * 处理用户名输入
-     * @param {Event} e - 事件对象
-     * @private
-     */
-    _handleUsernameInput(e) {
-        this._debouncedValidate('username');
+    // 获取表单数据
+    getFormData() {
+        return {
+            username: this.username.val().trim(),
+            password: this.password.val(),
+            rememberMe: this.rememberMe.prop('checked')
+        };
     }
 
-    /**
-     * 处理密码输入
-     * @param {Event} e - 事件对象
-     * @private
-     */
-    _handlePasswordInput(e) {
-        this._debouncedValidate('password');
+    // 切换密码可见性
+    togglePasswordVisibility() {
+        const type = this.password.attr('type');
+        const newType = type === 'password' ? 'text' : 'password';
+
+        this.password.attr('type', newType);
+        this.togglePasswordBtn.find('i')
+            .toggleClass('bi-eye bi-eye-slash');
     }
 
-    /**
-     * 处理回车按键
-     * @param {Event} e - 事件对象
-     * @private
-     */
-    _handleEnterPress(e) {
-        if (e.key === 'Enter') {
-            this.$form.submit();
+    // 表单验证
+    validateForm() {
+        let isValid = true;
+
+        Object.keys(this.validationRules).forEach(field => {
+            if (!this.validateField(field)) {
+                isValid = false;
+            }
+        });
+
+        return isValid;
+    }
+
+    // 字段验证
+    validateField(fieldName) {
+        const field = this[fieldName];
+        const value = field.val().trim();
+        const rules = this.validationRules[fieldName];
+
+        // 错误消息
+        let errorMessage = '';
+
+        // 必填验证
+        if (rules.required && !value) {
+            errorMessage = `请输入${fieldName === 'username' ? '用户名' : '密码'}`;
+        }
+        // 长度验证
+        else if (value.length < rules.minLength) {
+            errorMessage = `${fieldName === 'username' ? '用户名' : '密码'}至少${rules.minLength}个字符`;
+        }
+        else if (value.length > rules.maxLength) {
+            errorMessage = `${fieldName === 'username' ? '用户名' : '密码'}不能超过${rules.maxLength}个字符`;
+        }
+        // 格式验证(仅用户名)
+        else if (fieldName === 'username' && !rules.pattern.test(value)) {
+            errorMessage = '用户名只能包含字母、数字和下划线';
+        }
+
+        const isValid = !errorMessage;
+        this.updateFieldStatus(field, isValid, errorMessage);
+
+        return isValid;
+    }
+
+    // 更新字段状态
+    updateFieldStatus(field, isValid, errorMessage = '') {
+        const formGroup = field.closest('.form-group');
+
+        field.toggleClass('is-invalid', !isValid);
+        formGroup.find('.invalid-feedback')
+            .text(errorMessage);
+    }
+
+    // 恢复记住的用户名
+    async restoreUsername() {
+        const rememberedUsername = localStorage.getItem('rememberedUsername');
+        if (rememberedUsername) {
+            this.username.val(rememberedUsername);
+            this.rememberMe.prop('checked', true);
         }
     }
 
     /**
      * 处理登录成功
-     * @param {Object} data - 登录返回数据
+     * @param {Object} data - 登录响应数据
      * @private
      */
-    _handleLoginSuccess(data) {
-        // 保存token和用户信息
-        localStorage.setItem(CONFIG.JWT.TOKEN_KEY, data.token);
-        localStorage.setItem('userInfo', JSON.stringify(data.user));
+    handleLoginSuccess(data) {
+        // 保存认证信息
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userInfo', JSON.stringify(data.userInfo));
 
         // 处理记住用户名
-        if (this.$rememberMe.prop('checked')) {
-            localStorage.setItem('rememberedUsername', this.$username.val().trim());
+        if (this.rememberMe.prop('checked')) {
+            localStorage.setItem('rememberedUsername', this.username.val().trim());
         } else {
             localStorage.removeItem('rememberedUsername');
         }
 
-        // 重定向
-        this._redirect(data.user.roleCode);
+        // 触发登录成功事件
+        window.eventBus.emit('auth:login', data.userInfo);
+
+        // 根据角色跳转到相应页面
+       this.redirectToDashboard();
     }
 
-    /**
-     * 处理错误
-     * @param {Error} error - 错误对象
-     * @private
-     */
-    _handleError(error) {
-        // 使用基类的错误展示方法
-        this.showError(error.message || CONFIG.MESSAGE.ERROR.SERVER);
-    }
+    // 处理登录错误
+    handleLoginError(error) {
+        let errorMessage = '登录失败，请稍后重试';
 
-    /**
-     * 页面重定向
-     * @param {string} roleCode - 角色代码
-     * @private
-     */
-    _redirect(roleCode) {
-        const redirectMap = {
-            'ADMIN': '/admin/dashboard.html',
-            'USER': '/user/dashboard.html'
-        };
-        window.location.href = redirectMap[roleCode] || '/login.html';
-    }
-
-    /**
-     * 表单验证和相关辅助方法
-     */
-
-    /**
-     * 初始化验证规则
-     * @private
-     */
-    _initValidation() {
-        // 用户名验证规则
-        this.usernameRules = {
-            required: true,
-            minlength: 3,
-            maxlength: 20,
-            pattern: /^[a-zA-Z0-9_]+$/
-        };
-
-        // 密码验证规则
-        this.passwordRules = {
-            required: true,
-            minlength: 6,
-            maxlength: 20
-        };
-    }
-
-    /**
-     * 验证整个表单
-     * @returns {boolean} 验证结果
-     * @private
-     */
-    _validateForm() {
-        const isUsernameValid = this._validateField('username');
-        const isPasswordValid = this._validateField('password');
-        return isUsernameValid && isPasswordValid;
-    }
-
-    /**
-     * 验证单个字段
-     * @param {string} field - 字段名称(username|password)
-     * @returns {boolean} 验证结果
-     * @private
-     */
-    _validateField(field) {
-        const $field = this[`$${field}`];
-        const value = $field.val().trim();
-        const rules = field === 'username' ? this.usernameRules : this.passwordRules;
-
-        // 清除之前的错误提示
-        this._clearFieldError(field);
-
-        // 验证必填项
-        if (rules.required && !value) {
-            const message = field === 'username' ?
-                CONFIG.MESSAGE.ERROR.VALIDATION.USERNAME_REQUIRED :
-                CONFIG.MESSAGE.ERROR.VALIDATION.PASSWORD_REQUIRED;
-            this._showFieldError(field, message);
-            return false;
+        if (error.status === 401) {
+            errorMessage = '用户名或密码错误';
+        } else if (error.status === 403) {
+            errorMessage = '账号已被禁用';
+        } else if (error.message) {
+            errorMessage = error.message;
         }
 
-        // 验证长度
-        if (value.length < rules.minlength || value.length > rules.maxlength) {
-            const message = field === 'username' ?
-                CONFIG.MESSAGE.ERROR.VALIDATION.USERNAME_LENGTH :
-                CONFIG.MESSAGE.ERROR.VALIDATION.PASSWORD_LENGTH;
-            this._showFieldError(field, message);
-            return false;
-        }
+        this.showError(errorMessage);
 
-        // 验证用户名格式
-        if (field === 'username' && rules.pattern && !rules.pattern.test(value)) {
-            this._showFieldError(field, CONFIG.MESSAGE.ERROR.VALIDATION.USERNAME_FORMAT);
-            return false;
-        }
-
-        return true;
+        // 清空密码
+        this.password.val('').focus();
     }
 
-    /**
-     * 显示字段错误信息
-     * @param {string} field - 字段名称
-     * @param {string} message - 错误信息
-     * @private
-     */
-    _showFieldError(field, message) {
-        const $field = this[`$${field}`];
-        const $feedback = $field.siblings('.invalid-feedback');
+    // 显示错误信息
+    showError(message) {
+        this.errorAlert
+            .removeClass('d-none')
+            .text(message)
+            .addClass('shake');
 
-        $field.addClass('is-invalid');
-        $feedback.text(message);
-
-        // 使用BaseComponent的错误展示机制
-        this.showError(message);
+        setTimeout(() => {
+            this.errorAlert.removeClass('shake');
+        }, 500);
     }
 
-    /**
-     * 清除字段错误信息
-     * @param {string} field - 字段名称
-     * @private
-     */
-    _clearFieldError(field) {
-        const $field = this[`$${field}`];
-        const $feedback = $field.siblings('.invalid-feedback');
+    // 清除错误信息
+    clearError() {
+        this.errorAlert
+            .addClass('d-none')
+            .text('');
 
-        $field.removeClass('is-invalid');
-        $feedback.text('');
+        this.form.find('.is-invalid')
+            .removeClass('is-invalid');
     }
 
-    /**
-     * 获取表单数据
-     * @returns {Object} 表单数据对象
-     * @private
-     */
-    _getFormData() {
-        return {
-            username: this.$username.val().trim(),
-            password: this.$password.val(),
-            rememberMe: this.$rememberMe.prop('checked')
-        };
+    // 设置加载状态
+    setLoading(isLoading) {
+        this.submitBtn
+            .prop('disabled', isLoading)
+            .toggleClass('btn-loading', isLoading)
+            .html(isLoading ? '' : '登录');
+
+        // 禁用/启用表单字段
+        this.form.find('input')
+            .prop('disabled', isLoading);
     }
 
-    /**
-     * 恢复记住的用户名
-     * @private
-     */
-    async _restoreUsername() {
-        try {
-            const rememberedUsername = localStorage.getItem('rememberedUsername');
-            if (rememberedUsername) {
-                this.$username.val(rememberedUsername);
-                this.$rememberMe.prop('checked', true);
-            }
-        } catch (error) {
-            console.error('恢复用户名失败:', error);
-        }
-    }
-
-    /**
-     * 设置加载状态
-     * @param {boolean} isLoading - 是否处于加载状态
-     * @private
-     */
-    _setLoading(isLoading) {
-        const $btn = this.$submitBtn;
-        const loadingHtml = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>登录中...';
-        const normalHtml = '登录';
-
-        $btn.prop('disabled', isLoading)
-            .html(isLoading ? loadingHtml : normalHtml);
-
-        // 设置输入框禁用状态
-        this.$username.prop('disabled', isLoading);
-        this.$password.prop('disabled', isLoading);
-        this.$rememberMe.prop('disabled', isLoading);
-    }
-
-    /**
-     * 清理组件资源
-     * 继承自BaseComponent的destroy方法
-     * @override
-     */
+    // 销毁实例
     destroy() {
-        // 清除防抖函数
-        if (this._debouncedValidate) {
-            this._debouncedValidate.cancel();
-        }
+        // 清除事件监听
+        this.form.off();
+        this.username.off();
+        this.password.off();
+        this.togglePasswordBtn.off();
+
+        // 取消防抖函数
+        this.debounceValidate.cancel();
 
         // 清除DOM引用
-        this.$form = null;
-        this.$username = null;
-        this.$password = null;
-        this.$rememberMe = null;
-        this.$errorMsg = null;
-        this.$submitBtn = null;
-
-        // 调用父类销毁方法
-        super.destroy();
+        this.form = null;
+        this.username = null;
+        this.password = null;
+        this.rememberMe = null;
+        this.submitBtn = null;
+        this.errorAlert = null;
+        this.togglePasswordBtn = null;
     }
 }
 
 // 页面加载完成后初始化
 $(document).ready(() => {
-    new LoginPage();
+    window.loginPage = new LoginPage();
 });

@@ -2,7 +2,6 @@ package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.mapper.TicketMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,15 +16,25 @@ import java.util.List;
  */
 @Service
 public class TicketServiceImpl implements TicketService {
-    @Autowired
-    private TicketMapper ticketMapper;
+    private final TicketMapper ticketMapper;
+
+    public TicketServiceImpl(TicketMapper ticketMapper) {
+        this.ticketMapper = ticketMapper;
+    }
+
+//    private final UserMapper userMapper;
+
     @Override
     public int insertTicket(Ticket record) {
+        //TODO: 判断工单类型是否存在
+        //TODO: 判断部门是否存在
         return ticketMapper.insertTicket(record);
     }
 
     @Override
     public int deleteById(Long ticket_id) {
+        //TODO: 判断工单是否存在
+        //TODO: 判断工单是否处于待处理状态
         return ticketMapper.deleteById(ticket_id);
     }
 

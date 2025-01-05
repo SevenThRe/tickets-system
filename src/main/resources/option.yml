@@ -1,0 +1,4 @@
+cache:
+  expire-time: 10
+  expire-time-unit: MINUTES
+  max-size: 1000

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工单系统 - 系统设置</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/navbar.css" rel="stylesheet">
+    <link href="/pages/admin/css/system-settings.css" rel="stylesheet">
+</head>
+<body class="admin-layout">
+<!-- 导航栏 -->
+<nav id="navbar" class="navbar-container"></nav>
+
+<!-- 主内容区 -->
+<main id="main" class="main-content">
+    <div class="page-header mb-4">
+        <h4>系统设置</h4>
+    </div>
+
+    <!-- 设置选项卡 -->
+    <div class="card">
+        <div class="card-body">
+            <ul class="nav nav-tabs" id="settingTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#general">
+                        <i class="bi bi-gear"></i> 基本设置
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#cache">
+                        <i class="bi bi-lightning"></i> 缓存设置
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#log">
+                        <i class="bi bi-file-text"></i> 日志设置
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content mt-4">
+                <!-- 基本设置 -->
+                <div class="tab-pane fade show active" id="general">
+                    <form id="generalForm">
+                        <div class="mb-4">
+                            <label class="form-label">系统名称</label>
+                            <input type="text" class="form-control" name="systemName">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">系统Logo</label>
+                            <div class="d-flex align-items-center">
+                                <img src="/images/logo.png" class="logo-preview me-3">
+                                <button type="button" class="btn btn-outline-primary">
+                                    更换Logo
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存设置</button>
+                    </form>
+                </div>
+
+                <!-- 缓存设置 -->
+                <div class="tab-pane fade" id="cache">
+                    <form id="cacheForm">
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" class="form-check-input" name="enableCache" id="enableCache" checked>
+                                <label class="form-check-label">启用系统缓存</label>
+                            </div>
+                        </div>
+                        <div id="cacheSettings">
+                            <div class="mb-4">
+                                <label class="form-label">缓存过期时间</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="expireTime" value="10">
+                                    <select class="form-select" name="expireTimeUnit" style="max-width: 150px;">
+                                        <option value="MINUTES">分钟</option>
+                                        <option value="HOURS">小时</option>
+                                        <option value="DAYS">天</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">最大缓存条数</label>
+                                <input type="number" class="form-control" name="maxSize" value="1000">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存设置</button>
+                    </form>
+                </div>
+
+                <!-- 日志设置 -->
+                <div class="tab-pane fade" id="log">
+                    <form id="logForm">
+                        <div class="mb-4">
+                            <label class="form-label">日志存储路径</label>
+                            <input type="text" class="form-control" name="logPath">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">日志级别</label>
+                            <select class="form-select" name="logLevel">
+                                <option value="DEBUG">DEBUG</option>
+                                <option value="INFO">INFO</option>
+                                <option value="WARN">WARN</option>
+                                <option value="ERROR">ERROR</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">日志保留天数</label>
+                            <input type="number" class="form-control" name="logRetentionDays">
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存设置</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 基础库 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<!-- 工具类 -->
+<script src="/static/js/utils/event-bus.js"></script>
+<script src="/static/js/utils/request-util.js"></script>
+<script src="/static/js/utils/validator-util.js"></script>
+<script src="/static/js/utils/utils.js"></script>
+
+<!-- 基础组件 -->
+<script src="/static/js/components/base/base-component.js"></script>
+<script src="/static/js/components/layout/navbar.js"></script>
+
+<!-- 页面逻辑 -->
+<script src="/static/pages/admin/js/system-setting.js"></script>
+</body>
+</html>

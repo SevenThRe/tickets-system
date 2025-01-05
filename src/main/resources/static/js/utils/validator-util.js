@@ -2,32 +2,34 @@
  * validator-util.js
  * 表单验证工具类，提供可扩展的验证规则和自定义验证支持
  * @author SeventhRe
- * @version 2.0.1
+ * @version 2.0.2
  */
-
-class Validator {
+class ValidatorUtil {
     /**
      * 创建验证器实例
      * @param {Object} rules - 验证规则配置
      */
     constructor(rules = {}) {
-        /**
-         * 表单验证规则配置
-         * @private
-         * @type {Object}
-         */
+        // 表单验证规则配置
         this.rules = rules;
 
-        /**
-         * 内置验证器定义
-         * 每个验证器包含validate方法和错误提示消息
-         * @private
-         * @type {Object}
-         */
+        // 系统默认验证器定义
         this.validators = {
             required: {
                 validate: value => value !== undefined && value !== null && value !== '',
-                message: '此字段不能为空'
+                message: window.Const.MESSAGE.ERROR.VALIDATION.USERNAME_REQUIRED
+            },
+            username: {
+                validate: value => /^[a-zA-Z0-9_]+$/.test(value),
+                message: window.Const.MESSAGE.ERROR.VALIDATION.USERNAME_FORMAT
+            },
+            usernameLength: {
+                validate: value => value.length >= 3 && value.length <= 20,
+                message: window.Const.MESSAGE.ERROR.VALIDATION.USERNAME_LENGTH
+            },
+            password: {
+                validate: value => value.length >= 6 && value.length <= 20,
+                message: window.Const.MESSAGE.ERROR.VALIDATION.PASSWORD_LENGTH
             },
             email: {
                 validate: value => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value),
@@ -37,16 +39,17 @@ class Validator {
                 validate: value => /^1[3-9]\d{9}$/.test(value),
                 message: '请输入有效的手机号码'
             },
-            url: {
-                validate: value => {
-                    try {
-                        new URL(value);
-                        return true;
-                    } catch {
-                        return false;
-                    }
-                },
-                message: '请输入有效的URL地址'
+            ticketStatus: {
+                validate: value => Object.values(window.Const.TICKET.STATUS).includes(Number(value)),
+                message: '无效的工单状态'
+            },
+            ticketPriority: {
+                validate: value => Object.values(window.Const.TICKET.PRIORITY).includes(Number(value)),
+                message: '无效的工单优先级'
+            },
+            themeType: {
+                validate: value => Object.values(window.Const.THEME.TYPES).includes(value),
+                message: '无效的主题类型'
             },
             min: {
                 validate: (value, param) => Number(value) >= param,
@@ -73,15 +76,55 @@ class Validator {
                 message: '格式不正确'
             }
         };
+
+        // 预定义的表单验证规则
+        this.formRules = {
+            loginForm: {
+                username: [
+                    { type: 'required' },
+                    { type: 'username' },
+                    { type: 'usernameLength' }
+                ],
+                password: [
+                    { type: 'required' },
+                    { type: 'password' }
+                ]
+            },
+            ticketForm: {
+                title: [
+                    { type: 'required' },
+                    { type: 'maxLength', param: 50 }
+                ],
+                content: [
+                    { type: 'required' },
+                    { type: 'maxLength', param: 500 }
+                ],
+                priority: [
+                    { type: 'required' },
+                    { type: 'ticketPriority' }
+                ],
+                status: [
+                    { type: 'required' },
+                    { type: 'ticketStatus' }
+                ]
+            },
+            themeForm: {
+                name: [
+                    { type: 'required' },
+                    { type: 'maxLength', param: 20 }
+                ],
+                type: [
+                    { type: 'required' },
+                    { type: 'themeType' }
+                ]
+            }
+        };
     }
 
     /**
      * 添加自定义验证器
-     * @param {string} name - 验证器名称
-     * @param {Object} validator - 验证器配置对象
-     * @param {Function} validator.validate - 验证函数
-     * @param {string|Function} validator.message - 错误消息或错误消息生成函数
-     * @throws {Error} 当验证器配置无效时抛出错误
+     * @param {string} name 验证器名称
+     * @param {Object} validator 验证器配置对象
      */
     addValidator(name, validator) {
         if (!validator || typeof validator.validate !== 'function') {
@@ -92,9 +135,9 @@ class Validator {
 
     /**
      * 验证单个字段
-     * @param {string} field - 字段名
-     * @param {*} value - 字段值
-     * @param {Object} data - 完整表单数据，用于关联验证
+     * @param {string} field 字段名
+     * @param {*} value 字段值
+     * @param {Object} data 完整表单数据
      * @returns {Promise<Object>} 错误信息对象
      */
     async validateField(field, value, data = {}) {
@@ -103,10 +146,8 @@ class Validator {
 
         const errors = {};
 
-        // 遍历字段的所有验证规则
         for (const rule of fieldRules) {
             try {
-                // 条件验证检查
                 if (rule.if && !await this._evaluateCondition(rule.if, data)) {
                     continue;
                 }
@@ -121,11 +162,11 @@ class Validator {
 
                 if (!isValid) {
                     errors[field] = this._getErrorMessage(validator, rule);
-                    break;  // 一个字段只显示第一个错误
+                    break;
                 }
             } catch (error) {
                 console.error(`字段[${field}]验证异常:`, error);
-                errors[field] = '验证执行失败';
+                errors[field] = window.Const.MESSAGE.ERROR.VALIDATION.UNKNOWN;
                 break;
             }
         }
@@ -135,13 +176,29 @@ class Validator {
 
     /**
      * 验证整个表单
-     * @param {Object} data - 表单数据对象
+     * @param {string} formType 表单类型
+     * @param {Object} data 表单数据
+     * @returns {Promise<Object>} 错误信息对象
+     */
+    async validateForm(formType, data = {}) {
+        // 获取预定义的表单规则
+        const formRules = this.formRules[formType];
+        if (!formRules) {
+            console.warn(`未找到表单类型[${formType}]的验证规则`);
+            return {};
+        }
+
+        this.rules = formRules;
+        return await this.validate(data);
+    }
+
+    /**
+     * 验证整个表单数据
+     * @param {Object} data 表单数据对象
      * @returns {Promise<Object>} 错误信息对象
      */
     async validate(data = {}) {
         const errors = {};
-
-        // 并行验证所有字段
         const validations = Object.entries(this.rules).map(async ([field, rules]) => {
             const fieldErrors = await this.validateField(field, data[field], data);
             Object.assign(errors, fieldErrors);
@@ -151,48 +208,17 @@ class Validator {
         return errors;
     }
 
-    /**
-     * 创建验证规则配置
-     * @param {Object} rules - 规则配置对象
-     * @returns {Validator} 验证器实例
-     */
-    static createRules(rules) {
-        return new Validator(rules);
-    }
-
-    /**
-     * 执行验证逻辑
-     * @private
-     * @param {Object} validator - 验证器对象
-     * @param {*} value - 待验证值
-     * @param {*} param - 验证参数
-     * @param {Object} data - 表单数据
-     * @returns {Promise<boolean>} 验证结果
-     */
+    // 私有辅助方法
     async _executeValidation(validator, value, param, data) {
         const result = validator.validate(value, param, data);
         return result instanceof Promise ? await result : result;
     }
 
-    /**
-     * 获取错误消息
-     * @private
-     * @param {Object} validator - 验证器对象
-     * @param {Object} rule - 规则配置
-     * @returns {string} 错误消息
-     */
     _getErrorMessage(validator, rule) {
         const message = rule.message || validator.message;
         return typeof message === 'function' ? message(rule.param) : message;
     }
 
-    /**
-     * 评估条件表达式
-     * @private
-     * @param {Function} condition - 条件函数
-     * @param {Object} data - 表单数据
-     * @returns {Promise<boolean>} 条件评估结果
-     */
     async _evaluateCondition(condition, data) {
         try {
             const result = condition(data);
@@ -202,7 +228,12 @@ class Validator {
             return false;
         }
     }
+
+    // 静态工厂方法
+    static createValidator(rules) {
+        return new ValidatorUtil(rules);
+    }
 }
 
-// 导出验证器类
-export default Validator;
+// 创建全局单例
+window.validatorUtil = new ValidatorUtil();
