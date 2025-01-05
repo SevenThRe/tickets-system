@@ -1,4 +1,4 @@
-create table ticket_system.sys_theme
+create table sys_theme
 (
     theme_id    varchar(32)                        not null comment '主题ID'
         primary key,
@@ -14,7 +14,7 @@ create table ticket_system.sys_theme
         unique (theme_name)
 );
 
-create table ticket_system.sys_user_theme
+create table sys_user_theme
 (
     user_id     bigint                             not null comment '用户ID',
     theme_id    varchar(32)                        not null comment '主题ID',
@@ -26,10 +26,10 @@ create table ticket_system.sys_user_theme
     comment '用户主题配置表' charset = utf8mb4;
 
 create index idx_current
-    on ticket_system.sys_user_theme (user_id, is_current)
+    on sys_user_theme (user_id, is_current)
     comment '当前主题索引';
 
-create table ticket_system.t_attachment
+create table t_attachment
 (
     attachment_id bigint auto_increment comment '附件ID'
         primary key,
@@ -45,17 +45,17 @@ create table ticket_system.t_attachment
     comment '附件表' charset = utf8mb4;
 
 create index idx_ticket
-    on ticket_system.t_attachment (ticket_id)
+    on t_attachment (ticket_id)
     comment '工单索引';
 
-create table ticket_system.t_department
+create table t_department
 (
     department_id   bigint auto_increment comment '部门ID'
         primary key,
     department_name varchar(50)                        not null comment '部门名称',
     manager_id      bigint                             null comment '部门负责人ID',
     parent_id       bigint                             null comment '父部门ID',
-    dept_level      tinyint                            not null comment '部门层级',
+    dept_level      int                                not null comment '部门层级',
     description     varchar(200)                       null comment '部门描述',
     status          tinyint  default 1                 not null comment '状态：0-禁用，1-启用',
     is_deleted      tinyint  default 0                 not null comment '是否删除',
@@ -63,23 +63,20 @@ create table ticket_system.t_department
     update_by       bigint                             null comment '更新人',
     create_time     datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     update_time     datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    orderNum        int      default 0                 null comment '部门排序号',
-    constraint idx_orderNum_parent
-        unique (parent_id, orderNum) comment '父部门ID和序号的唯一索引',
     constraint uk_dept_name
         unique (department_name) comment '部门名称唯一索引'
 )
     comment '部门表' charset = utf8mb4;
 
 create index idx_manager
-    on ticket_system.t_department (manager_id)
+    on t_department (manager_id)
     comment '部门负责人索引';
 
 create index idx_parent
-    on ticket_system.t_department (parent_id)
+    on t_department (parent_id)
     comment '父部门索引';
 
-create table ticket_system.t_notification
+create table t_notification
 (
     notification_id bigint auto_increment comment '通知ID'
         primary key,
@@ -94,14 +91,14 @@ create table ticket_system.t_notification
     comment '通知表' charset = utf8mb4;
 
 create index idx_ticket
-    on ticket_system.t_notification (ticket_id)
+    on t_notification (ticket_id)
     comment '工单索引';
 
 create index idx_user
-    on ticket_system.t_notification (user_id)
+    on t_notification (user_id)
     comment '用户索引';
 
-create table ticket_system.t_permission
+create table t_permission
 (
     permission_id   bigint auto_increment comment '权限ID'
         primary key,
@@ -119,40 +116,25 @@ create table ticket_system.t_permission
 )
     comment '权限表' charset = utf8mb4;
 
-create table ticket_system.t_position
+create table t_role
 (
-    id          bigint auto_increment comment '主键ID'
+    role_id        bigint auto_increment comment '角色ID'
         primary key,
-    code        varchar(50)                        not null comment '职位编码',
-    name        varchar(50)                        not null comment '职位名称',
-    dept_id     bigint                             null comment '所属部门ID',
-    status      tinyint  default 1                 null comment '状态(0-禁用 1-启用)',
-    order_num   int      default 0                 null comment '排序号',
-    create_time datetime default CURRENT_TIMESTAMP null comment '创建时间',
-    update_time datetime                           null on update CURRENT_TIMESTAMP comment '更新时间',
-    constraint uk_code
-        unique (code)
-)
-    comment '职位表';
-
-create table ticket_system.t_role
-(
-    role_id     bigint auto_increment comment '角色ID'
-        primary key,
-    role_name   varchar(50)                        not null comment '角色名称',
-    role_code   varchar(50)                        not null comment '角色编码',
-    description varchar(200)                       null comment '角色描述',
-    status      tinyint  default 1                 not null comment '状态：0-禁用，1-启用',
-    is_deleted  tinyint  default 0                 not null comment '是否删除',
-    create_by   bigint                             null comment '创建人',
-    create_time datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    update_time datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    role_name      varchar(50)                        not null comment '角色名称',
+    role_code      varchar(50)                        not null comment '角色编码',
+    base_role_code varchar(20)                        not null comment '基础角色编码(ADMIN/DEPT/USER)',
+    description    varchar(200)                       null comment '角色描述',
+    status         tinyint  default 1                 not null comment '状态：0-禁用，1-启用',
+    is_deleted     tinyint  default 0                 not null comment '是否删除',
+    create_by      bigint                             null comment '创建人',
+    create_time    datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    update_time    datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     constraint uk_role_code
         unique (role_code) comment '角色编码唯一索引'
 )
     comment '角色表' charset = utf8mb4;
 
-create table ticket_system.t_role_permission
+create table t_role_permission
 (
     role_id       bigint                             not null comment '角色ID',
     permission_id bigint                             not null comment '权限ID',
@@ -161,13 +143,14 @@ create table ticket_system.t_role_permission
 )
     comment '角色权限关联表' charset = utf8mb4;
 
-create table ticket_system.t_ticket
+create table t_ticket
 (
     ticket_id          bigint auto_increment comment '工单ID'
         primary key,
     type_id            bigint                             not null comment '工单类型ID',
     title              varchar(100)                       not null comment '工单标题',
     content            text                               not null comment '工单内容',
+    creator_id         bigint                             not null comment '创建人ID',
     processor_id       bigint                             null comment '处理人ID',
     department_id      bigint                             not null comment '处理部门ID',
     priority           tinyint  default 0                 not null comment '优先级：0-普通，1-紧急，2-非常紧急',
@@ -182,19 +165,23 @@ create table ticket_system.t_ticket
 )
     comment '工单表' charset = utf8mb4;
 
+create index creator_id
+    on t_ticket (creator_id)
+    comment '创建人索引';
+
 create index idx_department
-    on ticket_system.t_ticket (department_id)
+    on t_ticket (department_id)
     comment '部门索引';
 
 create index idx_processor
-    on ticket_system.t_ticket (processor_id)
+    on t_ticket (processor_id)
     comment '处理人索引';
 
 create index idx_type
-    on ticket_system.t_ticket (type_id)
+    on t_ticket (type_id)
     comment '类型索引';
 
-create table ticket_system.t_ticket_record
+create table t_ticket_record
 (
     record_id          bigint auto_increment comment '记录ID'
         primary key,
@@ -210,14 +197,14 @@ create table ticket_system.t_ticket_record
     comment '工单处理记录表' charset = utf8mb4;
 
 create index idx_operator
-    on ticket_system.t_ticket_record (operator_id)
+    on t_ticket_record (operator_id)
     comment '操作人索引';
 
 create index idx_ticket
-    on ticket_system.t_ticket_record (ticket_id)
+    on t_ticket_record (ticket_id)
     comment '工单索引';
 
-create table ticket_system.t_ticket_type
+create table t_ticket_type
 (
     type_id     bigint auto_increment comment '类型ID'
         primary key,
@@ -229,7 +216,7 @@ create table ticket_system.t_ticket_type
 )
     comment '工单类型表' charset = utf8mb4;
 
-create table ticket_system.t_user
+create table t_user
 (
     user_id       bigint auto_increment comment '用户ID'
         primary key,
@@ -245,17 +232,16 @@ create table ticket_system.t_user
     update_by     bigint                             null comment '更新人',
     create_time   datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     update_time   datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    position_id   bigint                             null comment '职位ID',
     constraint uk_username
         unique (username) comment '用户名唯一索引'
 )
     comment '用户表' charset = utf8mb4;
 
 create index idx_department
-    on ticket_system.t_user (department_id)
+    on t_user (department_id)
     comment '部门索引';
 
-create table ticket_system.t_user_role
+create table t_user_role
 (
     user_id     bigint                             not null comment '用户ID',
     role_id     bigint                             not null comment '角色ID',
