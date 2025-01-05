@@ -51,7 +51,7 @@ class RequestUtil {
             if (jqXHR.status === 401) {
                 // 未授权,跳转登录
                 window.eventBus.emit('auth:logout');
-                window.location.href = '/login.html';
+                window.location.href = '/pages/auth/login.html';
                 return;
             }
             // 其他错误处理

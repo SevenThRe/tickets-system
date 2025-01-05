@@ -5,7 +5,7 @@
 class BootstrapIcons {
     constructor() {
         this.iconCache = new Map();
-        this.baseUrl = '/static/lib/bootstrap-icons/';
+        this.baseUrl = '/lib/bootstrap-icons/';
     }
 
     /**

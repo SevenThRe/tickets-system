@@ -2,7 +2,6 @@ package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.mapper.TicketMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

@@ -229,7 +229,7 @@ class Navbar extends BaseComponent {
             this.state.currentUser = JSON.parse(userInfo);
         } catch (error) {
             console.error('加载用户信息失败:', error);
-            window.location.href = '/login.html';
+            window.location.href = '/pages/auth/login.html';
         }
     }
 
