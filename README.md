@@ -14,6 +14,9 @@
   - ES6
   - HTML5
   - CSS
+- 其他:
+  - Maven 3
+  - JDK 17
 
 ## 主要功能
 
@@ -138,11 +141,11 @@ project-root/
 
 ## 本地运行
 
-1. 创建MySQL数据库,执行`backend/db/schema.sql`初始化表结构。
+1. 创建MySQL数据库,执行`ticket.sql`初始化表结构。
 
-2. 在`backend/src/main/resources/application.yml`中配置数据库连接信息。
+2. 在`ticket/src/main/resources/application.properties`中配置数据库连接信息。
 
-3. 进入backend目录,运行以下命令启动后端:
+3. 进入ticket目录,运行以下命令启动后端:
 
    ```bash
    mvn spring-boot:run
@@ -162,4 +165,5 @@ project-root/
 
 ## 版权声明
   
-本项目仅供学习参考,不用于任何商业用途。
+本项目仅供学习参考，不用于任何商业用途。
+项目并不完善，斟酌使用。
