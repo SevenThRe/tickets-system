@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>导航页</title>
 
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -52,6 +53,29 @@
         .category ul li a:hover {
             text-decoration: underline;
         }
+        .img {
+            text-align: center;
+        }
+        .img img {
+            border-radius: 50%;
+            border-image-repeat: round;
+            border-width: 5px;
+            box-shadow: #1f2937 1px 2px 10px 0px;
+            margin: 20px auto;
+            mask-border-mode: alpha;
+            stop-opacity: 0.8;
+            width: 20%;
+            height: 20%;
+            object-fit: cover;
+            max-width: 200px;
+            max-height: 200px;
+        }
+        .img img:hover {
+            transform: scale(1.1);
+            transition: transform 0.3s ease-in-out;
+            box-shadow: #4b5563 1px 2px 10px 0px;
+        }
+
     </style>
 </head>
 <body>
@@ -62,7 +86,9 @@
     <a href="#dept">Dept</a>
     <a href="#user">User</a>
 </nav>
-
+<div class="img">
+    <img src="images/abstract.jpg" alt="abstract">
+</div>
 <div class="container">
     <div id="admin" class="category">
         <h2>Admin</h2>
