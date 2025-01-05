@@ -1,29 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.etc.ticket.mapper.TicketMapper">
-    <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Ticket">
-        <id column="ticket_id" jdbcType="BIGINT" property="ticket_id"/>
-        <result column="type_id" jdbcType="BIGINT" property="type_id"/>
-        <result column="title" jdbcType="VARCHAR" property="title"/>
-        <result column="content" jdbcType="VARCHAR" property="content"/>
-        <result column="processor_id" jdbcType="BIGINT" property="processor_id"/>
-        <result column="department_id" jdbcType="BIGINT" property="department_id"/>
-        <result column="priority" jdbcType="TINYINT" property="priority"/>
-        <result column="status" jdbcType="TINYINT" property="status"/>
-        <result column="expect_finish_time" jdbcType="TIMESTAMP" property="expect_finish_time"/>
-        <result column="actual_finish_time" jdbcType="TIMESTAMP" property="actual_finish_time"/>
-        <result column="is_deleted" jdbcType="TINYINT" property="is_deleted"/>
-        <result column="create_by" jdbcType="BIGINT" property="create_by"/>
-        <result column="update_by" jdbcType="BIGINT" property="update_by"/>
-        <result column="create_time" jdbcType="TIMESTAMP" property="create_time"/>
-        <result column="update_time" jdbcType="TIMESTAMP" property="update_time"/>
-    </resultMap>
-
-    <!--  <sql id="Base_Column_List">-->
+  <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Ticket">
+    <id column="ticket_id" jdbcType="BIGINT" property="ticketId" />
+    <result column="type_id" jdbcType="BIGINT" property="typeId" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+    <result column="content" jdbcType="VARCHAR" property="content" />
+    <result column="processor_id" jdbcType="BIGINT" property="processorId" />
+    <result column="department_id" jdbcType="BIGINT" property="departmentId" />
+    <result column="priority" jdbcType="TINYINT" property="priority" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+    <result column="expect_finish_time" jdbcType="TIMESTAMP" property="expectFinishTime" />
+    <result column="actual_finish_time" jdbcType="TIMESTAMP" property="actualFinishTime" />
+    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
+    <result column="create_by" jdbcType="BIGINT" property="createBy" />
+    <result column="update_by" jdbcType="BIGINT" property="updateBy" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+    <!--  &lt;sql id="Base_Column_List"&gt;-->
     <!--    select ticket_id, type_id, title, content, processor_id, department_id, priority,-->
     <!--      `status`, expect_finish_time, actual_finish_time, is_deleted, create_by, update_by,-->
     <!--      create_time, update_time from t_ticket-->
-    <!--  </sql>-->
+    <!--  &lt;/sql&gt;-->
 
 
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
@@ -131,8 +130,7 @@
         set is_deleted = 1
         where ticket_id = #{ticket_id,jdbcType=BIGINT}
     </update>
-    <insert id="insertTicket" keyColumn="ticket_id" keyProperty="ticket_id"
-            parameterType="com.icss.etc.ticket.entity.Ticket" useGeneratedKeys="true">
+    <insert id="insertTicket" keyColumn="ticket_id" keyProperty="ticket_id" parameterType="com.icss.etc.ticket.entity.Ticket" useGeneratedKeys="true">
         insert into t_ticket
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="type_id != null">

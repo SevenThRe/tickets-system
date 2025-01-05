@@ -33,6 +33,7 @@
     </table>
     <table path="ticket_system.t_ticket">
       <table path="ticket_system.t_department" name="部门ID" from="department_id" to="department_id"/>
+      <table path="ticket_system.t_position" name="processor_id" from="processor_id" to="id"/>
       <table path="ticket_system.t_ticket_type" name="工单类型ID" from="type_id" to="type_id"/>
       <table path="ticket_system.t_user" name="处理人ID" from="processor_id" to="user_id"/>
     </table>

@@ -16,7 +16,7 @@ window.Const = {
         EXPIRE_TIME: 30 * 60 * 1000, // 30分钟
         CLEANUP_INTERVAL: 60 * 1000   // 1分钟
     },
-    
+
     // 业务模块相关常量
     BUSINESS: {
         TICKET: {
@@ -62,6 +62,32 @@ window.Const = {
                     1: 'text-warning',
                     2: 'text-danger'
                 }
+            },
+            OPERATION: Object.freeze({
+                CREATE: 'CREATE',
+                PROCESS: 'PROCESS',
+                NOTE: 'NOTE',
+                TRANSFER: 'TRANSFER',
+                RESOLVE: 'RESOLVE',
+                CLOSE: 'CLOSE',
+                EVALUATE: 'EVALUATE'
+            }),
+            OPERATION_MAP: {
+                text: {
+                    CREATE: '创建工单',
+                    PROCESS: '开始处理',
+                    NOTE: '添加备注',
+                    TRANSFER: '转交工单',
+                    RESOLVE: '完成处理',
+                    CLOSE: '关闭工单',
+                    EVALUATE: '评价工单'
+                }
+            },
+            EVALUATION: {
+                MIN_SCORE: 1,
+                MAX_SCORE: 5,
+                MIN_CONTENT_LENGTH: 5,
+                MAX_CONTENT_LENGTH: 500
             }
         },
         USER: {
@@ -94,7 +120,7 @@ window.Const = {
             }
         }
     },
-    
+
     // UI相关常量
     UI: {
         THEME: {
@@ -112,7 +138,7 @@ window.Const = {
             DEFAULT_CURRENT: 1
         }
     },
-    
+
     // API相关常量
     API: {
         AUTH: {
@@ -126,17 +152,25 @@ window.Const = {
             GET_CURRENT: '/users/current',
             GET_PERMISSIONS: '/users/permissions',
             PUT_UPDATE_PROFILE: '/users/profile',
-            PUT_CHANGE_PASSWORD: '/users/password'
+            PUT_CHANGE_PASSWORD: '/users/password',
+            PUT_SETTING_UPDATE: '/users/settings',
+            GET_SETTING: '/users/settings',
+            POST_AVATAR_UPLOAD:'/users/avatar'
         },
         TICKET: {
             GET_LIST: '/tickets',
+            GET_MY_TICKETS:'/tickets/my',
             POST_CREATE: '/tickets',
             GET_DETAIL: id => `/tickets/${id}`,
             PUT_PROCESS: id => `/tickets/${id}/process`,
             PUT_RESOLVE: id => `/tickets/${id}/resolve`,
             POST_TRANSFER: id => `/tickets/${id}/transfer`,
             PUT_CLOSE: id => `/tickets/${id}/close`,
-            POST_UPLOAD: '/tickets/attachments'
+            POST_UPLOAD: '/tickets/attachments',
+            GET_ATTACHMENT: id => `/tickets/${id}/attachments`,
+            DELETE_ATTACHMENT: id => `/attachments/${id}`,
+            DOWNLOAD_ATTACHMENT: id => `/attachments/${id}/download`,
+            BATCH_DOWNLOAD: '/tickets/attachments/batch-download'
         },
         DEPARTMENT: {
             GET_LIST: '/departments',
@@ -154,81 +188,114 @@ window.Const = {
         },
         SYSTEM: {
             GET_THEMES: '/system/themes',
-                POST_SET_THEME: '/system/theme/set',
-                GET_THEME_PREVIEW: '/system/theme/preview',
-                POST_SAVE_THEME: '/system/theme/save',
-                GET_DEPARTMENT_LIST: '/system/departments',
-                GET_ROLE_LIST: '/system/roles'
+            POST_SET_THEME: '/system/theme/set',
+            GET_THEME_PREVIEW: '/system/theme/preview',
+            POST_SAVE_THEME: '/system/theme/save',
+            GET_DEPARTMENT_LIST: '/system/departments',
+            GET_ROLE_LIST: '/system/roles'
         }
     },
+
     // 错误码和消息
     ERROR_CODES: {
         NETWORK_TIMEOUT: 1001,
-            NETWORK_CONNECTION: 1002,
-            SERVER_ERROR: 1003,
-            UNKNOWN_ERROR: 1004,
-            UNAUTHORIZED: 2001,
-            FORBIDDEN: 2002,
-            TOKEN_EXPIRED: 2003,
-            LOGIN_FAILED: 2004,
-            VALIDATION_ERROR: 3001
+        NETWORK_CONNECTION: 1002,
+        SERVER_ERROR: 1003,
+        UNKNOWN_ERROR: 1004,
+        UNAUTHORIZED: 2001,
+        FORBIDDEN: 2002,
+        TOKEN_EXPIRED: 2003,
+        LOGIN_FAILED: 2004,
+        VALIDATION_ERROR: 3001
     },
+
+    // 消息提示
     MESSAGES: {
         ERROR: {
             NETWORK: {
                 TIMEOUT: '请求超时，请稍后重试',
-                    CONNECTION: '网络连接失败，请检查网络',
-                    SERVER: '服务器错误，请稍后重试',
-                    UNKNOWN: '未知错误，请稍后重试'
+                CONNECTION: '网络连接失败，请检查网络',
+                SERVER: '服务器错误，请稍后重试',
+                UNKNOWN: '未知错误，请稍后重试'
             },
             AUTH: {
                 UNAUTHORIZED: '请先登录',
-                    FORBIDDEN: '无权访问',
-                    TOKEN_EXPIRED: '登录已过期，请重新登录',
-                    LOGIN_FAILED: '登录失败，用户名或密码错误'
+                FORBIDDEN: '无权访问',
+                TOKEN_EXPIRED: '登录已过期，请重新登录',
+                LOGIN_FAILED: '登录失败，用户名或密码错误'
             },
             VALIDATION: {
                 USERNAME_REQUIRED: '请输入用户名',
-                    PASSWORD_REQUIRED: '请输入密码',
-                    USERNAME_FORMAT: '用户名只能包含字母、数字和下划线',
-                    USERNAME_LENGTH: '用户名长度必须在3-20个字符之间',
-                    PASSWORD_LENGTH: '密码长度必须在6-20个字符之间',
-                    EMAIL_FORMAT: '邮箱格式不正确',
-                    MOBILE_FORMAT: '手机号格式不正确',
-                    UNKNOWN: '验证失败'
+                PASSWORD_REQUIRED: '请输入密码',
+                USERNAME_FORMAT: '用户名只能包含字母、数字和下划线',
+                USERNAME_LENGTH: '用户名长度必须在3-20个字符之间',
+                PASSWORD_LENGTH: '密码长度必须在6-20个字符之间',
+                EMAIL_FORMAT: '邮箱格式不正确',
+                MOBILE_FORMAT: '手机号格式不正确',
+                UNKNOWN: '验证失败'
             },
             TICKET: {
                 NOT_FOUND: '工单不存在',
-                    CREATE_FAILED: '创建工单失败',
-                    UPDATE_FAILED: '更新工单失败',
-                    DELETE_FAILED: '删除工单失败',
-                    ASSIGN_FAILED: '分配工单失败',
-                    COMMENT_FAILED: '评论失败'
+                CREATE_FAILED: '创建工单失败',
+                UPDATE_FAILED: '更新工单失败',
+                DELETE_FAILED: '删除工单失败',
+                ASSIGN_FAILED: '分配工单失败',
+                COMMENT_FAILED: '评论失败',
+                LOAD_FAILED: '加载工单列表失败',
+                DETAIL_FAILED: '加载工单详情失败',
+                PROCESS_FAILED: '处理工单失败',
+                TRANSFER_FAILED: '转交工单失败',
+                CLOSE_FAILED: '关闭工单失败',
+                EVALUATE_FAILED: '评价工单失败',
+                ATTACHMENT_UPLOAD_FAILED: '附件上传失败',
+                ATTACHMENT_DOWNLOAD_FAILED: '附件下载失败',
+                ATTACHMENT_DELETE_FAILED: '删除附件失败',
+                NOTE_ADD_FAILED: '添加备注失败',
+                // 表单验证错误
+                TITLE_REQUIRED: '请输入工单标题',
+                CONTENT_REQUIRED: '请输入工单内容',
+                DEPARTMENT_REQUIRED: '请选择处理部门',
+                TITLE_LENGTH: '标题长度应在5-50个字符之间',
+                CONTENT_LENGTH: '内容长度应在10-500个字符之间',
+                EVALUATION_SCORE_REQUIRED: '请选择评分',
+                EVALUATION_CONTENT_REQUIRED: '请输入评价内容',
+                NOTE_CONTENT_REQUIRED: '请输入备注内容',
+                CLOSE_REASON_REQUIRED: '请输入关闭原因',
+                FILE_SIZE_LIMIT: '文件大小不能超过10MB',
+                FILE_TYPE_ERROR: '不支持的文件类型'
             }
         },
         SUCCESS: {
             AUTH: {
                 LOGIN: '登录成功',
-                    LOGOUT: '退出成功',
-                    PASSWORD_RESET: '密码重置成功',
-                    PASSWORD_CHANGE: '密码修改成功'
+                LOGOUT: '退出成功',
+                PASSWORD_RESET: '密码重置成功',
+                PASSWORD_CHANGE: '密码修改成功'
             },
             TICKET: {
                 CREATE: '工单创建成功',
-                    UPDATE: '工单更新成功',
-                    DELETE: '工单删除成功',
-                    ASSIGN: '工单分配成功',
-                    COMMENT: '评论成功'
+                UPDATE: '工单更新成功',
+                DELETE: '工单删除成功',
+                ASSIGN: '工单分配成功',
+                COMMENT: '评论成功',
+                PROCESS: '工单处理成功',
+                TRANSFER: '工单转交成功',
+                CLOSE: '工单关闭成功',
+                EVALUATE: '评价提交成功',
+                NOTE_ADD: '备注添加成功',
+                ATTACHMENT_UPLOAD: '附件上传成功',
+                ATTACHMENT_DELETE: '附件删除成功'
             },
             THEME: {
                 CREATE: '主题创建成功',
-                    UPDATE: '主题更新成功',
-                    DELETE: '主题删除成功',
-                    SAVE: '主题保存成功',
-                    APPLY: '主题应用成功'
+                UPDATE: '主题更新成功',
+                DELETE: '主题删除成功',
+                SAVE: '主题保存成功',
+                APPLY: '主题应用成功'
             }
         }
     },
+
     // 时间格式常量
     TIME_FORMAT: {
         DATE: 'YYYY-MM-DD',
@@ -242,6 +309,35 @@ window.Const = {
             min: 3,
             max: 20,
             pattern: 'REGEX.USERNAME'
+        }
+    },
+
+    // 文件相关常量
+    FILE: {
+        MAX_SIZE: 10 * 1024 * 1024, // 10MB
+        ALLOWED_TYPES: [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/zip',
+            'application/x-rar-compressed'
+        ],
+        TYPE_MAP: {
+            'image/jpeg': 'JPEG 图片',
+            'image/png': 'PNG 图片',
+            'image/gif': 'GIF 图片',
+            'application/pdf': 'PDF 文档',
+            'application/msword': 'Word 文档',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word 文档',
+            'application/vnd.ms-excel': 'Excel 表格',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Excel 表格',
+            'application/zip': 'ZIP 压缩包',
+            'application/x-rar-compressed': 'RAR 压缩包'
         }
     }
 };

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工单系统 - 个人中心</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/navbar.css" rel="stylesheet">
+    <link href="/static/pages/common/css/profile.css" rel="stylesheet">
+</head>
+<body class="profile-page">
+<!-- 导航栏 -->
+<nav id="navbar" class="navbar-container"></nav>
+
+<!-- 主内容区 -->
+<main id="main" class="main-content">
+    <!-- 个人信息概览 -->
+    <div class="profile-header mb-4">
+        <div class="profile-cover">
+            <div class="profile-avatar">
+                <img src="/static/images/default-avatar.png" style="width: 50px; height: 50px;" alt="用户头像" class="avatar" id="userAvatar">
+                <button class="btn btn-sm btn-light avatar-upload" id="uploadAvatarBtn">
+                    <i class="bi bi-camera"></i>
+                </button>
+            </div>
+        </div>
+        <div class="profile-info">
+            <h4 class="user-name" id="userName">loading...</h4>
+            <p class="user-role text-muted" id="userRole">loading...</p>
+        </div>
+    </div>
+
+    <!-- 内容标签页 -->
+    <div class="card">
+        <div class="card-body">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#basicInfo">
+                        <i class="bi bi-person"></i> 基本信息
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#security">
+                        <i class="bi bi-shield-lock"></i> 账号安全
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#notification">
+                        <i class="bi bi-bell"></i> 消息通知
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content mt-4">
+                <!-- 基本信息 -->
+                <div class="tab-pane fade show active" id="basicInfo">
+                    <form id="basicInfoForm" class="profile-form">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">用户名</label>
+                                <input type="text" class="form-control" name="username" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">真实姓名</label>
+                                <input type="text" class="form-control" name="realName" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">邮箱</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">手机号</label>
+                                <input type="tel" class="form-control" name="phone" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">所属部门</label>
+                                <input type="text" class="form-control" name="department" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">职位</label>
+                                <input type="text" class="form-control" name="position" readonly>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存修改</button>
+                    </form>
+                </div>
+
+                <!-- 账号安全 -->
+                <div class="tab-pane fade" id="security">
+                    <form id="passwordForm" class="profile-form">
+                        <div class="mb-3">
+                            <label class="form-label">当前密码</label>
+                            <input type="password" class="form-control" name="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">新密码</label>
+                            <input type="password" class="form-control" name="newPassword" required>
+                            <div class="form-text">密码长度至少6位，需包含字母和数字</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">确认新密码</label>
+                            <input type="password" class="form-control" name="confirmPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">修改密码</button>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="security-settings">
+                    <!--假装做了一些安全设置-->
+                        <h6 class="mb-3">安全设置</h6>
+                        <div class="list-group">
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">双因素认证</h6>
+                                    <p class="mb-0 text-muted small">使用手机验证码进行双重认证</p>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" id="twoFactorAuth">
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">登录通知</h6>
+                                    <p class="mb-0 text-muted small">异地登录时发送邮件通知</p>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" id="loginNotification">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 消息通知 -->
+                <div class="tab-pane fade" id="notification">
+                    <div class="notification-settings">
+                        <h6 class="mb-3">通知设置</h6>
+                        <div class="list-group">
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">工单提醒</h6>
+                                    <p class="mb-0 text-muted small">有新工单时通知我</p>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" id="ticketNotification">
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">处理进度</h6>
+                                    <p class="mb-0 text-muted small">工单状态有更新时通知我</p>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" id="processNotification">
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">系统消息</h6>
+                                    <p class="mb-0 text-muted small">接收系统公告和维护通知</p>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" id="systemNotification">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 头像上传模态框 -->
+<div class="modal fade" id="avatarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">上传头像</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="avatarForm">
+                    <div class="mb-3">
+                        <label class="form-label">选择图片</label>
+                        <input type="file" class="form-control" id="avatarFile" accept="image/*" required>
+                    </div>
+                    <div class="avatar-preview text-center">
+                        <img src="" alt="预览" id="avatarPreview" style="max-width: 200px; display: none;">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="uploadAvatarSubmit">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/utils/event-bus.js"></script>
+<script src="/static/js/utils/request-util.js"></script>
+<script src="/static/js/utils/validator-util.js"></script>
+<script src="/static/js/components/base/base-component.js"></script>
+<script src="/static/js/components/layout/navbar.js"></script>
+<script src="/static/pages/common/js/profile.js"></script>
+</body>
+</html>

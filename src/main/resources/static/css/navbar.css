@@ -1,0 +1,166 @@
+/* navbar.css */
+/* 变量定义 */
+:root {
+    --navbar-width: 5rem;
+    --navbar-expanded-width: 16rem;
+    --navbar-bg: hsl(256, 12%, 12%);
+    --navbar-hover-bg: hsl(257, 11%, 16%);
+    --navbar-text: hsl(0, 0%, 50%);
+    --navbar-hover-text: hsl(0, 0%, 100%);
+    --transition-speed: 0.35s;
+}
+
+/* 导航栏容器 */
+#navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--navbar-width);
+    height: 100vh;
+    background-color: var(--navbar-bg);
+    transition: width var(--transition-speed) cubic-bezier(.175, .685, .32, 1);
+    overflow-x: hidden;
+    z-index: 1000;
+    padding: 0;
+    transform: translateX(0); /* 添加transform以启用GPU加速 */
+}
+
+/* 主内容区域调整 */
+.main-content {
+    padding: 2rem;
+    min-height: 100vh;
+    margin-left: var(--navbar-width); /* 仅在非折叠状态下保持边距 */
+    transition: margin-left var(--transition-speed) cubic-bezier(.175, .685, .32, 1);
+}
+
+/* 页面基础布局 */
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background-color: var(--background-color);
+}
+
+/* 展开效果 */
+#navbar:hover {
+    width: var(--navbar-expanded-width);
+}
+
+/* 导航项列表 */
+.navbar-items {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Logo样式 */
+.navbar-logo {
+    margin: 0;
+    width: 100%;
+    height: 5rem;
+    background: hsl(256, 10%, 10%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar-logo > .navbar-item-inner {
+    width: calc(5rem - 8px);
+    padding: 0;
+}
+
+.navbar-logo svg {
+    width: 2em;
+    height: 2em;
+    fill: white;
+}
+
+/* 导航项基础样式 */
+.navbar-item {
+    width: 100%;
+    padding: 0 0.5rem;
+}
+
+.navbar-item-inner {
+    display: flex;
+    align-items: center;
+    padding: 1rem 0;
+    color: var(--navbar-text);
+    text-decoration: none;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.navbar-item-inner:hover {
+    color: var(--navbar-hover-text);
+    background: var(--navbar-hover-bg);
+}
+
+/* 图标容器 */
+.navbar-item-inner-icon-wrapper {
+    width: calc(5rem - 1rem - 8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 链接文本 */
+.link-text {
+    margin: 0;
+    width: 0;
+    white-space: nowrap;
+    opacity: 0;
+    transition: all var(--transition-speed) cubic-bezier(.175, .685, .32, 1);
+    overflow: hidden;
+}
+
+#navbar:hover .link-text {
+    width: calc(100% - calc(5rem - 8px));
+    opacity: 1;
+}
+
+/* 活动状态 */
+.navbar-item.active .navbar-item-inner {
+    color: var(--navbar-hover-text);
+    background: var(--navbar-hover-bg);
+}
+
+/* 滚动条样式 */
+#navbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+#navbar::-webkit-scrollbar-track {
+    background: var(--navbar-bg);
+}
+
+#navbar::-webkit-scrollbar-thumb {
+    background: var(--navbar-hover-bg);
+}
+
+/* 主内容区域调整 */
+.main-content {
+    margin-left: var(--navbar-width);
+    transition: margin-left var(--transition-speed) cubic-bezier(.175, .685, .32, 1);
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    #navbar {
+        transform: translateX(calc(-1 * var(--navbar-width))); /* 默认隐藏导航栏 */
+    }
+
+    #navbar.show {
+        transform: translateX(0); /* 显示导航栏 */
+    }
+
+    .main-content {
+        margin-left: 0; /* 移除左边距 */
+        padding: 1rem;
+    }
+}

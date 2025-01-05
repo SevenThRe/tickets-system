@@ -8,18 +8,83 @@ class Navbar extends BaseComponent {
 
         // 状态管理
         this.state = {
-            expanded: false,              // 是否展开
+            expanded: true,              // 是否展开
             activeMenu: null,             // 当前激活菜单
             currentUser: null,            // 当前用户信息
             userMenus: [],                // 用户菜单列表
-            loading: false                // 加载状态
+            loading: false,               // 加载状态
+            isMobile: window.innerWidth <= 768  // 是否移动端
         };
 
-        // DOM引用缓存
-        this._domRefs = {};
+        window.addEventListener('resize', this._handleResize.bind(this));
 
         // 初始化事件绑定
         this._bindEvents();
+        // 监听Logo更新事件
+        window.eventBus.on('system:logoUpdated', () => {
+            this.render();
+        });
+    }
+
+    /**
+     * 绑定事件
+     * @private
+     */
+    _bindEvents() {
+        // 切换导航栏展开状态
+        document.addEventListener('click', (e) => {
+            const navbar = document.getElementById('navbar');
+            const toggleBtn = document.getElementById('navbarToggle');
+            const isMobile = window.innerWidth <= 768;
+
+            // 处理移动端导航栏切换
+            if (toggleBtn && toggleBtn.contains(e.target)) {
+                this.state.expanded = !this.state.expanded;
+                this._updateNavbarState();
+                return;
+            }
+
+            // 移动端点击外部区域收起导航栏
+            if (isMobile && navbar && !navbar.contains(e.target)) {
+                this.state.expanded = false;
+                this._updateNavbarState();
+            }
+        });
+
+        // 监听窗口大小变化
+        window.addEventListener('resize', () => {
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                this.state.expanded = false;
+                this._updateNavbarState();
+            }
+        });
+    }
+
+    /**
+     * 更新导航栏状态
+     * @private
+     */
+    _updateNavbarState() {
+        const navbar = document.getElementById('navbar');
+        if (navbar) {
+            navbar.classList.toggle('expanded', this.state.expanded);
+        }
+    }
+
+
+
+    /**
+     * 处理窗口大小变化
+     * @private
+     */
+    _handleResize() {
+        const isMobile = window.innerWidth <= 768;
+        if (this.state.isMobile !== isMobile) {
+            this.state.isMobile = isMobile;
+            this.state.expanded = false;
+            this.render();
+        }
     }
 
     /**
@@ -207,7 +272,12 @@ class Navbar extends BaseComponent {
         }
 
         const html = `
-            <nav id="navbar" class="navbar${this.state.expanded ? ' expanded' : ''}">
+            ${window.innerWidth <= 768 ? `
+                <button id="navbarToggle" class="navbar-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+            ` : ''}
+            <nav id="navbar" class="${this.state.expanded ? 'expanded' : ''}">
                 <ul class="navbar-items">
                     ${this._renderLogo()}
                     ${this._renderMenuItems()}
@@ -224,15 +294,40 @@ class Navbar extends BaseComponent {
      * 渲染Logo
      */
     _renderLogo() {
+        // 从localStorage或系统配置获取Logo配置
+        const systemConfig = this._getSystemConfig();
+        const logoUrl = systemConfig?.logoUrl;
+
         return `
-            <li class="navbar-logo">
-                <a class="navbar-item-inner">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-                    </svg>
-                </a>
-            </li>
-        `;
+        <li class="navbar-logo">
+            <a class="navbar-item-inner">
+                ${logoUrl ? `
+                    <img src="${logoUrl}" alt="系统Logo" class="navbar-logo-image">
+                ` : `
+                    <!-- 默认SVG Logo -->
+                    <div class="navbar-logo-default">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                        </svg>
+                    </div>
+                `}
+            </a>
+        </li>
+    `;
+    }
+
+    /**
+     * 获取系统配置
+     * @private
+     */
+    _getSystemConfig() {
+        try {
+            const config = localStorage.getItem('system_config');
+            return config ? JSON.parse(config) : null;
+        } catch (error) {
+            console.error('获取系统配置失败:', error);
+            return null;
+        }
     }
 
     /**

@@ -13,43 +13,66 @@ class ValidatorUtil {
         // 表单验证规则配置
         this.rules = rules;
 
+        // 验证消息常量
+        this.VALIDATION_MESSAGES = {
+            REQUIRED: '此项是必填的',
+            USERNAME_FORMAT: '用户名只能包含字母、数字和下划线',
+            USERNAME_LENGTH: '用户名长度必须在3-20个字符之间',
+            PASSWORD_LENGTH: '密码长度必须在6-20个字符之间',
+            EMAIL_FORMAT: '请输入有效的邮箱地址',
+            MOBILE_FORMAT: '请输入有效的手机号码',
+            TICKET_STATUS: '无效的工单状态',
+            TICKET_PRIORITY: '无效的工单优先级',
+            THEME_TYPE: '无效的主题类型',
+            UNKNOWN: '验证失败'
+        };
+
         // 系统默认验证器定义
         this.validators = {
             required: {
                 validate: value => value !== undefined && value !== null && value !== '',
-                message: window.Const.MESSAGE.ERROR.VALIDATION.USERNAME_REQUIRED
+                message: this.VALIDATION_MESSAGES.REQUIRED
             },
             username: {
                 validate: value => /^[a-zA-Z0-9_]+$/.test(value),
-                message: window.Const.MESSAGE.ERROR.VALIDATION.USERNAME_FORMAT
+                message: this.VALIDATION_MESSAGES.USERNAME_FORMAT
             },
             usernameLength: {
                 validate: value => value.length >= 3 && value.length <= 20,
-                message: window.Const.MESSAGE.ERROR.VALIDATION.USERNAME_LENGTH
+                message: this.VALIDATION_MESSAGES.USERNAME_LENGTH
             },
             password: {
                 validate: value => value.length >= 6 && value.length <= 20,
-                message: window.Const.MESSAGE.ERROR.VALIDATION.PASSWORD_LENGTH
+                message: this.VALIDATION_MESSAGES.PASSWORD_LENGTH
             },
             email: {
                 validate: value => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value),
-                message: '请输入有效的邮箱地址'
+                message: this.VALIDATION_MESSAGES.EMAIL_FORMAT
             },
             mobile: {
                 validate: value => /^1[3-9]\d{9}$/.test(value),
-                message: '请输入有效的手机号码'
+                message: this.VALIDATION_MESSAGES.MOBILE_FORMAT
             },
             ticketStatus: {
-                validate: value => Object.values(window.Const.TICKET.STATUS).includes(Number(value)),
-                message: '无效的工单状态'
+                validate: value => {
+                    const TICKET_STATUS = window.Const?.TICKET?.STATUS || {};
+                    return Object.values(TICKET_STATUS).includes(Number(value));
+                },
+                message: this.VALIDATION_MESSAGES.TICKET_STATUS
             },
             ticketPriority: {
-                validate: value => Object.values(window.Const.TICKET.PRIORITY).includes(Number(value)),
-                message: '无效的工单优先级'
+                validate: value => {
+                    const TICKET_PRIORITY = window.Const?.TICKET?.PRIORITY || {};
+                    return Object.values(TICKET_PRIORITY).includes(Number(value));
+                },
+                message: this.VALIDATION_MESSAGES.TICKET_PRIORITY
             },
             themeType: {
-                validate: value => Object.values(window.Const.THEME.TYPES).includes(value),
-                message: '无效的主题类型'
+                validate: value => {
+                    const THEME_TYPES = window.Const?.THEME?.TYPES || {};
+                    return Object.values(THEME_TYPES).includes(value);
+                },
+                message: this.VALIDATION_MESSAGES.THEME_TYPE
             },
             min: {
                 validate: (value, param) => Number(value) >= param,
@@ -74,10 +97,22 @@ class ValidatorUtil {
             pattern: {
                 validate: (value, param) => new RegExp(param).test(value),
                 message: '格式不正确'
+            },
+            // 针对部门管理新增的验证器
+            departmentCode: {
+                validate: value => /^[A-Z0-9]{2,10}$/.test(value),
+                message: '部门编码只能包含大写字母和数字，长度2-10位'
+            },
+            departmentName: {
+                validate: value => value.length >= 2 && value.length <= 50,
+                message: '部门名称长度必须在2-50个字符之间'
+            },
+            departmentOrder: {
+                validate: value => Number.isInteger(Number(value)) && Number(value) >= 0,
+                message: '排序号必须是非负整数'
             }
         };
 
-        // 预定义的表单验证规则
         this.formRules = {
             loginForm: {
                 username: [
@@ -88,6 +123,19 @@ class ValidatorUtil {
                 password: [
                     { type: 'required' },
                     { type: 'password' }
+                ]
+            },
+            departmentForm: {
+                name: [
+                    { type: 'required' },
+                    { type: 'departmentName' }
+                ],
+                code: [
+                    { type: 'required' },
+                    { type: 'departmentCode' }
+                ],
+                orderNum: [
+                    { type: 'departmentOrder' }
                 ]
             },
             ticketForm: {

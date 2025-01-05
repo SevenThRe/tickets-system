@@ -1,11 +1,9 @@
 package com.icss.etc.ticket.mapper;
 
 import com.icss.etc.ticket.entity.Ticket;
-import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
-//@Mapper
 public interface TicketMapper {
     /**
      * 插入工单，忽略空值
@@ -48,6 +46,5 @@ public interface TicketMapper {
      * @return 工单列表
      */
     List<Ticket> selectByCondition(Ticket condition);
-
 
 }

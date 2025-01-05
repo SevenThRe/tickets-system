@@ -12,7 +12,7 @@ class SystemSettings extends BaseComponent {
                 'click #saveEmailBtn': '_handleSaveEmail',
                 'click #testEmailBtn': '_handleTestEmail',
                 'click #saveLogBtn': '_handleSaveLog',
-                'change #logoFile': '_handleLogoUpload'
+                'change #logoFile': '_handleLogoUpdate'
             }
         });
         // 加载配置文件内容
@@ -67,4 +67,49 @@ class SystemSettings extends BaseComponent {
      * 渲染配置项
      */
     _renderSettings() {}
+
+    /**
+     * 处理Logo更新
+     * @private
+     */
+    async _handleLogoUpdate(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const formData = new FormData();
+            formData.append('logo', file);
+
+            const response = await window.requestUtil.upload('/api/system/logo', formData);
+
+            if (response.code === 200) {
+                // 更新系统配置
+                const systemConfig = this._getSystemConfig() || {};
+                systemConfig.logoUrl = response.data.url;
+                localStorage.setItem('system_config', JSON.stringify(systemConfig));
+
+                // 触发全局事件，通知导航栏更新
+                window.eventBus.emit('system:logoUpdated');
+
+                this.showSuccess('Logo更新成功');
+            }
+        } catch (error) {
+            console.error('上传Logo失败:', error);
+            this.showError('Logo更新失败，请重试');
+        }
+    }
+
+    /**
+     * 获取系统配置
+     * @private
+     */
+    _getSystemConfig() {
+        try {
+            const config = localStorage.getItem('system_config');
+            return config ? JSON.parse(config) : null;
+        } catch (error) {
+            console.error('获取系统配置失败:', error);
+            return null;
+        }
+    }
 }
