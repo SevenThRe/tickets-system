@@ -1,6 +1,7 @@
 package com.icss.etc.ticket.controller;
 
 import com.icss.etc.ticket.entity.Ticket;
+import com.icss.etc.ticket.entity.vo.TicketVO;
 import com.icss.etc.ticket.service.TicketService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,9 +23,6 @@ public class TicketController {
 
     public TicketController(TicketService ticketService) {
         this.ticketService = ticketService;
-    }
-
-    public record TicketVO(String title, String content) {
     }
 
 

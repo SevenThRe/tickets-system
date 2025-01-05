@@ -4,6 +4,8 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+import com.icss.etc.ticket.enums.Priority;
+import com.icss.etc.ticket.enums.TicketStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -49,12 +51,12 @@ public class Ticket implements Serializable {
     /**
      * 优先级：0-普通，1-紧急，2-非常紧急
      */
-    private Byte priority;
+    private Priority priority;
 
     /**
      * 状态：0-待处理，1-处理中，2-已完成，3-已关闭
      */
-    private Byte status;
+    private TicketStatus status;
 
     /**
      * 期望完成时间
@@ -69,7 +71,7 @@ public class Ticket implements Serializable {
     /**
      * 是否删除
      */
-    private Byte isDeleted;
+    private Integer isDeleted;
 
     /**
      * 创建人

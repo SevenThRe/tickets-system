@@ -1,5 +1,7 @@
 package com.icss.etc.ticket.enums;
 
+import lombok.Getter;
+
 /**
  * {@code BaseRole}
  * @apiNote 基础角色枚举类，包含
@@ -10,6 +12,7 @@ package com.icss.etc.ticket.enums;
  * @version 1.0
  * @since 1.0
  */
+@Getter
 public enum BaseRole {
     /**
      * 管理员
@@ -24,9 +27,10 @@ public enum BaseRole {
      */
     USER("普通用户");
 
-    private String desc;
+    private final String desc;
 
     BaseRole(String desc) {
         this.desc = desc;
     }
+
 }
