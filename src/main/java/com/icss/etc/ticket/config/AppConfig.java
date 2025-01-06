@@ -30,4 +30,10 @@ public class AppConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/attachment/**").addResourceLocations("classpath:/static/attachment/");
     }
 
+    /**
+     * TODO: 身份验证拦截器
+     * 结合JWT实现身份验证
+     */
+
+
 }
