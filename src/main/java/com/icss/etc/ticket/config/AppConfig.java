@@ -1,7 +1,9 @@
 package com.icss.etc.ticket.config;
 
+import com.icss.etc.ticket.interceptors.AuthInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -14,6 +16,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class AppConfig implements WebMvcConfigurer {
+
+    public AppConfig(AuthInterceptor authInterceptor) {
+        this.authInterceptor = authInterceptor;
+    }
 
     /**
      * 配置路径匹配
@@ -34,6 +40,15 @@ public class AppConfig implements WebMvcConfigurer {
      * TODO: 身份验证拦截器
      * 结合JWT实现身份验证
      */
+    private final AuthInterceptor authInterceptor;
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        // 添加登录认证拦截器
+        registry.addInterceptor(authInterceptor)
+                .addPathPatterns("/**")   // 拦截所有请求
+                .excludePathPatterns("/pages/auth/**")
+                .excludePathPatterns("/api/auth/**");   // 排除登录注册等不需要验证的路径
 
+    }
 
 }

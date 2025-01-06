@@ -69,11 +69,11 @@ public class JWTUtils {
         return builder.compact();
     }
     /**
-     * @Title: updateToken
-     * @Description: 该函数用于更新token
-     * @param: @param token
-     * @param: @return
-     * @return: String
+     * @Title: updateToken 该函数用于更新token
+     * @Description: 该函数用于更新token 传入旧的token,将其解密再生成一个新的token
+     * @param: @param token 旧的token
+     * @param: @return 传入旧的token,将其解密再生成一个新的token
+     * @return: String 新的token
      * @throws
      */
     public static String updateToken(String token) {
@@ -86,11 +86,11 @@ public class JWTUtils {
         return generToken(id, issuer, subject);
     }
     /**
-     * @Title: verifyToken
+     * @Title: verifyToken 该函数用于验证token
      * @Description: 将token解密出来,将payload信息包装成Claims类返回
-     * @param: @param token
-     * @param: @return
-     * @return: Claims
+     * @param: @param token 传入的token
+     * @param: @return Claims
+     * @return: Claims 返回payload信息
      * @throws
      */
     private static Claims verifyToken(String token) {
