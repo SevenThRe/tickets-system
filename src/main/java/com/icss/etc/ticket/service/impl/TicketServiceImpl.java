@@ -1,7 +1,8 @@
-package com.icss.etc.ticket.service;
+package com.icss.etc.ticket.service.impl;
 
 import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.mapper.TicketMapper;
+import com.icss.etc.ticket.service.TicketService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

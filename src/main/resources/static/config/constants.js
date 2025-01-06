@@ -119,6 +119,26 @@ window.Const = {
                 }
             }
         },
+        // 新增部门管理相关的常量
+        VALIDATION: {
+            NAME: {
+                MIN_LENGTH: 2,
+                MAX_LENGTH: 50,
+                PATTERN: /^[\u4e00-\u9fa5a-zA-Z0-9_-]{2,50}$/  // 中文、字母、数字、下划线、中划线
+            },
+            CODE: {
+                MIN_LENGTH: 2,
+                MAX_LENGTH: 10,
+                PATTERN: /^[A-Z0-9]{2,10}$/  // 大写字母和数字
+            },
+            DESCRIPTION: {
+                MAX_LENGTH: 200
+            },
+            ORDER: {
+                MIN: 0,
+                MAX: 9999
+            }
+        },
         BASE_ROLE: Object.freeze({
             ADMIN: 'ADMIN',    // 系统管理员
             DEPT: 'DEPT',      // 部门主管
@@ -259,7 +279,15 @@ window.Const = {
             GET_ATTACHMENT: id => `/tickets/${id}/attachments`,
             DELETE_ATTACHMENT: id => `/attachments/${id}`,
             DOWNLOAD_ATTACHMENT: id => `/attachments/${id}/download`,
-            BATCH_DOWNLOAD: '/tickets/attachments/batch-download'
+            BATCH_DOWNLOAD: '/tickets/attachments/batch-download',
+            MAX_PROCESSING_COUNT: 5,    // 单人最大处理中工单数
+            MIN_HANDLE_HOURS: 1,       // 最小处理时间(小时)
+            MAX_HANDLE_HOURS: 720,     // 最大处理时间(30天)
+        },
+        REFRESH_INTERVAL: {
+            ADMIN: 3 * 60 * 1000,     // 管理员刷新间隔
+            DEPT: 5 * 60 * 1000,      // 部门主管刷新间隔
+            USER: 10 * 60 * 1000      // 普通用户刷新间隔
         },
         DEPARTMENT: {
             GET_LIST: '/departments',
@@ -272,8 +300,25 @@ window.Const = {
             POST_ADD_MEMBER: id => `/departments/${id}/members`,
             DELETE_MEMBER: (deptId, memberId) => `/departments/${deptId}/members/${memberId}`,
             PUT_MANAGER: id => `/departments/${id}/manager`,
-            PUT_ORDER: '/departments/order',
-            GET_AVAILABLE_MANAGERS: '/departments/available-managers'
+
+            // 新增API路径
+            GET_ALL: '/departments/all',                    // 获取所有部门(扁平结构)
+            GET_CHILDREN: id => `/departments/${id}/children`,  // 获取子部门
+            GET_ANCESTORS: id => `/departments/${id}/ancestors`, // 获取祖先部门
+            GET_SUBORDINATES: id => `/departments/${id}/subordinates`, // 获取下属部门
+            PUT_MOVE: id => `/departments/${id}/move`,      // 移动部门
+            PUT_ORDER: '/departments/order',                // 更新排序
+            PUT_STATUS: id => `/departments/${id}/status`,  // 更新状态
+
+            // 成员管理相关API
+            GET_AVAILABLE_USERS: '/departments/available-users',  // 获取可添加的用户
+            GET_MEMBER_STATS: id => `/departments/${id}/member-stats`, // 获取成员统计
+            PUT_MEMBER_POSITION: (deptId, userId) =>
+                `/departments/${deptId}/members/${userId}/position`, // 更新成员职位
+            PUT_MEMBER_STATUS: (deptId, userId) =>
+                `/departments/${deptId}/members/${userId}/status`,  // 更新成员状态
+            POST_BATCH_ADD_MEMBERS: id => `/departments/${id}/members/batch`, // 批量添加成员
+            DELETE_BATCH_MEMBERS: id => `/departments/${id}/members/batch`   // 批量移除成员
         },
         SYSTEM: {
             GET_THEMES: '/system/themes',
@@ -338,6 +383,34 @@ window.Const = {
                 EMAIL_FORMAT: '邮箱格式不正确',
                 MOBILE_FORMAT: '手机号格式不正确',
                 UNKNOWN: '验证失败'
+            },
+            DEPARTMENT: {
+                NOT_FOUND: '部门不存在',
+                CREATE_FAILED: '创建部门失败',
+                UPDATE_FAILED: '更新部门失败',
+                DELETE_FAILED: '删除部门失败',
+                MOVE_FAILED: '移动部门失败',
+                STATUS_UPDATE_FAILED: '更新部门状态失败',
+
+                // 表单验证错误
+                NAME_REQUIRED: '请输入部门名称',
+                CODE_REQUIRED: '请输入部门编码',
+                NAME_FORMAT: '部门名称只能包含中文、字母、数字、下划线和中划线',
+                CODE_FORMAT: '部门编码只能包含大写字母和数字',
+                NAME_LENGTH: '部门名称长度必须在2-50个字符之间',
+                CODE_LENGTH: '部门编码长度必须在2-10个字符之间',
+                DESCRIPTION_LENGTH: '部门描述长度不能超过200个字符',
+                ORDER_INVALID: '排序号必须是0-9999之间的整数',
+                PARENT_INVALID: '无效的父部门',
+                MANAGER_REQUIRED: '请选择部门主管',
+
+                // 成员管理错误
+                MEMBER_ADD_FAILED: '添加成员失败',
+                MEMBER_REMOVE_FAILED: '移除成员失败',
+                MEMBER_UPDATE_FAILED: '更新成员信息失败',
+                MAX_MEMBERS_EXCEEDED: '超出部门最大成员数限制',
+                MEMBER_NOT_FOUND: '成员不存在',
+                DUPLICATE_MEMBER: '该用户已是部门成员'
             },
             TICKET: {
                 NOT_FOUND: '工单不存在',
@@ -425,6 +498,16 @@ window.Const = {
                 DELETE: '角色删除成功',
                 PERMISSION_UPDATE: '角色权限更新成功'
             },
+            DEPARTMENT: {
+                CREATE: '创建部门成功',
+                UPDATE: '更新部门成功',
+                DELETE: '删除部门成功',
+                MOVE: '移动部门成功',
+                STATUS_UPDATE: '更新部门状态成功',
+                MEMBER_ADD: '添加成员成功',
+                MEMBER_REMOVE: '移除成员成功',
+                MEMBER_UPDATE: '更新成员信息成功'
+            }
         }
     },
 
