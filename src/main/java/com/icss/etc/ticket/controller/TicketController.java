@@ -1,7 +1,6 @@
 package com.icss.etc.ticket.controller;
 
 import com.icss.etc.ticket.entity.Ticket;
-import com.icss.etc.ticket.entity.vo.TicketVO;
 import com.icss.etc.ticket.service.TicketService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,7 +16,6 @@ import java.util.List;
 @RestController
 
 @RequestMapping("ticket")
-
 public class TicketController {
     private final TicketService ticketService;
 
@@ -26,13 +24,6 @@ public class TicketController {
     }
 
 
-    @RequestMapping("list")
-    public TicketVO[] list() {
-        TicketVO[] array = ticketService.selectAll().stream().map(
-                ticket -> new
-                        TicketVO(ticket.getTitle(), ticket.getContent())).toArray(TicketVO[]::new);
-        return array;
-    }
 
     @RequestMapping("selectAll")
     public List<Ticket> selectAll() {

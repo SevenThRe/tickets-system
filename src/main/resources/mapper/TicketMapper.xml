@@ -2,24 +2,22 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.etc.ticket.mapper.TicketMapper">
   <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Ticket">
-    <!--@mbg.generated-->
-    <!--@Table t_ticket-->
-    <id column="ticket_id" jdbcType="BIGINT" property="ticket_id" />
-    <result column="type_id" jdbcType="BIGINT" property="type_id" />
-    <result column="title" jdbcType="VARCHAR" property="title" />
-    <result column="content" jdbcType="LONGVARCHAR" property="content" />
-    <result column="processor_id" jdbcType="BIGINT" property="processor_id" />
-    <result column="department_id" jdbcType="BIGINT" property="department_id" />
-    <result column="priority" jdbcType="TINYINT" property="priority" />
-    <result column="status" jdbcType="TINYINT" property="status" />
-    <result column="expect_finish_time" jdbcType="TIMESTAMP" property="expect_finish_time" />
-    <result column="actual_finish_time" jdbcType="TIMESTAMP" property="actual_finish_time" />
-    <result column="is_deleted" jdbcType="TINYINT" property="is_deleted" />
-    <result column="create_by" jdbcType="BIGINT" property="create_by" />
-    <result column="update_by" jdbcType="BIGINT" property="update_by" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="create_time" />
-    <result column="update_time" jdbcType="TIMESTAMP" property="update_time" />
-  </resultMap>
+<!--    <id property="ticket_id" column="ticket_id"/>-->
+<!--    <result property="type_id" jdbcType="BIGINT"  column="type_id"/>-->
+<!--    <result property="title" jdbcType="BIGINT"  column="title"/>-->
+<!--    <result property="content" jdbcType="BLOB" column="content"/>-->
+<!--    <result property="processor_id" jdbcType="BIGINT"  column="processor_id"/>-->
+<!--    <result property="department_id" jdbcType="BIGINT"  column="department_id"/>-->
+<!--    <result property="priority" column="priority" typeHandler="com.icss.etc.ticket.handler.PriorityTypeHandler"/>-->
+<!--    <result property="status" column="status" typeHandler="com.icss.etc.ticket.handler.TicketStatusTypeHandler"/>-->
+<!--    <result property="expect_finish_time" jdbcType="DATE" column="expect_finish_time"/>-->
+<!--    <result property="actual_finish_time" column="actual_finish_time"/>-->
+<!--    <result property="is_deleted" column="is_deleted"/>-->
+<!--    <result property="create_by" jdbcType="BIGINT" column="create_by"/>-->
+<!--    <result property="update_by" jdbcType="BIGINT" column="update_by"/>-->
+<!--    <result property="create_time" jdbcType="DATE" column="create_time"/>-->
+<!--    <result property="update_time" jdbcType="DATE" column="update_time"/>-->
+</resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
     ticket_id, type_id, title, content, processor_id, department_id, priority, `status`, 

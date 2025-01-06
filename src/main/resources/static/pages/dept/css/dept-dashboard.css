@@ -1,0 +1,286 @@
+/* dept-dashboard.css */
+/* 作者: SeventhRe
+   功能: 部门主管工作台页面样式
+   更新: 2024-01-06
+*/
+
+/* 全局变量定义 */
+:root {
+    --primary-color: #3b82f6;      /* 主要颜色 */
+    --primary-hover: #2563eb;      /* 主要颜色悬停状态 */
+    --success-color: #10b981;      /* 成功状态颜色 */
+    --warning-color: #f59e0b;      /* 警告状态颜色 */
+    --danger-color: #ef4444;       /* 危险/错误状态颜色 */
+    --background-color: #f3f4f6;   /* 背景色 */
+    --card-background: #ffffff;     /* 卡片背景色 */
+    --text-primary: #111827;       /* 主要文本颜色 */
+    --text-secondary: #6b7280;     /* 次要文本颜色 */
+    --border-color: #e5e7eb;       /* 边框颜色 */
+}
+
+/* 页面基础布局样式 */
+.main-content {
+    flex: 1;
+    margin-left: 250px;    /* 与导航栏宽度对应 */
+    padding: 2rem;
+    background-color: var(--background-color);
+    min-height: 100vh;     /* 保证最小高度占满视口 */
+}
+
+/* 部门信息头部样式 */
+.dept-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.dept-info {
+    /* 部门信息布局 */
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.dept-name {
+    /* 部门名称样式 */
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.dept-meta {
+    /* 部门元信息样式 */
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.dept-meta .divider {
+    /* 分隔符样式 */
+    margin: 0 0.5rem;
+    color: var(--border-color);
+}
+
+/* 统计卡片样式 */
+.stat-card {
+    background: var(--card-background);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    /* 卡片悬停效果 */
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    /* 统计图标样式 */
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.stat-icon i {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+.stat-value {
+    /* 统计数值样式 */
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.stat-label {
+    /* 统计标签样式 */
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* 工单状态标签样式 */
+.ticket-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-pending {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.status-processing {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.status-completed {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+.status-closed {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+/* 优先级指示器样式 */
+.priority-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.priority-high {
+    background-color: var(--danger-color);
+}
+
+.priority-medium {
+    background-color: var(--warning-color);
+}
+
+.priority-low {
+    background-color: var(--success-color);
+}
+
+/* 成员工作量列表样式 */
+.member-workload-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.member-workload-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    background-color: var(--background-color);
+}
+
+.member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 1rem;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+}
+
+.member-info {
+    flex: 1;
+}
+
+.member-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.workload-progress {
+    height: 6px;
+    border-radius: 3px;
+    background-color: var(--border-color);
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* 表格样式优化 */
+.table {
+    margin: 0;
+}
+
+.table th {
+    background-color: var(--background-color);
+    font-weight: 600;
+    padding: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* 模态框样式优化 */
+.modal-content {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    border-bottom-color: var(--border-color);
+    padding: 1.25rem;
+}
+
+.modal-body {
+    padding: 1.25rem;
+}
+
+.modal-footer {
+    border-top-color: var(--border-color);
+    padding: 1.25rem;
+}
+
+/* 响应式布局调整 */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 64px;
+        padding: 1rem;
+    }
+
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+
+    .dept-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background-color: #111827;
+        --card-background: #1f2937;
+        --text-primary: #f9fafb;
+        --text-secondary: #d1d5db;
+        --border-color: #374151;
+    }
+
+    .stat-card {
+        background-color: var(--card-background);
+    }
+
+    .table th {
+        background-color: var(--card-background);
+    }
+}

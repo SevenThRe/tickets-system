@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工单系统 - 部门工作台</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/navbar.css" rel="stylesheet">
+    <link href="/pages/dept/css/dept-dashboard.css" rel="stylesheet">
+</head>
+<body>
+<!-- 导航栏 -->
+<nav id="navbar" class="navbar-container"></nav>
+
+<!-- 主内容区 -->
+<main id="main" class="main-content">
+    <!-- 部门信息头部 -->
+    <div class="dept-header mb-4">
+        <div class="dept-info">
+            <h4 class="dept-name" id="deptName">部门名称</h4>
+            <div class="dept-meta">
+                <span id="managerName">部门主管</span>
+                <span class="divider">|</span>
+                <span id="memberCount">0名成员</span>
+            </div>
+        </div>
+        <div class="actions">
+            <button class="btn btn-outline-secondary me-2" id="refreshBtn">
+                <i class="bi bi-arrow-clockwise"></i> 刷新
+            </button>
+            <button class="btn btn-primary" id="assignTicketBtn">
+                <i class="bi bi-plus-lg"></i> 分配工单
+            </button>
+        </div>
+    </div>
+
+    <!-- 统计卡片区 -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="pendingCount">0</h3>
+                    <p class="stat-label">待处理工单</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="processingCount">0</h3>
+                    <p class="stat-label">处理中工单</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="completedCount">0</h3>
+                    <p class="stat-label">已完成工单</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="avgHandleTime">0h</h3>
+                    <p class="stat-label">平均处理时长</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图表和列表区域 -->
+    <div class="row mb-4">
+        <!-- 工单趋势图 -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">工单趋势</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-secondary btn-sm active" data-range="week">
+                            周
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" data-range="month">
+                            月
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="ticketTrendChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 成员工作量TOP5 -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">成员工作量TOP5</h5>
+                </div>
+                <div class="card-body">
+                    <div class="member-workload-list" id="memberWorkloadList">
+                        <!-- 通过JS动态填充 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最新工单列表 -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">最新工单</h5>
+            <a href="/dept/tickets.html" class="btn btn-link">查看全部</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>工单编号</th>
+                        <th>标题</th>
+                        <th>处理人</th>
+                        <th>状态</th>
+                        <th>优先级</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="recentTicketsList">
+                    <!-- 通过JS动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 工单分配模态框 -->
+<div class="modal fade" id="assignModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">分配工单</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ticket-list mb-3">
+                    <div class="table-responsive">
+                        <table class="table" id="unassignedTicketsTable">
+                            <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" class="form-check-input" id="selectAllTickets">
+                                </th>
+                                <th>工单编号</th>
+                                <th>标题</th>
+                                <th>优先级</th>
+                                <th>创建时间</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <!-- 通过JS动态填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="assignment-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label required">处理人</label>
+                                <select class="form-select" id="assigneeSelect" required>
+                                    <option value="">请选择处理人</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">期望完成时间</label>
+                                <input type="datetime-local" class="form-control" id="expectFinishTime">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">备注说明</label>
+                        <textarea class="form-control" id="assignNote" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmAssignBtn">确认分配</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+<script src="/js/utils/event-bus.js"></script>
+<script src="/js/utils/request-util.js"></script>
+<script src="/js/components/base/base-component.js"></script>
+<script src="/js/components/layout/navbar.js"></script>
+<script src="/pages/dept/js/dept-dashboard.js"></script>
+</body>
+</html>
