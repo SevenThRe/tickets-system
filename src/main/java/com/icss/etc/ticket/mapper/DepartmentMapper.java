@@ -33,12 +33,21 @@ public interface DepartmentMapper {
     int insertSelective(Department record);
 
     /**
-     * select by primary key
+     * 根据主键查询
      *
      * @param department_id primary key
      * @return object by primary key
      */
     Department selectByPrimaryKey(Long department_id);
+
+    /**
+     * 根据父部门ID查询子部门列表
+     *
+     * @param parent_id parent department id
+     * @return sub department list
+     */
+    List<Department> selectSubDepartments(Long parent_id);
+
 
     /**
      * update record selective

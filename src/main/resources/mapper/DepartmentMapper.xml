@@ -2,7 +2,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.etc.ticket.mapper.DepartmentMapper">
   <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Department">
-    <!--@mbg.generated-->
     <!--@Table t_department-->
     <id column="department_id" jdbcType="BIGINT" property="department_id" />
     <result column="department_name" jdbcType="VARCHAR" property="department_name" />
@@ -16,10 +15,10 @@
     <result column="update_by" jdbcType="BIGINT" property="update_by" />
     <result column="create_time" jdbcType="TIMESTAMP" property="create_time" />
     <result column="update_time" jdbcType="TIMESTAMP" property="update_time" />
+    <collection property="subDepartments" ofType="com.icss.etc.ticket.entity.Department" column="department_id" select="selectSubDepartments" />
   </resultMap>
   <sql id="Base_Column_List">
-    <!--@mbg.generated-->
-    department_id, department_name, manager_id, parent_id, dept_level, description, `status`, 
+    department_id, department_name, manager_id, parent_id, dept_level, description, `status`,
     is_deleted, create_by, update_by, create_time, update_time
   </sql>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
@@ -28,6 +27,15 @@
     <include refid="Base_Column_List" />
     from t_department
     where department_id = #{department_id,jdbcType=BIGINT}
+  </select>
+
+
+  <select id="selectSubDepartments" parameterType="java.lang.Long" resultMap="BaseResultMap">
+      <!--@mbg.generated-->
+      select
+      <include refid="Base_Column_List" />
+      from t_department
+      where parent_id = #{department_id,jdbcType=BIGINT}
   </select>
   <insert id="insert" keyColumn="department_id" keyProperty="department_id" parameterType="com.icss.etc.ticket.entity.Department" useGeneratedKeys="true">
     <!--@mbg.generated-->
