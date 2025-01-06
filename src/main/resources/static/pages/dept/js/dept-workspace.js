@@ -80,6 +80,8 @@ class DepartmentWorkspace extends BaseComponent {
         // 初始化模态框
         this.assignModal = new bootstrap.Modal('#assignModal');
 
+        this._loadTicketsOptimized = _.throttle(this._loadTicketsRaw.bind(this), 300)
+
         // 初始化组件
         this.init();
     }
@@ -626,11 +628,11 @@ class DepartmentWorkspace extends BaseComponent {
     }
 
     /**
-     * 优化工单数据加载
+     * 处理刷新工作量
      * @private
-     * @description 使用节流防止频繁请求，并添加缓存机制
+     * @returns {Promise<void>}
      */
-    _loadTicketsOptimized: _.throttle(async function() {
+    async _loadTicketsRaw() {
         const cacheKey = JSON.stringify({
             pagination: this.state.pagination,
             filters: this.state.filters
@@ -638,7 +640,7 @@ class DepartmentWorkspace extends BaseComponent {
 
         // 检查缓存
         const cached = this.ticketCache?.get(cacheKey);
-        if (cached && Date.now() - cached.timestamp < 30000) { // 30秒缓存
+        if (cached && Date.now() - cached.timestamp < 30000) {
             this.state.tickets = cached.data;
             this._updateTicketsView();
             return;
@@ -655,7 +657,7 @@ class DepartmentWorkspace extends BaseComponent {
         } catch (error) {
             this._handleError(error);
         }
-    }, 300),
+    }
 
     /**
      * 统一错误处理
