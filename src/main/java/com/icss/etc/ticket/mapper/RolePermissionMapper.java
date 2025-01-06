@@ -32,20 +32,12 @@ public interface RolePermissionMapper {
     int insertSelective(RolePermission record);
 
     /**
-     * select by primary key
+     * 根据主键查询
      *
      * @param role_id primary key
      * @return object by primary key
      */
     RolePermission selectByPrimaryKey(@Param("role_id") Long role_id, @Param("permission_id") Long permission_id);
-
-    /**
-     * update record selective
-     *
-     * @param record the updated record
-     * @return update count
-     */
-    int updateByPrimaryKeySelective(RolePermission record);
 
     /**
      * update record

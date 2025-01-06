@@ -1,19 +1,5 @@
 /* my-tickets.css */
 
-/* 变量定义 */
-:root {
-    --primary-color: #3b82f6;
-    --primary-hover: #2563eb;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --danger-color: #ef4444;
-    --background-color: #f3f4f6;
-    --card-background: #ffffff;
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --border-color: #e5e7eb;
-}
-
 /* 页面布局 */
 .main-content {
     flex: 1;

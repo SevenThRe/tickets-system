@@ -101,6 +101,92 @@ window.Const = {
                 INACTIVE: 0
             })
         },
+        DEPT_TICKET: {
+            // 工单处理相关配置
+            MAX_UNASSIGNED: 20,     // 最大待分配工单数
+            MIN_MEMBER_WORKLOAD: 1, // 成员最小工作量
+            MAX_MEMBER_WORKLOAD: 5, // 成员最大工作量
+
+
+            // 工单处理效率等级
+            EFFICIENCY_LEVEL: {
+                EXCELLENT: 'EXCELLENT', // 优秀
+                GOOD: 'GOOD',         // 良好
+                NORMAL: 'NORMAL',     // 一般
+                POOR: 'POOR'          // 差
+            },
+            // 效率等级映射
+            EFFICIENCY_MAP: {
+                text: {
+                    EXCELLENT: '优秀',
+                    GOOD: '良好',
+                    NORMAL: '一般',
+                    POOR: '差'
+                },
+                class: {
+                    EXCELLENT: 'text-success',
+                    GOOD: 'text-primary',
+                    NORMAL: 'text-warning',
+                    POOR: 'text-danger'
+                }
+            },
+            TIMELINESS_LEVEL: {
+                IN_TIME: 'IN_TIME',       // 及时
+                APPROACHING: 'APPROACHING',// 临近截止
+                DELAYED: 'DELAYED',        // 已延期
+                OVERTIME: 'OVERTIME'       // 超时
+            },
+
+            // 时效等级映射
+            TIMELINESS_MAP: {
+                text: {
+                    IN_TIME: '及时',
+                    APPROACHING: '即将到期',
+                    DELAYED: '已延期',
+                    OVERTIME: '超时'
+                },
+                class: {
+                    IN_TIME: 'text-success',
+                    APPROACHING: 'text-warning',
+                    DELAYED: 'text-danger',
+                    OVERTIME: 'text-danger'
+                }
+            },
+
+            // 工单处理时间配置(小时)
+            TIME_CONFIG: {
+                WARNING_THRESHOLD: 4,     // 临近截止警告阈值
+                DEFAULT_PROCESS_TIME: 24, // 默认处理时限
+                MAX_PROCESS_TIME: 72     // 最大处理时限
+            }
+        },
+
+        // 部门绩效相关常量
+        DEPT_PERFORMANCE: {
+            // 绩效评级
+            RATING: {
+                A: 'A',
+                B: 'B',
+                C: 'C',
+                D: 'D'
+            },
+
+            // 评级映射
+            RATING_MAP: {
+                text: {
+                    A: '优秀',
+                    B: '良好',
+                    C: '一般',
+                    D: '待改进'
+                },
+                class: {
+                    A: 'text-success',
+                    B: 'text-primary',
+                    C: 'text-warning',
+                    D: 'text-danger'
+                }
+            }
+        },
         DEPARTMENT: {
             MAX_LEVEL: 5, // 最大层级
             MAX_CHILDREN: 50, // 每个部门最大子部门数
@@ -289,37 +375,29 @@ window.Const = {
             DEPT: 5 * 60 * 1000,      // 部门主管刷新间隔
             USER: 10 * 60 * 1000      // 普通用户刷新间隔
         },
-        DEPARTMENT: {
-            GET_LIST: '/departments',
-            GET_TREE: '/departments/tree',
-            GET_DETAIL: id => `/departments/${id}`,
-            POST_CREATE: '/departments',
-            PUT_UPDATE: id => `/departments/${id}`,
-            DELETE: id => `/departments/${id}`,
-            GET_MEMBERS: id => `/departments/${id}/members`,
-            POST_ADD_MEMBER: id => `/departments/${id}/members`,
-            DELETE_MEMBER: (deptId, memberId) => `/departments/${deptId}/members/${memberId}`,
-            PUT_MANAGER: id => `/departments/${id}/manager`,
-
-            // 新增API路径
-            GET_ALL: '/departments/all',                    // 获取所有部门(扁平结构)
-            GET_CHILDREN: id => `/departments/${id}/children`,  // 获取子部门
-            GET_ANCESTORS: id => `/departments/${id}/ancestors`, // 获取祖先部门
-            GET_SUBORDINATES: id => `/departments/${id}/subordinates`, // 获取下属部门
-            PUT_MOVE: id => `/departments/${id}/move`,      // 移动部门
-            PUT_ORDER: '/departments/order',                // 更新排序
-            PUT_STATUS: id => `/departments/${id}/status`,  // 更新状态
-
-            // 成员管理相关API
-            GET_AVAILABLE_USERS: '/departments/available-users',  // 获取可添加的用户
-            GET_MEMBER_STATS: id => `/departments/${id}/member-stats`, // 获取成员统计
-            PUT_MEMBER_POSITION: (deptId, userId) =>
-                `/departments/${deptId}/members/${userId}/position`, // 更新成员职位
-            PUT_MEMBER_STATUS: (deptId, userId) =>
-                `/departments/${deptId}/members/${userId}/status`,  // 更新成员状态
-            POST_BATCH_ADD_MEMBERS: id => `/departments/${id}/members/batch`, // 批量添加成员
-            DELETE_BATCH_MEMBERS: id => `/departments/${id}/members/batch`   // 批量移除成员
+        DEPT: {
+            // 部门接口
+            GET_CURRENT: '/departments/current',
+            GET_STATS: {
+                OVERVIEW: '/departments/stats/overview',
+                TRENDS: '/departments/stats/trends',
+                TYPES: '/departments/stats/types',
+                WORKLOADS: '/departments/stats/workloads',
+                EFFICIENCY: '/departments/stats/efficiency'
+            },
+            GET_PROCESSORS: '/departments/processors',
+            GET_TICKET_LIST: '/departments/tickets',
+            GET_TICKET_DETAIL: (id) => `/departments/tickets/${id}`,
+            EXPORT_TICKETS: '/departments/tickets/export'
         },
+        // 部门成员相关API
+        DEPT_MEMBER: {
+            GET_LIST: '/dept/members',                // 部门成员列表
+            GET_STATS: '/dept/members/stats',         // 成员工作统计
+            GET_PERFORMANCE: '/dept/members/performance', // 成员绩效
+            GET_PROCESSORS: '/dept/processors'        // 可选处理人列表
+        },
+
         SYSTEM: {
             GET_THEMES: '/system/themes',
             POST_SET_THEME: '/system/theme/set',

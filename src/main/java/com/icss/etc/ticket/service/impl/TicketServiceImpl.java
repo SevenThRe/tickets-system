@@ -1,9 +1,7 @@
 package com.icss.etc.ticket.service.impl;
-
-import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.enums.TicketEnum;
+import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.mapper.TicketMapper;
-import com.icss.etc.ticket.service.TicketService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +23,7 @@ public class TicketServiceImpl implements TicketService {
         this.ticketMapper = ticketMapper;
     }
 
+//    private final UserMapper userMapper;
 
     @Override
     public int insertTicket(Ticket record) {
