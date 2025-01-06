@@ -1,6 +1,6 @@
 package com.icss.etc.ticket.mapper;
 
-import com.icss.etc.ticket.entity.Department;
+import com.icss.etc.ticket.entity.UserRole;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -8,21 +8,21 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 /**
- * {@code DepartmentMapper}
+ * {@code UserRoleMapper}
  *
  * @author SevenThRe
  * @version 1.0
  * @since 1.0
  */
 
-public interface DepartmentMapper {
+public interface UserRoleMapper {
     /**
      * insert record to table
      *
      * @param record the record
      * @return insert count
      */
-    int insert(Department record);
+    int insert(UserRole record);
 
     /**
      * insert record to table selective
@@ -30,15 +30,15 @@ public interface DepartmentMapper {
      * @param record the record
      * @return insert count
      */
-    int insertSelective(Department record);
+    int insertSelective(UserRole record);
 
     /**
      * select by primary key
      *
-     * @param department_id primary key
+     * @param user_id primary key
      * @return object by primary key
      */
-    Department selectByPrimaryKey(Long department_id);
+    UserRole selectByPrimaryKey(@Param("user_id") Long user_id, @Param("role_id") Long role_id);
 
     /**
      * update record selective
@@ -46,7 +46,7 @@ public interface DepartmentMapper {
      * @param record the updated record
      * @return update count
      */
-    int updateByPrimaryKeySelective(Department record);
+    int updateByPrimaryKeySelective(UserRole record);
 
     /**
      * update record
@@ -54,11 +54,11 @@ public interface DepartmentMapper {
      * @param record the updated record
      * @return update count
      */
-    int updateByPrimaryKey(Department record);
+    int updateByPrimaryKey(UserRole record);
 
-    List<Department> selectByAll(Department department);
+    List<UserRole> selectByAll(UserRole userRole);
 
-    int updateBatchSelective(@Param("list") List<Department> list);
+    int updateBatchSelective(@Param("list") List<UserRole> list);
 
-    int batchInsert(@Param("list") List<Department> list);
+    int batchInsert(@Param("list") List<UserRole> list);
 }

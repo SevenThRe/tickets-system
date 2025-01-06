@@ -1,64 +1,57 @@
 package com.icss.etc.ticket.mapper;
 
-import com.icss.etc.ticket.entity.Department;
-
+import com.icss.etc.ticket.entity.Theme;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import org.apache.ibatis.annotations.Param;
 
 /**
- * {@code DepartmentMapper}
- *
- * @author SevenThRe
- * @version 1.0
+ * {@code ThemeMapper} 
+ * 
  * @since 1.0
+ * @version 1.0
+ * @author SevenThRe
  */
-
-public interface DepartmentMapper {
+    
+public interface ThemeMapper {
     /**
      * insert record to table
-     *
      * @param record the record
      * @return insert count
      */
-    int insert(Department record);
+    int insert(Theme record);
 
     /**
      * insert record to table selective
-     *
      * @param record the record
      * @return insert count
      */
-    int insertSelective(Department record);
+    int insertSelective(Theme record);
 
     /**
      * select by primary key
-     *
-     * @param department_id primary key
+     * @param theme_id primary key
      * @return object by primary key
      */
-    Department selectByPrimaryKey(Long department_id);
+    Theme selectByPrimaryKey(String theme_id);
 
     /**
      * update record selective
-     *
      * @param record the updated record
      * @return update count
      */
-    int updateByPrimaryKeySelective(Department record);
+    int updateByPrimaryKeySelective(Theme record);
 
     /**
      * update record
-     *
      * @param record the updated record
      * @return update count
      */
-    int updateByPrimaryKey(Department record);
+    int updateByPrimaryKey(Theme record);
 
-    List<Department> selectByAll(Department department);
+    List<Theme> selectByAll(Theme theme);
 
-    int updateBatchSelective(@Param("list") List<Department> list);
+    int updateBatchSelective(@Param("list") List<Theme> list);
 
-    int batchInsert(@Param("list") List<Department> list);
+    int batchInsert(@Param("list") List<Theme> list);
 }

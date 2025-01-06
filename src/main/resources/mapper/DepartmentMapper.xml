@@ -2,56 +2,58 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.etc.ticket.mapper.DepartmentMapper">
   <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Department">
-    <id column="department_id" jdbcType="BIGINT" property="departmentId" />
-    <result column="department_name" jdbcType="VARCHAR" property="departmentName" />
-    <result column="manager_id" jdbcType="BIGINT" property="managerId" />
-    <result column="parent_id" jdbcType="BIGINT" property="parentId" />
-    <result column="dept_level" jdbcType="INTEGER" property="deptLevel" />
+    <!--@mbg.generated-->
+    <!--@Table t_department-->
+    <id column="department_id" jdbcType="BIGINT" property="department_id" />
+    <result column="department_name" jdbcType="VARCHAR" property="department_name" />
+    <result column="manager_id" jdbcType="BIGINT" property="manager_id" />
+    <result column="parent_id" jdbcType="BIGINT" property="parent_id" />
+    <result column="dept_level" jdbcType="INTEGER" property="dept_level" />
     <result column="description" jdbcType="VARCHAR" property="description" />
     <result column="status" jdbcType="TINYINT" property="status" />
-    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
-    <result column="create_by" jdbcType="BIGINT" property="createBy" />
-    <result column="update_by" jdbcType="BIGINT" property="updateBy" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
-    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="is_deleted" jdbcType="TINYINT" property="is_deleted" />
+    <result column="create_by" jdbcType="BIGINT" property="create_by" />
+    <result column="update_by" jdbcType="BIGINT" property="update_by" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="create_time" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="update_time" />
   </resultMap>
   <sql id="Base_Column_List">
+    <!--@mbg.generated-->
     department_id, department_name, manager_id, parent_id, dept_level, description, `status`, 
     is_deleted, create_by, update_by, create_time, update_time
   </sql>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    <!--@mbg.generated-->
     select 
     <include refid="Base_Column_List" />
     from t_department
-    where department_id = #{departmentId,jdbcType=BIGINT}
+    where department_id = #{department_id,jdbcType=BIGINT}
   </select>
-  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
-    delete from t_department
-    where department_id = #{departmentId,jdbcType=BIGINT}
-  </delete>
-  <insert id="insert" keyColumn="department_id" keyProperty="departmentId" parameterType="com.icss.etc.ticket.entity.Department" useGeneratedKeys="true">
+  <insert id="insert" keyColumn="department_id" keyProperty="department_id" parameterType="com.icss.etc.ticket.entity.Department" useGeneratedKeys="true">
+    <!--@mbg.generated-->
     insert into t_department (department_name, manager_id, parent_id, 
       dept_level, description, `status`, 
       is_deleted, create_by, update_by, 
       create_time, update_time)
-    values (#{departmentName,jdbcType=VARCHAR}, #{managerId,jdbcType=BIGINT}, #{parentId,jdbcType=BIGINT}, 
-      #{deptLevel,jdbcType=INTEGER}, #{description,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT}, 
-      #{isDeleted,jdbcType=TINYINT}, #{createBy,jdbcType=BIGINT}, #{updateBy,jdbcType=BIGINT}, 
-      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
+    values (#{department_name,jdbcType=VARCHAR}, #{manager_id,jdbcType=BIGINT}, #{parent_id,jdbcType=BIGINT}, 
+      #{dept_level,jdbcType=INTEGER}, #{description,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT}, 
+      #{is_deleted,jdbcType=TINYINT}, #{create_by,jdbcType=BIGINT}, #{update_by,jdbcType=BIGINT}, 
+      #{create_time,jdbcType=TIMESTAMP}, #{update_time,jdbcType=TIMESTAMP})
   </insert>
-  <insert id="insertSelective" keyColumn="department_id" keyProperty="departmentId" parameterType="com.icss.etc.ticket.entity.Department" useGeneratedKeys="true">
+  <insert id="insertSelective" keyColumn="department_id" keyProperty="department_id" parameterType="com.icss.etc.ticket.entity.Department" useGeneratedKeys="true">
+    <!--@mbg.generated-->
     insert into t_department
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="departmentName != null">
+      <if test="department_name != null">
         department_name,
       </if>
-      <if test="managerId != null">
+      <if test="manager_id != null">
         manager_id,
       </if>
-      <if test="parentId != null">
+      <if test="parent_id != null">
         parent_id,
       </if>
-      <if test="deptLevel != null">
+      <if test="dept_level != null">
         dept_level,
       </if>
       <if test="description != null">
@@ -60,34 +62,34 @@
       <if test="status != null">
         `status`,
       </if>
-      <if test="isDeleted != null">
+      <if test="is_deleted != null">
         is_deleted,
       </if>
-      <if test="createBy != null">
+      <if test="create_by != null">
         create_by,
       </if>
-      <if test="updateBy != null">
+      <if test="update_by != null">
         update_by,
       </if>
-      <if test="createTime != null">
+      <if test="create_time != null">
         create_time,
       </if>
-      <if test="updateTime != null">
+      <if test="update_time != null">
         update_time,
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="departmentName != null">
-        #{departmentName,jdbcType=VARCHAR},
+      <if test="department_name != null">
+        #{department_name,jdbcType=VARCHAR},
       </if>
-      <if test="managerId != null">
-        #{managerId,jdbcType=BIGINT},
+      <if test="manager_id != null">
+        #{manager_id,jdbcType=BIGINT},
       </if>
-      <if test="parentId != null">
-        #{parentId,jdbcType=BIGINT},
+      <if test="parent_id != null">
+        #{parent_id,jdbcType=BIGINT},
       </if>
-      <if test="deptLevel != null">
-        #{deptLevel,jdbcType=INTEGER},
+      <if test="dept_level != null">
+        #{dept_level,jdbcType=INTEGER},
       </if>
       <if test="description != null">
         #{description,jdbcType=VARCHAR},
@@ -95,37 +97,38 @@
       <if test="status != null">
         #{status,jdbcType=TINYINT},
       </if>
-      <if test="isDeleted != null">
-        #{isDeleted,jdbcType=TINYINT},
+      <if test="is_deleted != null">
+        #{is_deleted,jdbcType=TINYINT},
       </if>
-      <if test="createBy != null">
-        #{createBy,jdbcType=BIGINT},
+      <if test="create_by != null">
+        #{create_by,jdbcType=BIGINT},
       </if>
-      <if test="updateBy != null">
-        #{updateBy,jdbcType=BIGINT},
+      <if test="update_by != null">
+        #{update_by,jdbcType=BIGINT},
       </if>
-      <if test="createTime != null">
-        #{createTime,jdbcType=TIMESTAMP},
+      <if test="create_time != null">
+        #{create_time,jdbcType=TIMESTAMP},
       </if>
-      <if test="updateTime != null">
-        #{updateTime,jdbcType=TIMESTAMP},
+      <if test="update_time != null">
+        #{update_time,jdbcType=TIMESTAMP},
       </if>
     </trim>
   </insert>
   <update id="updateByPrimaryKeySelective" parameterType="com.icss.etc.ticket.entity.Department">
+    <!--@mbg.generated-->
     update t_department
     <set>
-      <if test="departmentName != null">
-        department_name = #{departmentName,jdbcType=VARCHAR},
+      <if test="department_name != null">
+        department_name = #{department_name,jdbcType=VARCHAR},
       </if>
-      <if test="managerId != null">
-        manager_id = #{managerId,jdbcType=BIGINT},
+      <if test="manager_id != null">
+        manager_id = #{manager_id,jdbcType=BIGINT},
       </if>
-      <if test="parentId != null">
-        parent_id = #{parentId,jdbcType=BIGINT},
+      <if test="parent_id != null">
+        parent_id = #{parent_id,jdbcType=BIGINT},
       </if>
-      <if test="deptLevel != null">
-        dept_level = #{deptLevel,jdbcType=INTEGER},
+      <if test="dept_level != null">
+        dept_level = #{dept_level,jdbcType=INTEGER},
       </if>
       <if test="description != null">
         description = #{description,jdbcType=VARCHAR},
@@ -133,37 +136,182 @@
       <if test="status != null">
         `status` = #{status,jdbcType=TINYINT},
       </if>
-      <if test="isDeleted != null">
-        is_deleted = #{isDeleted,jdbcType=TINYINT},
+      <if test="is_deleted != null">
+        is_deleted = #{is_deleted,jdbcType=TINYINT},
       </if>
-      <if test="createBy != null">
-        create_by = #{createBy,jdbcType=BIGINT},
+      <if test="create_by != null">
+        create_by = #{create_by,jdbcType=BIGINT},
       </if>
-      <if test="updateBy != null">
-        update_by = #{updateBy,jdbcType=BIGINT},
+      <if test="update_by != null">
+        update_by = #{update_by,jdbcType=BIGINT},
       </if>
-      <if test="createTime != null">
-        create_time = #{createTime,jdbcType=TIMESTAMP},
+      <if test="create_time != null">
+        create_time = #{create_time,jdbcType=TIMESTAMP},
       </if>
-      <if test="updateTime != null">
-        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      <if test="update_time != null">
+        update_time = #{update_time,jdbcType=TIMESTAMP},
       </if>
     </set>
-    where department_id = #{departmentId,jdbcType=BIGINT}
+    where department_id = #{department_id,jdbcType=BIGINT}
   </update>
   <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.Department">
+    <!--@mbg.generated-->
     update t_department
-    set department_name = #{departmentName,jdbcType=VARCHAR},
-      manager_id = #{managerId,jdbcType=BIGINT},
-      parent_id = #{parentId,jdbcType=BIGINT},
-      dept_level = #{deptLevel,jdbcType=INTEGER},
+    set department_name = #{department_name,jdbcType=VARCHAR},
+      manager_id = #{manager_id,jdbcType=BIGINT},
+      parent_id = #{parent_id,jdbcType=BIGINT},
+      dept_level = #{dept_level,jdbcType=INTEGER},
       description = #{description,jdbcType=VARCHAR},
       `status` = #{status,jdbcType=TINYINT},
-      is_deleted = #{isDeleted,jdbcType=TINYINT},
-      create_by = #{createBy,jdbcType=BIGINT},
-      update_by = #{updateBy,jdbcType=BIGINT},
-      create_time = #{createTime,jdbcType=TIMESTAMP},
-      update_time = #{updateTime,jdbcType=TIMESTAMP}
-    where department_id = #{departmentId,jdbcType=BIGINT}
+      is_deleted = #{is_deleted,jdbcType=TINYINT},
+      create_by = #{create_by,jdbcType=BIGINT},
+      update_by = #{update_by,jdbcType=BIGINT},
+      create_time = #{create_time,jdbcType=TIMESTAMP},
+      update_time = #{update_time,jdbcType=TIMESTAMP}
+    where department_id = #{department_id,jdbcType=BIGINT}
   </update>
+  <select id="selectByAll" resultMap="BaseResultMap">
+        <!--@mbg.generated-->
+        select
+        <include refid="Base_Column_List" />
+        from t_department
+        <where>
+            <if test="department_id != null">
+                and department_id=#{department_id,jdbcType=BIGINT}
+            </if>
+            <if test="department_name != null">
+                and department_name=#{department_name,jdbcType=VARCHAR}
+            </if>
+            <if test="manager_id != null">
+                and manager_id=#{manager_id,jdbcType=BIGINT}
+            </if>
+            <if test="parent_id != null">
+                and parent_id=#{parent_id,jdbcType=BIGINT}
+            </if>
+            <if test="dept_level != null">
+                and dept_level=#{dept_level,jdbcType=INTEGER}
+            </if>
+            <if test="description != null">
+                and description=#{description,jdbcType=VARCHAR}
+            </if>
+            <if test="status != null">
+                and `status`=#{status,jdbcType=TINYINT}
+            </if>
+            <if test="is_deleted != null">
+                and is_deleted=#{is_deleted,jdbcType=TINYINT}
+            </if>
+            <if test="create_by != null">
+                and create_by=#{create_by,jdbcType=BIGINT}
+            </if>
+            <if test="update_by != null">
+                and update_by=#{update_by,jdbcType=BIGINT}
+            </if>
+            <if test="create_time != null">
+                and create_time=#{create_time,jdbcType=TIMESTAMP}
+            </if>
+            <if test="update_time != null">
+                and update_time=#{update_time,jdbcType=TIMESTAMP}
+            </if>
+        </where>
+    </select>
+  <update id="updateBatchSelective" parameterType="java.util.List">
+    <!--@mbg.generated-->
+    update t_department
+    <trim prefix="set" suffixOverrides=",">
+      <trim prefix="department_name = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.department_name != null">
+            when department_id = #{item.department_id,jdbcType=BIGINT} then #{item.department_name,jdbcType=VARCHAR}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="manager_id = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.manager_id != null">
+            when department_id = #{item.department_id,jdbcType=BIGINT} then #{item.manager_id,jdbcType=BIGINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="parent_id = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.parent_id != null">
+            when department_id = #{item.department_id,jdbcType=BIGINT} then #{item.parent_id,jdbcType=BIGINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="dept_level = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.dept_level != null">
+            when department_id = #{item.department_id,jdbcType=BIGINT} then #{item.dept_level,jdbcType=INTEGER}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="description = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.description != null">
+            when department_id = #{item.department_id,jdbcType=BIGINT} then #{item.description,jdbcType=VARCHAR}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="`status` = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.status != null">
+            when department_id = #{item.department_id,jdbcType=BIGINT} then #{item.status,jdbcType=TINYINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="is_deleted = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.is_deleted != null">
+            when department_id = #{item.department_id,jdbcType=BIGINT} then #{item.is_deleted,jdbcType=TINYINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="create_by = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.create_by != null">
+            when department_id = #{item.department_id,jdbcType=BIGINT} then #{item.create_by,jdbcType=BIGINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="update_by = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.update_by != null">
+            when department_id = #{item.department_id,jdbcType=BIGINT} then #{item.update_by,jdbcType=BIGINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="create_time = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.create_time != null">
+            when department_id = #{item.department_id,jdbcType=BIGINT} then #{item.create_time,jdbcType=TIMESTAMP}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="update_time = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.update_time != null">
+            when department_id = #{item.department_id,jdbcType=BIGINT} then #{item.update_time,jdbcType=TIMESTAMP}
+          </if>
+        </foreach>
+      </trim>
+    </trim>
+    where department_id in
+    <foreach close=")" collection="list" item="item" open="(" separator=", ">
+      #{item.department_id,jdbcType=BIGINT}
+    </foreach>
+  </update>
+  <insert id="batchInsert" keyColumn="department_id" keyProperty="department_id" parameterType="map" useGeneratedKeys="true">
+    <!--@mbg.generated-->
+    insert into t_department
+    (department_name, manager_id, parent_id, dept_level, description, `status`, is_deleted, 
+      create_by, update_by, create_time, update_time)
+    values
+    <foreach collection="list" item="item" separator=",">
+      (#{item.department_name,jdbcType=VARCHAR}, #{item.manager_id,jdbcType=BIGINT}, #{item.parent_id,jdbcType=BIGINT}, 
+        #{item.dept_level,jdbcType=INTEGER}, #{item.description,jdbcType=VARCHAR}, #{item.status,jdbcType=TINYINT}, 
+        #{item.is_deleted,jdbcType=TINYINT}, #{item.create_by,jdbcType=BIGINT}, #{item.update_by,jdbcType=BIGINT}, 
+        #{item.create_time,jdbcType=TIMESTAMP}, #{item.update_time,jdbcType=TIMESTAMP})
+    </foreach>
+  </insert>
 </mapper>

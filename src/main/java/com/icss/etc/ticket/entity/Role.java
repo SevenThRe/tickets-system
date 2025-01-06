@@ -3,69 +3,56 @@ package com.icss.etc.ticket.entity;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import com.icss.etc.ticket.enums.BaseRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 /**
- * {@code Ticket} 
+ * {@code Role} 
  * 
  * @since 1.0
  * @version 1.0
  * @author SevenThRe
  */
+
+/**
+ * 角色表
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Ticket implements Serializable {
+public class Role implements Serializable {
     /**
-     * 工单ID
+     * 角色ID
      */
-    private Long ticket_id;
+    private Long role_id;
 
     /**
-     * 工单类型ID
+     * 角色名称
      */
-    private Long type_id;
+    private String role_name;
 
     /**
-     * 工单标题
+     * 角色编码
      */
-    private String title;
+    private String role_code;
 
     /**
-     * 工单内容
+     * 基础角色编码(ADMIN/DEPT/USER)
      */
-    private String content;
+    private BaseRole base_role_code;
 
     /**
-     * 处理人ID
+     * 角色描述
      */
-    private Long processor_id;
+    private String description;
 
     /**
-     * 处理部门ID
-     */
-    private Long department_id;
-
-    /**
-     * 优先级：0-普通，1-紧急，2-非常紧急
-     */
-    private Integer priority;
-
-    /**
-     * 状态：0-待处理，1-处理中，2-已完成，3-已关闭
+     * 状态：0-禁用，1-启用
      */
     private Integer status;
-
-    /**
-     * 期望完成时间
-     */
-    private LocalDateTime expect_finish_time;
-
-    /**
-     * 实际完成时间
-     */
-    private LocalDateTime actual_finish_time;
 
     /**
      * 是否删除
@@ -76,11 +63,6 @@ public class Ticket implements Serializable {
      * 创建人
      */
     private Long create_by;
-
-    /**
-     * 更新人
-     */
-    private Long update_by;
 
     /**
      * 创建时间

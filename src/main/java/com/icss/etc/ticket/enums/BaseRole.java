@@ -17,15 +17,15 @@ public enum BaseRole {
     /**
      * 管理员
      */
-    ADMIN("管理员"),
+    ADMIN("ADMIN"),
     /**
      * 部门主管
      */
-    DEPT("部门主管"),
+    DEPT("DEPT"),
     /**
      * 普通用户
      */
-    USER("普通用户");
+    USER("USER");
 
     private final String desc;
 

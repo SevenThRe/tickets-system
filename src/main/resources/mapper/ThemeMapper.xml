@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.etc.ticket.mapper.ThemeMapper">
+  <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Theme">
+    <!--@mbg.generated-->
+    <!--@Table sys_theme-->
+    <id column="theme_id" jdbcType="VARCHAR" property="theme_id" />
+    <result column="theme_name" jdbcType="VARCHAR" property="theme_name" />
+    <result column="theme_type" jdbcType="VARCHAR" property="theme_type" />
+    <result column="is_system" jdbcType="TINYINT" property="is_system" />
+    <result column="is_default" jdbcType="TINYINT" property="is_default" />
+    <result column="config_json" jdbcType="LONGVARCHAR" property="config_json" />
+    <result column="create_by" jdbcType="BIGINT" property="create_by" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="create_time" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="update_time" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    theme_id, theme_name, theme_type, is_system, is_default, config_json, create_by, 
+    create_time, update_time
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    <!--@mbg.generated-->
+    select 
+    <include refid="Base_Column_List" />
+    from sys_theme
+    where theme_id = #{theme_id,jdbcType=VARCHAR}
+  </select>
+  <insert id="insert" parameterType="com.icss.etc.ticket.entity.Theme">
+    <!--@mbg.generated-->
+    insert into sys_theme (theme_id, theme_name, theme_type, 
+      is_system, is_default, config_json, 
+      create_by, create_time, update_time
+      )
+    values (#{theme_id,jdbcType=VARCHAR}, #{theme_name,jdbcType=VARCHAR}, #{theme_type,jdbcType=VARCHAR}, 
+      #{is_system,jdbcType=TINYINT}, #{is_default,jdbcType=TINYINT}, #{config_json,jdbcType=LONGVARCHAR}, 
+      #{create_by,jdbcType=BIGINT}, #{create_time,jdbcType=TIMESTAMP}, #{update_time,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.icss.etc.ticket.entity.Theme">
+    <!--@mbg.generated-->
+    insert into sys_theme
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="theme_id != null">
+        theme_id,
+      </if>
+      <if test="theme_name != null">
+        theme_name,
+      </if>
+      <if test="theme_type != null">
+        theme_type,
+      </if>
+      <if test="is_system != null">
+        is_system,
+      </if>
+      <if test="is_default != null">
+        is_default,
+      </if>
+      <if test="config_json != null">
+        config_json,
+      </if>
+      <if test="create_by != null">
+        create_by,
+      </if>
+      <if test="create_time != null">
+        create_time,
+      </if>
+      <if test="update_time != null">
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="theme_id != null">
+        #{theme_id,jdbcType=VARCHAR},
+      </if>
+      <if test="theme_name != null">
+        #{theme_name,jdbcType=VARCHAR},
+      </if>
+      <if test="theme_type != null">
+        #{theme_type,jdbcType=VARCHAR},
+      </if>
+      <if test="is_system != null">
+        #{is_system,jdbcType=TINYINT},
+      </if>
+      <if test="is_default != null">
+        #{is_default,jdbcType=TINYINT},
+      </if>
+      <if test="config_json != null">
+        #{config_json,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="create_by != null">
+        #{create_by,jdbcType=BIGINT},
+      </if>
+      <if test="create_time != null">
+        #{create_time,jdbcType=TIMESTAMP},
+      </if>
+      <if test="update_time != null">
+        #{update_time,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.icss.etc.ticket.entity.Theme">
+    <!--@mbg.generated-->
+    update sys_theme
+    <set>
+      <if test="theme_name != null">
+        theme_name = #{theme_name,jdbcType=VARCHAR},
+      </if>
+      <if test="theme_type != null">
+        theme_type = #{theme_type,jdbcType=VARCHAR},
+      </if>
+      <if test="is_system != null">
+        is_system = #{is_system,jdbcType=TINYINT},
+      </if>
+      <if test="is_default != null">
+        is_default = #{is_default,jdbcType=TINYINT},
+      </if>
+      <if test="config_json != null">
+        config_json = #{config_json,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="create_by != null">
+        create_by = #{create_by,jdbcType=BIGINT},
+      </if>
+      <if test="create_time != null">
+        create_time = #{create_time,jdbcType=TIMESTAMP},
+      </if>
+      <if test="update_time != null">
+        update_time = #{update_time,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where theme_id = #{theme_id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.Theme">
+    <!--@mbg.generated-->
+    update sys_theme
+    set theme_name = #{theme_name,jdbcType=VARCHAR},
+      theme_type = #{theme_type,jdbcType=VARCHAR},
+      is_system = #{is_system,jdbcType=TINYINT},
+      is_default = #{is_default,jdbcType=TINYINT},
+      config_json = #{config_json,jdbcType=LONGVARCHAR},
+      create_by = #{create_by,jdbcType=BIGINT},
+      create_time = #{create_time,jdbcType=TIMESTAMP},
+      update_time = #{update_time,jdbcType=TIMESTAMP}
+    where theme_id = #{theme_id,jdbcType=VARCHAR}
+  </update>
+  <select id="selectByAll" resultMap="BaseResultMap">
+        <!--@mbg.generated-->
+        select
+        <include refid="Base_Column_List"/>
+        from sys_theme
+        <where>
+            <if test="theme_id != null">
+                and theme_id=#{theme_id,jdbcType=VARCHAR}
+            </if>
+            <if test="theme_name != null">
+                and theme_name=#{theme_name,jdbcType=VARCHAR}
+            </if>
+            <if test="theme_type != null">
+                and theme_type=#{theme_type,jdbcType=VARCHAR}
+            </if>
+            <if test="is_system != null">
+                and is_system=#{is_system,jdbcType=TINYINT}
+            </if>
+            <if test="is_default != null">
+                and is_default=#{is_default,jdbcType=TINYINT}
+            </if>
+            <if test="config_json != null">
+                and config_json=#{config_json,jdbcType=LONGVARCHAR}
+            </if>
+            <if test="create_by != null">
+                and create_by=#{create_by,jdbcType=BIGINT}
+            </if>
+            <if test="create_time != null">
+                and create_time=#{create_time,jdbcType=TIMESTAMP}
+            </if>
+            <if test="update_time != null">
+                and update_time=#{update_time,jdbcType=TIMESTAMP}
+            </if>
+        </where>
+    </select>
+  <update id="updateBatchSelective" parameterType="java.util.List">
+    <!--@mbg.generated-->
+    update sys_theme
+    <trim prefix="set" suffixOverrides=",">
+      <trim prefix="theme_name = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.theme_name != null">
+            when theme_id = #{item.theme_id,jdbcType=VARCHAR} then #{item.theme_name,jdbcType=VARCHAR}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="theme_type = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.theme_type != null">
+            when theme_id = #{item.theme_id,jdbcType=VARCHAR} then #{item.theme_type,jdbcType=VARCHAR}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="is_system = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.is_system != null">
+            when theme_id = #{item.theme_id,jdbcType=VARCHAR} then #{item.is_system,jdbcType=TINYINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="is_default = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.is_default != null">
+            when theme_id = #{item.theme_id,jdbcType=VARCHAR} then #{item.is_default,jdbcType=TINYINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="config_json = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.config_json != null">
+            when theme_id = #{item.theme_id,jdbcType=VARCHAR} then #{item.config_json,jdbcType=LONGVARCHAR}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="create_by = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.create_by != null">
+            when theme_id = #{item.theme_id,jdbcType=VARCHAR} then #{item.create_by,jdbcType=BIGINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="create_time = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.create_time != null">
+            when theme_id = #{item.theme_id,jdbcType=VARCHAR} then #{item.create_time,jdbcType=TIMESTAMP}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="update_time = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.update_time != null">
+            when theme_id = #{item.theme_id,jdbcType=VARCHAR} then #{item.update_time,jdbcType=TIMESTAMP}
+          </if>
+        </foreach>
+      </trim>
+    </trim>
+    where theme_id in
+    <foreach close=")" collection="list" item="item" open="(" separator=", ">
+      #{item.theme_id,jdbcType=VARCHAR}
+    </foreach>
+  </update>
+  <insert id="batchInsert" parameterType="map">
+    <!--@mbg.generated-->
+    insert into sys_theme
+    (theme_id, theme_name, theme_type, is_system, is_default, config_json, create_by, 
+      create_time, update_time)
+    values
+    <foreach collection="list" item="item" separator=",">
+      (#{item.theme_id,jdbcType=VARCHAR}, #{item.theme_name,jdbcType=VARCHAR}, #{item.theme_type,jdbcType=VARCHAR}, 
+        #{item.is_system,jdbcType=TINYINT}, #{item.is_default,jdbcType=TINYINT}, #{item.config_json,jdbcType=LONGVARCHAR}, 
+        #{item.create_by,jdbcType=BIGINT}, #{item.create_time,jdbcType=TIMESTAMP}, #{item.update_time,jdbcType=TIMESTAMP}
+        )
+    </foreach>
+  </insert>
+</mapper>

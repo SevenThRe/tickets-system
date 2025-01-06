@@ -1,10 +1,134 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工单系统 - 我的工作台</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/navbar.css" rel="stylesheet">
+    <link href="/pages/user/css/dashboard.css" rel="stylesheet">
 </head>
 <body>
+<!-- 导航栏 -->
+<nav id="navbar" class="navbar-container"></nav>
 
+<!-- 主内容区 -->
+<main id="main" class="main-content">
+    <!-- 欢迎信息 -->
+    <div class="welcome-section mb-4">
+        <h4>欢迎回来, <span id="userName">加载中...</span></h4>
+        <p class="text-muted" id="currentTime"></p>
+    </div>
+
+    <!-- 快捷操作区 -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="quick-action-card" onclick="location.href='/pages/user/todos.html'">
+                <div class="card-icon pending">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="card-info">
+                    <h3 id="todoCount">0</h3>
+                    <p>待办工单</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="quick-action-card" onclick="location.href='/pages/user/my-tickets.html'">
+                <div class="card-icon total">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <div class="card-info">
+                    <h3 id="totalTickets">0</h3>
+                    <p>我的工单</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="quick-action-card" onclick="location.href='/pages/user/my-tickets.html'">
+                <div class="card-icon new">
+                    <i class="bi bi-plus-circle"></i>
+                </div>
+                <div class="card-info">
+                    <h3>提交工单</h3>
+                    <p>发起新的工单</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="quick-action-card" onclick="location.href='/pages/user/profile.html'">
+                <div class="card-icon profile">
+                    <i class="bi bi-person"></i>
+                </div>
+                <div class="card-info">
+                    <h3>个人中心</h3>
+                    <p>查看个人信息</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 待办工单预览 -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">待办工单</h5>
+            <a href="/pages/user/todos.html" class="btn btn-sm btn-link">查看全部</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>工单编号</th>
+                        <th>标题</th>
+                        <th>优先级</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="todoList">
+                    <!-- 通过JS动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近工单预览 -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">最近工单</h5>
+            <a href="/pages/user/my-tickets.html" class="btn btn-sm btn-link">查看全部</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>工单编号</th>
+                        <th>标题</th>
+                        <th>状态</th>
+                        <th>更新时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="recentList">
+                    <!-- 通过JS动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="/js/utils/event-bus.js"></script>
+<script src="/js/utils/request-util.js"></script>
+<script src="/js/components/base/base-component.js"></script>
+<script src="/js/components/layout/navbar.js"></script>
+<script src="/pages/user/js/dashboard.js"></script>
 </body>
 </html>

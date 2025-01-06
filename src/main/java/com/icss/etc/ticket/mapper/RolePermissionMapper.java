@@ -1,28 +1,27 @@
 package com.icss.etc.ticket.mapper;
 
-import com.icss.etc.ticket.entity.Department;
+import com.icss.etc.ticket.entity.RolePermission;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
 /**
- * {@code DepartmentMapper}
+ * {@code RolePermissionMapper}
  *
  * @author SevenThRe
  * @version 1.0
  * @since 1.0
  */
 
-public interface DepartmentMapper {
+public interface RolePermissionMapper {
     /**
      * insert record to table
      *
      * @param record the record
      * @return insert count
      */
-    int insert(Department record);
+    int insert(RolePermission record);
 
     /**
      * insert record to table selective
@@ -30,15 +29,15 @@ public interface DepartmentMapper {
      * @param record the record
      * @return insert count
      */
-    int insertSelective(Department record);
+    int insertSelective(RolePermission record);
 
     /**
      * select by primary key
      *
-     * @param department_id primary key
+     * @param role_id primary key
      * @return object by primary key
      */
-    Department selectByPrimaryKey(Long department_id);
+    RolePermission selectByPrimaryKey(@Param("role_id") Long role_id, @Param("permission_id") Long permission_id);
 
     /**
      * update record selective
@@ -46,7 +45,7 @@ public interface DepartmentMapper {
      * @param record the updated record
      * @return update count
      */
-    int updateByPrimaryKeySelective(Department record);
+    int updateByPrimaryKeySelective(RolePermission record);
 
     /**
      * update record
@@ -54,11 +53,11 @@ public interface DepartmentMapper {
      * @param record the updated record
      * @return update count
      */
-    int updateByPrimaryKey(Department record);
+    int updateByPrimaryKey(RolePermission record);
 
-    List<Department> selectByAll(Department department);
+    List<RolePermission> selectByAll(RolePermission rolePermission);
 
-    int updateBatchSelective(@Param("list") List<Department> list);
+    int updateBatchSelective(@Param("list") List<RolePermission> list);
 
-    int batchInsert(@Param("list") List<Department> list);
+    int batchInsert(@Param("list") List<RolePermission> list);
 }

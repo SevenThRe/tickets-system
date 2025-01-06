@@ -2,28 +2,298 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.etc.ticket.mapper.TicketMapper">
   <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Ticket">
-    <id column="ticket_id" jdbcType="BIGINT" property="ticketId" />
-    <result column="type_id" jdbcType="BIGINT" property="typeId" />
+    <!--@mbg.generated-->
+    <!--@Table t_ticket-->
+    <id column="ticket_id" jdbcType="BIGINT" property="ticket_id" />
+    <result column="type_id" jdbcType="BIGINT" property="type_id" />
     <result column="title" jdbcType="VARCHAR" property="title" />
-    <result column="content" jdbcType="VARCHAR" property="content" />
-    <result column="processor_id" jdbcType="BIGINT" property="processorId" />
-    <result column="department_id" jdbcType="BIGINT" property="departmentId" />
+    <result column="content" jdbcType="LONGVARCHAR" property="content" />
+    <result column="processor_id" jdbcType="BIGINT" property="processor_id" />
+    <result column="department_id" jdbcType="BIGINT" property="department_id" />
     <result column="priority" jdbcType="TINYINT" property="priority" />
     <result column="status" jdbcType="TINYINT" property="status" />
-    <result column="expect_finish_time" jdbcType="TIMESTAMP" property="expectFinishTime" />
-    <result column="actual_finish_time" jdbcType="TIMESTAMP" property="actualFinishTime" />
-    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
-    <result column="create_by" jdbcType="BIGINT" property="createBy" />
-    <result column="update_by" jdbcType="BIGINT" property="updateBy" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
-    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="expect_finish_time" jdbcType="TIMESTAMP" property="expect_finish_time" />
+    <result column="actual_finish_time" jdbcType="TIMESTAMP" property="actual_finish_time" />
+    <result column="is_deleted" jdbcType="TINYINT" property="is_deleted" />
+    <result column="create_by" jdbcType="BIGINT" property="create_by" />
+    <result column="update_by" jdbcType="BIGINT" property="update_by" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="create_time" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="update_time" />
   </resultMap>
-    <!--  &lt;sql id="Base_Column_List"&gt;-->
-    <!--    select ticket_id, type_id, title, content, processor_id, department_id, priority,-->
-    <!--      `status`, expect_finish_time, actual_finish_time, is_deleted, create_by, update_by,-->
-    <!--      create_time, update_time from t_ticket-->
-    <!--  &lt;/sql&gt;-->
-
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    ticket_id, type_id, title, content, processor_id, department_id, priority, `status`, 
+    expect_finish_time, actual_finish_time, is_deleted, create_by, update_by, create_time, 
+    update_time
+  </sql>
+  <insert id="insertSelective" keyColumn="ticket_id" keyProperty="ticket_id" parameterType="com.icss.etc.ticket.entity.Ticket" useGeneratedKeys="true">
+    <!--@mbg.generated-->
+    insert into t_ticket
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="type_id != null">
+        type_id,
+      </if>
+      <if test="title != null">
+        title,
+      </if>
+      <if test="content != null">
+        content,
+      </if>
+      <if test="processor_id != null">
+        processor_id,
+      </if>
+      <if test="department_id != null">
+        department_id,
+      </if>
+      <if test="priority != null">
+        priority,
+      </if>
+      <if test="status != null">
+        `status`,
+      </if>
+      <if test="expect_finish_time != null">
+        expect_finish_time,
+      </if>
+      <if test="actual_finish_time != null">
+        actual_finish_time,
+      </if>
+      <if test="is_deleted != null">
+        is_deleted,
+      </if>
+      <if test="create_by != null">
+        create_by,
+      </if>
+      <if test="update_by != null">
+        update_by,
+      </if>
+      <if test="create_time != null">
+        create_time,
+      </if>
+      <if test="update_time != null">
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="type_id != null">
+        #{type_id,jdbcType=BIGINT},
+      </if>
+      <if test="title != null">
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null">
+        #{content,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="processor_id != null">
+        #{processor_id,jdbcType=BIGINT},
+      </if>
+      <if test="department_id != null">
+        #{department_id,jdbcType=BIGINT},
+      </if>
+      <if test="priority != null">
+        #{priority,jdbcType=TINYINT},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="expect_finish_time != null">
+        #{expect_finish_time,jdbcType=TIMESTAMP},
+      </if>
+      <if test="actual_finish_time != null">
+        #{actual_finish_time,jdbcType=TIMESTAMP},
+      </if>
+      <if test="is_deleted != null">
+        #{is_deleted,jdbcType=TINYINT},
+      </if>
+      <if test="create_by != null">
+        #{create_by,jdbcType=BIGINT},
+      </if>
+      <if test="update_by != null">
+        #{update_by,jdbcType=BIGINT},
+      </if>
+      <if test="create_time != null">
+        #{create_time,jdbcType=TIMESTAMP},
+      </if>
+      <if test="update_time != null">
+        #{update_time,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <select id="selectByAll" resultMap="BaseResultMap">
+        <!--@mbg.generated-->
+        select
+        <include refid="Base_Column_List" />
+        from t_ticket
+        <where>
+            <if test="ticket_id != null">
+                and ticket_id=#{ticket_id,jdbcType=BIGINT}
+            </if>
+            <if test="type_id != null">
+                and type_id=#{type_id,jdbcType=BIGINT}
+            </if>
+            <if test="title != null and title != ''">
+                and title=#{title,jdbcType=VARCHAR}
+            </if>
+            <if test="content != null and content != ''">
+                and content=#{content,jdbcType=LONGVARCHAR}
+            </if>
+            <if test="processor_id != null">
+                and processor_id=#{processor_id,jdbcType=BIGINT}
+            </if>
+            <if test="department_id != null">
+                and department_id=#{department_id,jdbcType=BIGINT}
+            </if>
+            <if test="priority != null">
+                and priority=#{priority,jdbcType=TINYINT}
+            </if>
+            <if test="status != null">
+                and `status`=#{status,jdbcType=TINYINT}
+            </if>
+            <if test="expect_finish_time != null">
+                and expect_finish_time=#{expect_finish_time,jdbcType=TIMESTAMP}
+            </if>
+            <if test="actual_finish_time != null">
+                and actual_finish_time=#{actual_finish_time,jdbcType=TIMESTAMP}
+            </if>
+            <if test="is_deleted != null">
+                and is_deleted=#{is_deleted,jdbcType=TINYINT}
+            </if>
+            <if test="create_by != null">
+                and create_by=#{create_by,jdbcType=BIGINT}
+            </if>
+            <if test="update_by != null">
+                and update_by=#{update_by,jdbcType=BIGINT}
+            </if>
+            <if test="create_time != null">
+                and create_time=#{create_time,jdbcType=TIMESTAMP}
+            </if>
+            <if test="update_time != null">
+                and update_time=#{update_time,jdbcType=TIMESTAMP}
+            </if>
+        </where>
+    </select>
+  <update id="updateBatchSelective" parameterType="java.util.List">
+    <!--@mbg.generated-->
+    update t_ticket
+    <trim prefix="set" suffixOverrides=",">
+      <trim prefix="type_id = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.type_id != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.type_id,jdbcType=BIGINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="title = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.title != null and item.title != ''">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.title,jdbcType=VARCHAR}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="content = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.content != null and item.content != ''">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.content,jdbcType=LONGVARCHAR}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="processor_id = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.processor_id != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.processor_id,jdbcType=BIGINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="department_id = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.department_id != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.department_id,jdbcType=BIGINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="priority = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.priority != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.priority,jdbcType=TINYINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="`status` = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.status != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.status,jdbcType=TINYINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="expect_finish_time = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.expect_finish_time != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.expect_finish_time,jdbcType=TIMESTAMP}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="actual_finish_time = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.actual_finish_time != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.actual_finish_time,jdbcType=TIMESTAMP}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="is_deleted = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.is_deleted != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.is_deleted,jdbcType=TINYINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="create_by = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.create_by != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.create_by,jdbcType=BIGINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="update_by = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.update_by != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.update_by,jdbcType=BIGINT}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="create_time = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.create_time != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.create_time,jdbcType=TIMESTAMP}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="update_time = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.update_time != null">
+            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.update_time,jdbcType=TIMESTAMP}
+          </if>
+        </foreach>
+      </trim>
+    </trim>
+    where ticket_id in
+    <foreach close=")" collection="list" item="item" open="(" separator=", ">
+      #{item.ticket_id,jdbcType=BIGINT}
+    </foreach>
+  </update>
+  <insert id="batchInsert" keyColumn="ticket_id" keyProperty="ticket_id" parameterType="map" useGeneratedKeys="true">
+    <!--@mbg.generated-->
+    insert into t_ticket
+    (type_id, title, content, processor_id, department_id, priority, `status`, expect_finish_time, 
+      actual_finish_time, is_deleted, create_by, update_by, create_time, update_time)
+    values
+    <foreach collection="list" item="item" separator=",">
+      (#{item.type_id,jdbcType=BIGINT}, #{item.title,jdbcType=VARCHAR}, #{item.content,jdbcType=LONGVARCHAR}, 
+        #{item.processor_id,jdbcType=BIGINT}, #{item.department_id,jdbcType=BIGINT}, #{item.priority,jdbcType=TINYINT}, 
+        #{item.status,jdbcType=TINYINT}, #{item.expect_finish_time,jdbcType=TIMESTAMP}, 
+        #{item.actual_finish_time,jdbcType=TIMESTAMP}, #{item.is_deleted,jdbcType=TINYINT}, 
+        #{item.create_by,jdbcType=BIGINT}, #{item.update_by,jdbcType=BIGINT}, #{item.create_time,jdbcType=TIMESTAMP}, 
+        #{item.update_time,jdbcType=TIMESTAMP})
+    </foreach>
+  </insert>
 
     <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select ticket_id,
@@ -87,7 +357,7 @@
         <if test="type_id != null">
             and type_id = #{type_id,jdbcType=BIGINT}
         </if>
-        <if test="title != null and title != ">
+        <if test="title != null and title != ''">
             and title = #{title,jdbcType=VARCHAR}
         </if>
         <if test="content != null and content != ''">

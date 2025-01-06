@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.etc.ticket.mapper.UserRoleMapper">
+  <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.UserRole">
+    <!--@mbg.generated-->
+    <!--@Table t_user_role-->
+    <id column="user_id" jdbcType="BIGINT" property="user_id" />
+    <id column="role_id" jdbcType="BIGINT" property="role_id" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="create_time" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    user_id, role_id, create_time
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="map" resultMap="BaseResultMap">
+    <!--@mbg.generated-->
+    select 
+    <include refid="Base_Column_List" />
+    from t_user_role
+    where user_id = #{user_id,jdbcType=BIGINT}
+      and role_id = #{role_id,jdbcType=BIGINT}
+  </select>
+  <insert id="insert" parameterType="com.icss.etc.ticket.entity.UserRole">
+    <!--@mbg.generated-->
+    insert into t_user_role (user_id, role_id, create_time
+      )
+    values (#{user_id,jdbcType=BIGINT}, #{role_id,jdbcType=BIGINT}, #{create_time,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.icss.etc.ticket.entity.UserRole">
+    <!--@mbg.generated-->
+    insert into t_user_role
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="user_id != null">
+        user_id,
+      </if>
+      <if test="role_id != null">
+        role_id,
+      </if>
+      <if test="create_time != null">
+        create_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="user_id != null">
+        #{user_id,jdbcType=BIGINT},
+      </if>
+      <if test="role_id != null">
+        #{role_id,jdbcType=BIGINT},
+      </if>
+      <if test="create_time != null">
+        #{create_time,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.icss.etc.ticket.entity.UserRole">
+    <!--@mbg.generated-->
+    update t_user_role
+    <set>
+      <if test="create_time != null">
+        create_time = #{create_time,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where user_id = #{user_id,jdbcType=BIGINT}
+      and role_id = #{role_id,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.UserRole">
+    <!--@mbg.generated-->
+    update t_user_role
+    set create_time = #{create_time,jdbcType=TIMESTAMP}
+    where user_id = #{user_id,jdbcType=BIGINT}
+      and role_id = #{role_id,jdbcType=BIGINT}
+  </update>
+  <select id="selectByAll" resultMap="BaseResultMap">
+        <!--@mbg.generated-->
+        select
+        <include refid="Base_Column_List" />
+        from t_user_role
+        <where>
+            <if test="user_id != null">
+                and user_id=#{user_id,jdbcType=BIGINT}
+            </if>
+            <if test="role_id != null">
+                and role_id=#{role_id,jdbcType=BIGINT}
+            </if>
+            <if test="create_time != null">
+                and create_time=#{create_time,jdbcType=TIMESTAMP}
+            </if>
+        </where>
+    </select>
+  <update id="updateBatchSelective" parameterType="java.util.List">
+    <!--@mbg.generated-->
+    update t_user_role
+    <trim prefix="set" suffixOverrides=",">
+      <trim prefix="create_time = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.create_time != null">
+            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.create_time,jdbcType=TIMESTAMP}
+          </if>
+        </foreach>
+      </trim>
+    </trim>
+    where user_id in
+    <foreach close=")" collection="list" item="item" open="(" separator=", ">
+      #{item.user_id,jdbcType=BIGINT}
+    </foreach>
+  </update>
+  <insert id="batchInsert" parameterType="map">
+    <!--@mbg.generated-->
+    insert into t_user_role
+    (user_id, role_id, create_time)
+    values
+    <foreach collection="list" item="item" separator=",">
+      (#{item.user_id,jdbcType=BIGINT}, #{item.role_id,jdbcType=BIGINT}, #{item.create_time,jdbcType=TIMESTAMP}
+        )
+    </foreach>
+  </insert>
+</mapper>
