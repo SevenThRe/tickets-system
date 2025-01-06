@@ -1,3 +1,149 @@
 /*
 /pages/user/css/dashboard.css
 */
+/* dashboard.css */
+:root {
+    --primary-color: #3b82f6;
+    --background-color: #f3f4f6;
+    --card-background: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --border-color: #e5e7eb;
+}
+
+/* 页面布局 */
+.main-content {
+    flex: 1;
+    margin-left: 250px;
+    padding: 2rem;
+    background-color: var(--background-color);
+}
+
+/* 欢迎区域 */
+.welcome-section {
+    padding: 1rem;
+    background: var(--card-background);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* 快捷操作卡片 */
+.quick-action-card {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+    background: var(--card-background);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-5px);
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+}
+
+.card-icon i {
+    font-size: 24px;
+    color: white;
+}
+
+.card-icon.pending {
+    background-color: #f59e0b;
+}
+
+.card-icon.total {
+    background-color: #3b82f6;
+}
+
+.card-icon.new {
+    background-color: #10b981;
+}
+
+.card-icon.profile {
+    background-color: #6366f1;
+}
+
+.card-info h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.card-info p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+/* 表格样式优化 */
+.table {
+    margin: 0;
+}
+
+.table th {
+    background-color: var(--background-color);
+    font-weight: 600;
+    padding: 1rem;
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+/* 状态标签 */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-pending {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.status-processing {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.status-completed {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 64px;
+        padding: 1rem;
+    }
+
+    .quick-action-card {
+        padding: 1rem;
+    }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background-color: #111827;
+        --card-background: #1f2937;
+        --text-primary: #f9fafb;
+        --text-secondary: #d1d5db;
+        --border-color: #374151;
+    }
+}

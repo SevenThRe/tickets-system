@@ -246,8 +246,12 @@ window.Const = {
             GET_LIST: '/tickets',
             GET_MY_TICKETS:'/tickets/my',
             POST_CREATE: '/tickets',
-            GET_DETAIL: id => `/tickets/${id}`,
-            PUT_PROCESS: id => `/tickets/${id}/process`,
+            GET_TODOS: '/tickets/todos',        // 获取待办工单
+            GET_RECENT: '/tickets/recent',      // 获取最近工单
+            GET_STATISTICS: '/tickets/statistics',  // 获取工单统计
+            GET_DETAIL: id => `/tickets/${id}`,       // 获取工单详情
+            PUT_PROCESS: id => `/tickets/${id}/process`,  // 提交工单处理
+            PUT_UPLOAD: id => `/tickets/${id}/attachments`,  // 上传工单附件
             PUT_RESOLVE: id => `/tickets/${id}/resolve`,
             POST_TRANSFER: id => `/tickets/${id}/transfer`,
             PUT_CLOSE: id => `/tickets/${id}/close`,

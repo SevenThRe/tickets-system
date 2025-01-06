@@ -260,6 +260,34 @@ class BaseComponent {
     off(eventName, callback) {
         this.container.off(eventName, callback);
     }
+
+
+    /**
+     * 显示加载状态
+     * @param {string} [message='加载中...'] 加载提示文本
+     * @private
+     */
+    _showLoading(message = '加载中...') {
+        if (!this.loadingEl) {
+            this.loadingEl = $('<div class="loading-overlay">')
+                .append('<div class="spinner-border text-primary"></div>')
+                .append(`<div class="loading-text">${message}</div>`)
+                .appendTo('body');
+        }
+        this.loadingEl.show();
+        this.container.addClass('loading');
+    }
+
+    /**
+     * 隐藏加载状态
+     * @private
+     */
+    _hideLoading() {
+        if (this.loadingEl) {
+            this.loadingEl.hide();
+        }
+        this.container.removeClass('loading');
+    }
 }
 
 // 添加到全局命名空间

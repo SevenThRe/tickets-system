@@ -1,64 +1,57 @@
 package com.icss.etc.ticket.mapper;
 
-import com.icss.etc.ticket.entity.Department;
-
+import com.icss.etc.ticket.entity.Permission;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import org.apache.ibatis.annotations.Param;
 
 /**
- * {@code DepartmentMapper}
- *
- * @author SevenThRe
- * @version 1.0
+ * {@code PermissionMapper} 
+ * 
  * @since 1.0
+ * @version 1.0
+ * @author SevenThRe
  */
-
-public interface DepartmentMapper {
+    
+public interface PermissionMapper {
     /**
      * insert record to table
-     *
      * @param record the record
      * @return insert count
      */
-    int insert(Department record);
+    int insert(Permission record);
 
     /**
      * insert record to table selective
-     *
      * @param record the record
      * @return insert count
      */
-    int insertSelective(Department record);
+    int insertSelective(Permission record);
 
     /**
      * select by primary key
-     *
-     * @param department_id primary key
+     * @param permission_id primary key
      * @return object by primary key
      */
-    Department selectByPrimaryKey(Long department_id);
+    Permission selectByPrimaryKey(Long permission_id);
 
     /**
      * update record selective
-     *
      * @param record the updated record
      * @return update count
      */
-    int updateByPrimaryKeySelective(Department record);
+    int updateByPrimaryKeySelective(Permission record);
 
     /**
      * update record
-     *
      * @param record the updated record
      * @return update count
      */
-    int updateByPrimaryKey(Department record);
+    int updateByPrimaryKey(Permission record);
 
-    List<Department> selectByAll(Department department);
+    List<Permission> selectByAll(Permission permission);
 
-    int updateBatchSelective(@Param("list") List<Department> list);
+    int updateBatchSelective(@Param("list") List<Permission> list);
 
-    int batchInsert(@Param("list") List<Department> list);
+    int batchInsert(@Param("list") List<Permission> list);
 }
