@@ -1,5 +1,6 @@
 package com.icss.etc.ticket.entity;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -81,5 +82,6 @@ public class Department implements Serializable {
      */
     private LocalDateTime update_time;
 
+    @Serial
     private static final long serialVersionUID = 1L;
 }

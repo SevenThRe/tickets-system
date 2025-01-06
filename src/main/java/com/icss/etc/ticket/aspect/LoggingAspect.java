@@ -17,7 +17,6 @@ import java.util.Arrays;
  */
 @Aspect
 @Slf4j
-@Component
 public class LoggingAspect {
 
 //    Logger log = LoggerFactory.getLogger(getClass());
