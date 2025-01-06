@@ -1,5 +1,6 @@
 package com.icss.etc.ticket.controller;
 
+import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.service.TicketService;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,6 +39,16 @@ public class TicketController {
     @RequestMapping("add")
     public int add(Ticket ticket) {
         return ticketService.insertTicket(ticket);
+    }
+
+    /**
+     * 获取代办工单
+     * GET /ticket/todos
+     * @return 代办工单列表
+     */
+    @RequestMapping("todos")
+    public R<List<Ticket>> getTodos() {
+        return R.OK(ticketService.getTodos());
     }
 
 }

@@ -87,6 +87,8 @@ public class User implements Serializable {
     */
     private LocalDateTime update_time;
 
+
+
     @Serial
     private static final long serialVersionUID = 1L;
 }

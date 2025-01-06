@@ -1,5 +1,6 @@
 package com.icss.etc.ticket.service;
 
+import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.Ticket;
 
 import java.util.List;
@@ -55,4 +56,9 @@ public interface TicketService {
      */
     List<Ticket> selectByCondition(Ticket condition);
 
+    /**
+     * 获取待办工单列表
+     * @return 待办工单列表
+     */
+    List<Ticket> getTodos();
 }

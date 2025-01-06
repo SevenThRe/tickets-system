@@ -114,7 +114,7 @@
       </if>
     </trim>
   </insert>
-  <update id="updateByPrimaryKeySelective" parameterType="com.icss.etc.ticket.entity.Department">
+  <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.Department">
     <!--@mbg.generated-->
     update t_department
     <set>
@@ -152,22 +152,6 @@
         update_time = #{update_time,jdbcType=TIMESTAMP},
       </if>
     </set>
-    where department_id = #{department_id,jdbcType=BIGINT}
-  </update>
-  <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.Department">
-    <!--@mbg.generated-->
-    update t_department
-    set department_name = #{department_name,jdbcType=VARCHAR},
-      manager_id = #{manager_id,jdbcType=BIGINT},
-      parent_id = #{parent_id,jdbcType=BIGINT},
-      dept_level = #{dept_level,jdbcType=INTEGER},
-      description = #{description,jdbcType=VARCHAR},
-      `status` = #{status,jdbcType=TINYINT},
-      is_deleted = #{is_deleted,jdbcType=TINYINT},
-      create_by = #{create_by,jdbcType=BIGINT},
-      update_by = #{update_by,jdbcType=BIGINT},
-      create_time = #{create_time,jdbcType=TIMESTAMP},
-      update_time = #{update_time,jdbcType=TIMESTAMP}
     where department_id = #{department_id,jdbcType=BIGINT}
   </update>
   <select id="selectByAll" resultMap="BaseResultMap">

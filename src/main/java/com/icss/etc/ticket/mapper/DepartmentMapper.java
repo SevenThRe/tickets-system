@@ -41,14 +41,6 @@ public interface DepartmentMapper {
     Department selectByPrimaryKey(Long department_id);
 
     /**
-     * update record selective
-     *
-     * @param record the updated record
-     * @return update count
-     */
-    int updateByPrimaryKeySelective(Department record);
-
-    /**
      * update record
      *
      * @param record the updated record

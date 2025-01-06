@@ -1,8 +1,10 @@
 package com.icss.etc.ticket.service.impl;
 
 import com.icss.etc.ticket.entity.Ticket;
+import com.icss.etc.ticket.enums.TicketEnum;
 import com.icss.etc.ticket.mapper.TicketMapper;
 import com.icss.etc.ticket.service.TicketService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.List;
  * @Version 1.0
  */
 @Service
+@Slf4j
 public class TicketServiceImpl implements TicketService {
     private final TicketMapper ticketMapper;
 
@@ -22,12 +25,25 @@ public class TicketServiceImpl implements TicketService {
         this.ticketMapper = ticketMapper;
     }
 
-//    private final UserMapper userMapper;
 
     @Override
     public int insertTicket(Ticket record) {
-        //TODO: 判断工单类型是否存在
-        //TODO: 判断部门是否存在
+
+        /*
+          判断工单类型是否存在
+         */
+        if (ticketMapper.selectByPrimaryKey(record.getTicket_id()) != null) {
+            log.error("{} 工单已存在", this.getClass().getName());
+            return TicketEnum.TICKET_EXIST.getCode();
+        }
+        /*
+            判断工单类型是否存在
+         */
+
+        /*
+            判断部门是否存在
+         */
+
         return ticketMapper.insertTicket(record);
     }
 
@@ -56,5 +72,10 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public List<Ticket> selectByCondition(Ticket condition) {
         return ticketMapper.selectByCondition(condition);
+    }
+
+    @Override
+    public List<Ticket> getTodos() {
+        return List.of();
     }
 }
