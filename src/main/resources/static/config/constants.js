@@ -349,9 +349,9 @@ window.Const = {
             POST_AVATAR_UPLOAD:'/users/avatar'
         },
         TICKET: {
-            GET_LIST: '/tickets',
+            GET_LIST: '/tickets/list',
             GET_MY_TICKETS:'/tickets/my',
-            POST_CREATE: '/tickets',
+            POST_CREATE: '/tickets/create',
             GET_TODOS: '/tickets/todos',        // 获取待办工单
             GET_RECENT: '/tickets/recent',      // 获取最近工单
             GET_STATISTICS: '/tickets/statistics',  // 获取工单统计
