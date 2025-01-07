@@ -19,11 +19,52 @@
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="position_id" jdbcType="BIGINT" property="positionId" />
   </resultMap>
+
+
+  <!-- 注册-->
+  <insert id="register" parameterType="registeredDTO">
+    insert into t_user
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="username != null  and username!=''">username,</if>
+      <if test="password != null   and password!=''">password,</if>
+      <if test="real_name != null and real_name!=''">real_name,</if>
+      <if test="department_id != null">department_id,</if>
+      <if test="email != null  and email!=''">email,</if>
+      <if test="phone != null   and phone!=''">phone,</if>
+      status,
+      is_deleted,
+      create_by,
+      update_by,
+      <if test="position_id != null">position_id,</if>
+      create_time,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+     <if test="username != null  and username!=''">#{username},</if>
+     <if test="password != null   and password!=''">#{password},</if>
+     <if test="real_name != null and real_name!=''">#{real_name},</if>
+     <if test="department_id != null">#{department_id},</if>
+     <if test="email != null  and email!=''">#{email},</if>
+     <if test="phone != null   and phone!=''">#{phone},</if>
+     1,
+      0,
+     0,
+    null,
+     <if test="position_id != null">#{position_id},</if>
+     default,
+    </trim>
+  </insert>
+
+  <!--  登陆-->
+  <select id="login" resultMap="BaseResultMap">
+    select * from t_user where username = #{username}
+  </select>
+
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
     user_id, username, `password`, real_name, department_id, email, phone, `status`, 
     is_deleted, create_by, update_by, create_time, update_time, position_id
   </sql>
+
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     <!--@mbg.generated-->
     select 

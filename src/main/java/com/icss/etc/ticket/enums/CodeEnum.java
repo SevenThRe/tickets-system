@@ -24,7 +24,10 @@ public enum CodeEnum {
     INTERNAL_ERROR(500, "内部服务器错误"),
     MODIFICATION_FAILED(400, "修改失败"),
     DELETION_FAILED(400, "删除失败"),
-    CREATION_FAILED(400, "创建失败");
+    CREATION_FAILED(400, "创建失败"),
+    USERNAME_OR_PASSWORD_ERROR(400, "用户名或密码错误"),
+    REGISTER_FAILED(400, "注册失败"),
+    USERNAME_EXIST(400, "用户名已存在");
 
 
 
