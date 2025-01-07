@@ -121,7 +121,7 @@ class LoginPage {
             const formData = this.getFormData();
 
             // 使用请求工具类发送请求
-            const response = await window.requestUtil.post("api/auth/login", formData);
+            const response = await window.requestUtil.post(Const.API.AUTH.POST_LOGIN, formData);
 
             if (response.code === 200) {
                 this.handleLoginSuccess(response.data);

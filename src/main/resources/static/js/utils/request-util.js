@@ -16,7 +16,7 @@ class RequestUtil {
          * @type {string}
          * @private
          */
-        this.baseURL = window.CONFIG?.BASE_URL || '';
+        this.baseURL = window.Const.BASE_URL || '';
 
         /**
          * 存储进行中的请求
@@ -95,6 +95,7 @@ class RequestUtil {
         this._pendingRequests.set(requestKey, true);
 
         try {
+            //TODO: response接收到的是null
             const response = await $.ajax({
                 url: this.baseURL + options.url,
                 method: options.method,
@@ -104,8 +105,15 @@ class RequestUtil {
             });
 
             // 处理响应
+            /**
+             * login.js:132
+             * 登录错误: ReferenceError: data is not defined
+             *     at LoginPage.redirectToDashboard (login.js:76:48)
+             *     at LoginPage.handleLoginSuccess (login.js:242:13)
+             *     at LoginPage.handleSubmit (login.js:127:22)
+             */
             if (response.code === 200) {
-                return response.data;
+                return response;
             } else {
                 throw new Error(response.message || '请求失败');
             }

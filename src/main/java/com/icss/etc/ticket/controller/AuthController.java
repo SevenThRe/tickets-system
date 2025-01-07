@@ -6,11 +6,16 @@ import com.icss.etc.ticket.entity.User;
 import com.icss.etc.ticket.entity.dto.AuthDTO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.service.UserService;
+import com.icss.etc.ticket.util.JWTUtils;
+import com.icss.etc.ticket.util.MD5Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -34,8 +39,15 @@ public class AuthController {
     @RequestMapping("/login")
     public R login(@RequestBody AuthDTO user) {
         User u = userService.login(user.username());
-        if (u != null && u.getPassword().equals(user.password())) {
-            return R.OK();
+        //TODO : 密码加密
+        String newpass = MD5Util.getMD5(user.password());
+        if (u != null && u.getPassword().equals(newpass)) {
+            String token = JWTUtils.generToken(u.getUserId().toString(), "AccessToken", u.getPassword());
+            Map<String, Object> map = new HashMap<>();
+            map.put("token", token);
+            u.setPassword("");
+            map.put("userInfo", u);
+            return R.OK(map);
         } else {
             return R.FAIL(CodeEnum.USERNAME_OR_PASSWORD_ERROR);
         }

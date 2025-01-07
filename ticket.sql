@@ -178,7 +178,7 @@ create table t_ticket
     is_deleted         tinyint  default 0                 not null comment '是否删除',
     create_by          bigint                             null comment '创建人',
     update_by          bigint                             null comment '更新人',
-    create_time        datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    create_time        datetime default CURRENT_TIMESTAMP null comment '创建时间',
     update_time        datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间'
 )
     comment '工单表' charset = utf8mb4;
@@ -245,7 +245,7 @@ create table t_user
     create_by     bigint                             null comment '创建人',
     update_by     bigint                             null comment '更新人',
     create_time   datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    update_time   datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    update_time   datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
     position_id   bigint                             null comment '职位ID',
     constraint uk_username
         unique (username) comment '用户名唯一索引'
