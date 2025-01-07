@@ -20,9 +20,25 @@
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
-    department_id, department_name, manager_id, parent_id, dept_level, description, `status`, 
+    department_id, department_name, manager_id, parent_id, dept_level, description, `status`,
     is_deleted, create_by, update_by, create_time, update_time, order_num
   </sql>
+
+  <!--  根据父部门ID查询子部门列表-->
+  <select id="selectSubDepartments" resultMap="BaseResultMap">
+    select  d1.department_id,d1.department_name,d1.parent_id,d2.*
+    from t_department d1  join t_department d2 on d1.department_id = d2.parent_id  where d1.department_id = #{parent_id}
+    order by d2.order_num
+  </select>
+
+  <!--  查询部门详情-->
+  <select id="selectByDpartmentId" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List"/>
+        from t_department where department_id = #{department_id} order by order_num
+  </select>
+
+
+
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     <!--@mbg.generated-->
     select 
@@ -47,71 +63,31 @@
     <!--@mbg.generated-->
     insert into t_department
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="departmentName != null">
-        department_name,
-      </if>
-      <if test="managerId != null">
-        manager_id,
-      </if>
-      <if test="parentId != null">
-        parent_id,
-      </if>
-      <if test="deptLevel != null">
-        dept_level,
-      </if>
-      <if test="description != null">
-        description,
-      </if>
-      <if test="status != null">
-        `status`,
-      </if>
-      <if test="isDeleted != null">
-        is_deleted,
-      </if>
-      <if test="createBy != null">
-        create_by,
-      </if>
-      <if test="updateBy != null">
-        update_by,
-      </if>
-      <if test="createTime != null">
-        create_time,
-      </if>
-      <if test="updateTime != null">
-        update_time,
-      </if>
+      <if test="department_name != null  and department_name!=''">department_name,</if>
+      <if test="manager_id != null">manager_id,</if>
+      <if test="parent_id != null">parent_id,</if>
+      <if test="dept_level != null">dept_level,</if>
+      <if test="description != null   and description!=''">description,</if>
+      status,
+      is_deleted,
+      <if test="create_by != null   and create_by!=''">create_by,</if>
+      update_by,
+      create_time,
+      update_time,
       <if test="orderNum != null">
         order_num,
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="departmentName != null">
-        #{departmentName,jdbcType=VARCHAR},
-      </if>
-      <if test="managerId != null">
-        #{managerId,jdbcType=BIGINT},
-      </if>
-      <if test="parentId != null">
-        #{parentId,jdbcType=BIGINT},
-      </if>
-      <if test="deptLevel != null">
-        #{deptLevel,jdbcType=TINYINT},
-      </if>
-      <if test="description != null">
-        #{description,jdbcType=VARCHAR},
-      </if>
-      <if test="status != null">
-        #{status,jdbcType=TINYINT},
-      </if>
-      <if test="isDeleted != null">
-        #{isDeleted,jdbcType=TINYINT},
-      </if>
-      <if test="createBy != null">
-        #{createBy,jdbcType=BIGINT},
-      </if>
-      <if test="updateBy != null">
-        #{updateBy,jdbcType=BIGINT},
-      </if>
+      <if test="department_name != null   and department_name!=''">#{department_name},</if>
+      <if test="manager_id != null"> #{manager_id},</if>
+      <if test="parent_id != null">#{parent_id},</if>
+      <if test="dept_level != null"> #{dept_level},</if>
+      <if test="description != null   and description!=''">#{description},</if>
+      1,
+      0,
+      <if test="create_by != null">#{create_by},</if>
+      0,
       <if test="createTime != null">
         #{createTime,jdbcType=TIMESTAMP},
       </if>
@@ -123,6 +99,7 @@
       </if>
     </trim>
   </insert>
+
   <update id="updateByPrimaryKeySelective" parameterType="com.icss.etc.ticket.entity.Department">
     <!--@mbg.generated-->
     update t_department
@@ -204,8 +181,8 @@
             <if test="deptLevel != null">
                 and dept_level=#{deptLevel,jdbcType=TINYINT}
             </if>
-            <if test="description != null">
-                and description=#{description,jdbcType=VARCHAR}
+            <if test="description != null and description != ''">
+                and description='%'#{description,jdbcType=VARCHAR}'%'
             </if>
             <if test="status != null">
                 and `status`=#{status,jdbcType=TINYINT}
@@ -230,7 +207,10 @@
             </if>
         </where>
     </select>
-  <update id="updateBatchSelective" parameterType="java.util.List">
+
+
+
+    <update id="updateBatchSelective" parameterType="java.util.List">
     <!--@mbg.generated-->
     update t_department
     <trim prefix="set" suffixOverrides=",">

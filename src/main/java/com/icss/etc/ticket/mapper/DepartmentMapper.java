@@ -70,4 +70,8 @@ public interface DepartmentMapper {
     int updateBatchSelective(@Param("list") List<Department> list);
 
     int batchInsert(@Param("list") List<Department> list);
+
+//   查询部门详情
+    Department selectByDpartmentId(Long department_id);
+
 }
