@@ -9,6 +9,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 /**
  * {@code AppConfig}
+ * 123
  * 配置类
  * @author SevenThRe
  * @version 1.0
