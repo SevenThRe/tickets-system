@@ -4,46 +4,47 @@
   <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.User">
     <!--@mbg.generated-->
     <!--@Table t_user-->
-    <id column="user_id" jdbcType="BIGINT" property="user_id" />
+    <id column="user_id" jdbcType="BIGINT" property="userId" />
     <result column="username" jdbcType="VARCHAR" property="username" />
     <result column="password" jdbcType="VARCHAR" property="password" />
-    <result column="real_name" jdbcType="VARCHAR" property="real_name" />
-    <result column="department_id" jdbcType="BIGINT" property="department_id" />
+    <result column="real_name" jdbcType="VARCHAR" property="realName" />
+    <result column="department_id" jdbcType="BIGINT" property="departmentId" />
     <result column="email" jdbcType="VARCHAR" property="email" />
     <result column="phone" jdbcType="VARCHAR" property="phone" />
     <result column="status" jdbcType="TINYINT" property="status" />
-    <result column="is_deleted" jdbcType="TINYINT" property="is_deleted" />
-    <result column="create_by" jdbcType="BIGINT" property="create_by" />
-    <result column="update_by" jdbcType="BIGINT" property="update_by" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="create_time" />
-    <result column="update_time" jdbcType="TIMESTAMP" property="update_time" />
+    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
+    <result column="create_by" jdbcType="BIGINT" property="createBy" />
+    <result column="update_by" jdbcType="BIGINT" property="updateBy" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="position_id" jdbcType="BIGINT" property="positionId" />
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
     user_id, username, `password`, real_name, department_id, email, phone, `status`, 
-    is_deleted, create_by, update_by, create_time, update_time
+    is_deleted, create_by, update_by, create_time, update_time, position_id
   </sql>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     <!--@mbg.generated-->
     select 
     <include refid="Base_Column_List" />
     from t_user
-    where user_id = #{user_id,jdbcType=BIGINT}
+    where user_id = #{userId,jdbcType=BIGINT}
   </select>
-  <insert id="insert" keyColumn="user_id" keyProperty="user_id" parameterType="com.icss.etc.ticket.entity.User" useGeneratedKeys="true">
+  <insert id="insert" keyColumn="user_id" keyProperty="userId" parameterType="com.icss.etc.ticket.entity.User" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_user (username, `password`, real_name, 
       department_id, email, phone, 
       `status`, is_deleted, create_by, 
-      update_by, create_time, update_time
-      )
-    values (#{username,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, #{real_name,jdbcType=VARCHAR}, 
-      #{department_id,jdbcType=BIGINT}, #{email,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR}, 
-      #{status,jdbcType=TINYINT}, #{is_deleted,jdbcType=TINYINT}, #{create_by,jdbcType=BIGINT}, 
-      #{update_by,jdbcType=BIGINT}, #{create_time,jdbcType=TIMESTAMP}, #{update_time,jdbcType=TIMESTAMP}
-      )
+      update_by, create_time, update_time, 
+      position_id)
+    values (#{username,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, #{realName,jdbcType=VARCHAR}, 
+      #{departmentId,jdbcType=BIGINT}, #{email,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR}, 
+      #{status,jdbcType=TINYINT}, #{isDeleted,jdbcType=TINYINT}, #{createBy,jdbcType=BIGINT}, 
+      #{updateBy,jdbcType=BIGINT}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, 
+      #{positionId,jdbcType=BIGINT})
   </insert>
-  <insert id="insertSelective" keyColumn="user_id" keyProperty="user_id" parameterType="com.icss.etc.ticket.entity.User" useGeneratedKeys="true">
+  <insert id="insertSelective" keyColumn="user_id" keyProperty="userId" parameterType="com.icss.etc.ticket.entity.User" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_user
     <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -53,10 +54,10 @@
       <if test="password != null">
         `password`,
       </if>
-      <if test="real_name != null">
+      <if test="realName != null">
         real_name,
       </if>
-      <if test="department_id != null">
+      <if test="departmentId != null">
         department_id,
       </if>
       <if test="email != null">
@@ -68,20 +69,23 @@
       <if test="status != null">
         `status`,
       </if>
-      <if test="is_deleted != null">
+      <if test="isDeleted != null">
         is_deleted,
       </if>
-      <if test="create_by != null">
+      <if test="createBy != null">
         create_by,
       </if>
-      <if test="update_by != null">
+      <if test="updateBy != null">
         update_by,
       </if>
-      <if test="create_time != null">
+      <if test="createTime != null">
         create_time,
       </if>
-      <if test="update_time != null">
+      <if test="updateTime != null">
         update_time,
+      </if>
+      <if test="positionId != null">
+        position_id,
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -91,11 +95,11 @@
       <if test="password != null">
         #{password,jdbcType=VARCHAR},
       </if>
-      <if test="real_name != null">
-        #{real_name,jdbcType=VARCHAR},
+      <if test="realName != null">
+        #{realName,jdbcType=VARCHAR},
       </if>
-      <if test="department_id != null">
-        #{department_id,jdbcType=BIGINT},
+      <if test="departmentId != null">
+        #{departmentId,jdbcType=BIGINT},
       </if>
       <if test="email != null">
         #{email,jdbcType=VARCHAR},
@@ -106,20 +110,23 @@
       <if test="status != null">
         #{status,jdbcType=TINYINT},
       </if>
-      <if test="is_deleted != null">
-        #{is_deleted,jdbcType=TINYINT},
+      <if test="isDeleted != null">
+        #{isDeleted,jdbcType=TINYINT},
       </if>
-      <if test="create_by != null">
-        #{create_by,jdbcType=BIGINT},
+      <if test="createBy != null">
+        #{createBy,jdbcType=BIGINT},
       </if>
-      <if test="update_by != null">
-        #{update_by,jdbcType=BIGINT},
+      <if test="updateBy != null">
+        #{updateBy,jdbcType=BIGINT},
       </if>
-      <if test="create_time != null">
-        #{create_time,jdbcType=TIMESTAMP},
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="update_time != null">
-        #{update_time,jdbcType=TIMESTAMP},
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="positionId != null">
+        #{positionId,jdbcType=BIGINT},
       </if>
     </trim>
   </insert>
@@ -133,11 +140,11 @@
       <if test="password != null">
         `password` = #{password,jdbcType=VARCHAR},
       </if>
-      <if test="real_name != null">
-        real_name = #{real_name,jdbcType=VARCHAR},
+      <if test="realName != null">
+        real_name = #{realName,jdbcType=VARCHAR},
       </if>
-      <if test="department_id != null">
-        department_id = #{department_id,jdbcType=BIGINT},
+      <if test="departmentId != null">
+        department_id = #{departmentId,jdbcType=BIGINT},
       </if>
       <if test="email != null">
         email = #{email,jdbcType=VARCHAR},
@@ -148,49 +155,53 @@
       <if test="status != null">
         `status` = #{status,jdbcType=TINYINT},
       </if>
-      <if test="is_deleted != null">
-        is_deleted = #{is_deleted,jdbcType=TINYINT},
+      <if test="isDeleted != null">
+        is_deleted = #{isDeleted,jdbcType=TINYINT},
       </if>
-      <if test="create_by != null">
-        create_by = #{create_by,jdbcType=BIGINT},
+      <if test="createBy != null">
+        create_by = #{createBy,jdbcType=BIGINT},
       </if>
-      <if test="update_by != null">
-        update_by = #{update_by,jdbcType=BIGINT},
+      <if test="updateBy != null">
+        update_by = #{updateBy,jdbcType=BIGINT},
       </if>
-      <if test="create_time != null">
-        create_time = #{create_time,jdbcType=TIMESTAMP},
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="update_time != null">
-        update_time = #{update_time,jdbcType=TIMESTAMP},
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="positionId != null">
+        position_id = #{positionId,jdbcType=BIGINT},
       </if>
     </set>
-    where user_id = #{user_id,jdbcType=BIGINT}
+    where user_id = #{userId,jdbcType=BIGINT}
   </update>
   <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.User">
     <!--@mbg.generated-->
     update t_user
     set username = #{username,jdbcType=VARCHAR},
       `password` = #{password,jdbcType=VARCHAR},
-      real_name = #{real_name,jdbcType=VARCHAR},
-      department_id = #{department_id,jdbcType=BIGINT},
+      real_name = #{realName,jdbcType=VARCHAR},
+      department_id = #{departmentId,jdbcType=BIGINT},
       email = #{email,jdbcType=VARCHAR},
       phone = #{phone,jdbcType=VARCHAR},
       `status` = #{status,jdbcType=TINYINT},
-      is_deleted = #{is_deleted,jdbcType=TINYINT},
-      create_by = #{create_by,jdbcType=BIGINT},
-      update_by = #{update_by,jdbcType=BIGINT},
-      create_time = #{create_time,jdbcType=TIMESTAMP},
-      update_time = #{update_time,jdbcType=TIMESTAMP}
-    where user_id = #{user_id,jdbcType=BIGINT}
+      is_deleted = #{isDeleted,jdbcType=TINYINT},
+      create_by = #{createBy,jdbcType=BIGINT},
+      update_by = #{updateBy,jdbcType=BIGINT},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      position_id = #{positionId,jdbcType=BIGINT}
+    where user_id = #{userId,jdbcType=BIGINT}
   </update>
   <select id="selectByAll" resultMap="BaseResultMap">
         <!--@mbg.generated-->
         select
-        <include refid="Base_Column_List"/>
+        <include refid="Base_Column_List" />
         from t_user
         <where>
-            <if test="user_id != null">
-                and user_id=#{user_id,jdbcType=BIGINT}
+            <if test="userId != null">
+                and user_id=#{userId,jdbcType=BIGINT}
             </if>
             <if test="username != null">
                 and username=#{username,jdbcType=VARCHAR}
@@ -198,11 +209,11 @@
             <if test="password != null">
                 and `password`=#{password,jdbcType=VARCHAR}
             </if>
-            <if test="real_name != null">
-                and real_name=#{real_name,jdbcType=VARCHAR}
+            <if test="realName != null">
+                and real_name=#{realName,jdbcType=VARCHAR}
             </if>
-            <if test="department_id != null">
-                and department_id=#{department_id,jdbcType=BIGINT}
+            <if test="departmentId != null">
+                and department_id=#{departmentId,jdbcType=BIGINT}
             </if>
             <if test="email != null">
                 and email=#{email,jdbcType=VARCHAR}
@@ -213,20 +224,23 @@
             <if test="status != null">
                 and `status`=#{status,jdbcType=TINYINT}
             </if>
-            <if test="is_deleted != null">
-                and is_deleted=#{is_deleted,jdbcType=TINYINT}
+            <if test="isDeleted != null">
+                and is_deleted=#{isDeleted,jdbcType=TINYINT}
             </if>
-            <if test="create_by != null">
-                and create_by=#{create_by,jdbcType=BIGINT}
+            <if test="createBy != null">
+                and create_by=#{createBy,jdbcType=BIGINT}
             </if>
-            <if test="update_by != null">
-                and update_by=#{update_by,jdbcType=BIGINT}
+            <if test="updateBy != null">
+                and update_by=#{updateBy,jdbcType=BIGINT}
             </if>
-            <if test="create_time != null">
-                and create_time=#{create_time,jdbcType=TIMESTAMP}
+            <if test="createTime != null">
+                and create_time=#{createTime,jdbcType=TIMESTAMP}
             </if>
-            <if test="update_time != null">
-                and update_time=#{update_time,jdbcType=TIMESTAMP}
+            <if test="updateTime != null">
+                and update_time=#{updateTime,jdbcType=TIMESTAMP}
+            </if>
+            <if test="positionId != null">
+                and position_id=#{positionId,jdbcType=BIGINT}
             </if>
         </where>
     </select>
@@ -237,105 +251,112 @@
       <trim prefix="username = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
           <if test="item.username != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.username,jdbcType=VARCHAR}
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.username,jdbcType=VARCHAR}
           </if>
         </foreach>
       </trim>
       <trim prefix="`password` = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
           <if test="item.password != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.password,jdbcType=VARCHAR}
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.password,jdbcType=VARCHAR}
           </if>
         </foreach>
       </trim>
       <trim prefix="real_name = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.real_name != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.real_name,jdbcType=VARCHAR}
+          <if test="item.realName != null">
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.realName,jdbcType=VARCHAR}
           </if>
         </foreach>
       </trim>
       <trim prefix="department_id = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.department_id != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.department_id,jdbcType=BIGINT}
+          <if test="item.departmentId != null">
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.departmentId,jdbcType=BIGINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="email = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
           <if test="item.email != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.email,jdbcType=VARCHAR}
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.email,jdbcType=VARCHAR}
           </if>
         </foreach>
       </trim>
       <trim prefix="phone = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
           <if test="item.phone != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.phone,jdbcType=VARCHAR}
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.phone,jdbcType=VARCHAR}
           </if>
         </foreach>
       </trim>
       <trim prefix="`status` = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
           <if test="item.status != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.status,jdbcType=TINYINT}
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.status,jdbcType=TINYINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="is_deleted = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.is_deleted != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.is_deleted,jdbcType=TINYINT}
+          <if test="item.isDeleted != null">
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.isDeleted,jdbcType=TINYINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="create_by = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.create_by != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.create_by,jdbcType=BIGINT}
+          <if test="item.createBy != null">
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.createBy,jdbcType=BIGINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="update_by = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.update_by != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.update_by,jdbcType=BIGINT}
+          <if test="item.updateBy != null">
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.updateBy,jdbcType=BIGINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="create_time = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.create_time != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.create_time,jdbcType=TIMESTAMP}
+          <if test="item.createTime != null">
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.createTime,jdbcType=TIMESTAMP}
           </if>
         </foreach>
       </trim>
       <trim prefix="update_time = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.update_time != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.update_time,jdbcType=TIMESTAMP}
+          <if test="item.updateTime != null">
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.updateTime,jdbcType=TIMESTAMP}
+          </if>
+        </foreach>
+      </trim>
+      <trim prefix="position_id = case" suffix="end,">
+        <foreach collection="list" index="index" item="item">
+          <if test="item.positionId != null">
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.positionId,jdbcType=BIGINT}
           </if>
         </foreach>
       </trim>
     </trim>
     where user_id in
     <foreach close=")" collection="list" item="item" open="(" separator=", ">
-      #{item.user_id,jdbcType=BIGINT}
+      #{item.userId,jdbcType=BIGINT}
     </foreach>
   </update>
-  <insert id="batchInsert" keyColumn="user_id" keyProperty="user_id" parameterType="map" useGeneratedKeys="true">
+  <insert id="batchInsert" keyColumn="user_id" keyProperty="userId" parameterType="map" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_user
     (username, `password`, real_name, department_id, email, phone, `status`, is_deleted, 
-      create_by, update_by, create_time, update_time)
+      create_by, update_by, create_time, update_time, position_id)
     values
     <foreach collection="list" item="item" separator=",">
-      (#{item.username,jdbcType=VARCHAR}, #{item.password,jdbcType=VARCHAR}, #{item.real_name,jdbcType=VARCHAR}, 
-        #{item.department_id,jdbcType=BIGINT}, #{item.email,jdbcType=VARCHAR}, #{item.phone,jdbcType=VARCHAR}, 
-        #{item.status,jdbcType=TINYINT}, #{item.is_deleted,jdbcType=TINYINT}, #{item.create_by,jdbcType=BIGINT}, 
-        #{item.update_by,jdbcType=BIGINT}, #{item.create_time,jdbcType=TIMESTAMP}, #{item.update_time,jdbcType=TIMESTAMP}
-        )
+      (#{item.username,jdbcType=VARCHAR}, #{item.password,jdbcType=VARCHAR}, #{item.realName,jdbcType=VARCHAR}, 
+        #{item.departmentId,jdbcType=BIGINT}, #{item.email,jdbcType=VARCHAR}, #{item.phone,jdbcType=VARCHAR}, 
+        #{item.status,jdbcType=TINYINT}, #{item.isDeleted,jdbcType=TINYINT}, #{item.createBy,jdbcType=BIGINT}, 
+        #{item.updateBy,jdbcType=BIGINT}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP}, 
+        #{item.positionId,jdbcType=BIGINT})
     </foreach>
   </insert>
 </mapper>

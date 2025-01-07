@@ -8,43 +8,58 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * {@code UserTheme} 
+ * {@code Position} 
  * 
  * @since 1.0
  * @version 1.0
  * @author SevenThRe
  */
-
+    
 /**
- * 用户主题配置表
+ * 职位表
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserTheme implements Serializable {
+public class Position implements Serializable {
     /**
-     * 用户ID
-     */
-    private Long userId;
+    * 主键ID
+    */
+    private Long id;
 
     /**
-     * 主题ID
-     */
-    private String themeId;
+    * 职位编码
+    */
+    private String code;
 
     /**
-     * 是否当前使用的主题
-     */
-    private Integer isCurrent;
+    * 职位名称
+    */
+    private String name;
 
     /**
-     * 创建时间
-     */
+    * 所属部门ID
+    */
+    private Long deptId;
+
+    /**
+    * 状态(0-禁用 1-启用)
+    */
+    private Integer status;
+
+    /**
+    * 排序号
+    */
+    private Integer orderNum;
+
+    /**
+    * 创建时间
+    */
     private LocalDateTime createTime;
 
     /**
-     * 更新时间
-     */
+    * 更新时间
+    */
     private LocalDateTime updateTime;
 
     @Serial

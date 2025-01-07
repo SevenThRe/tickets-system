@@ -35,10 +35,18 @@ public interface DepartmentMapper {
     /**
      * select by primary key
      *
-     * @param department_id primary key
+     * @param departmentId primary key
      * @return object by primary key
      */
-    Department selectByPrimaryKey(Long department_id);
+    Department selectByPrimaryKey(Long departmentId);
+
+    /**
+     * update record selective
+     *
+     * @param record the updated record
+     * @return update count
+     */
+    int updateByPrimaryKeySelective(Department record);
 
     /**
      * update record

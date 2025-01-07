@@ -1,21 +1,24 @@
 package com.icss.etc.ticket.mapper;
 
 import com.icss.etc.ticket.entity.Notification;
+
 import java.time.LocalDateTime;
 import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 
 /**
- * {@code NotificationMapper} 
- * 
- * @since 1.0
- * @version 1.0
+ * {@code NotificationMapper}
+ *
  * @author SevenThRe
+ * @version 1.0
+ * @since 1.0
  */
-    
+
 public interface NotificationMapper {
     /**
      * insert record to table
+     *
      * @param record the record
      * @return insert count
      */
@@ -23,6 +26,7 @@ public interface NotificationMapper {
 
     /**
      * insert record to table selective
+     *
      * @param record the record
      * @return insert count
      */
@@ -30,13 +34,15 @@ public interface NotificationMapper {
 
     /**
      * select by primary key
-     * @param notification_id primary key
+     *
+     * @param notificationId primary key
      * @return object by primary key
      */
-    Notification selectByPrimaryKey(Long notification_id);
+    Notification selectByPrimaryKey(Long notificationId);
 
     /**
      * update record selective
+     *
      * @param record the updated record
      * @return update count
      */
@@ -44,6 +50,7 @@ public interface NotificationMapper {
 
     /**
      * update record
+     *
      * @param record the updated record
      * @return update count
      */

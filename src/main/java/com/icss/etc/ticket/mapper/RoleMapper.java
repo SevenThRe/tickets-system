@@ -35,10 +35,10 @@ public interface RoleMapper {
     /**
      * select by primary key
      *
-     * @param role_id primary key
+     * @param roleId primary key
      * @return object by primary key
      */
-    Role selectByPrimaryKey(Long role_id);
+    Role selectByPrimaryKey(Long roleId);
 
     /**
      * update record selective

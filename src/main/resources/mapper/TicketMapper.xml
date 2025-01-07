@@ -2,503 +2,319 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.etc.ticket.mapper.TicketMapper">
   <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Ticket">
-<!--    <id property="ticket_id" column="ticket_id"/>-->
-<!--    <result property="type_id" jdbcType="BIGINT"  column="type_id"/>-->
-<!--    <result property="title" jdbcType="BIGINT"  column="title"/>-->
-<!--    <result property="content" jdbcType="BLOB" column="content"/>-->
-<!--    <result property="processor_id" jdbcType="BIGINT"  column="processor_id"/>-->
-<!--    <result property="department_id" jdbcType="BIGINT"  column="department_id"/>-->
-<!--    <result property="priority" column="priority" typeHandler="com.icss.etc.ticket.handler.PriorityTypeHandler"/>-->
-<!--    <result property="status" column="status" typeHandler="com.icss.etc.ticket.handler.TicketStatusTypeHandler"/>-->
-<!--    <result property="expect_finish_time" jdbcType="DATE" column="expect_finish_time"/>-->
-<!--    <result property="actual_finish_time" column="actual_finish_time"/>-->
-<!--    <result property="is_deleted" column="is_deleted"/>-->
-<!--    <result property="create_by" jdbcType="BIGINT" column="create_by"/>-->
-<!--    <result property="update_by" jdbcType="BIGINT" column="update_by"/>-->
-<!--    <result property="create_time" jdbcType="DATE" column="create_time"/>-->
-<!--    <result property="update_time" jdbcType="DATE" column="update_time"/>-->
-</resultMap>
+    <!--@Table t_ticket-->
+    <id column="ticket_id" jdbcType="BIGINT" property="ticketId" />
+    <result column="type_id" jdbcType="BIGINT" property="typeId" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+    <result column="content" jdbcType="LONGVARCHAR" property="content" />
+    <result column="processor_id" jdbcType="BIGINT" property="processorId" />
+    <result column="department_id" jdbcType="BIGINT" property="departmentId" />
+    <result column="priority" jdbcType="TINYINT" property="priority" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+    <result column="expect_finish_time" jdbcType="TIMESTAMP" property="expectFinishTime" />
+    <result column="actual_finish_time" jdbcType="TIMESTAMP" property="actualFinishTime" />
+    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
+    <result column="create_by" jdbcType="BIGINT" property="createBy" />
+    <result column="update_by" jdbcType="BIGINT" property="updateBy" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
     ticket_id, type_id, title, content, processor_id, department_id, priority, `status`, 
     expect_finish_time, actual_finish_time, is_deleted, create_by, update_by, create_time, 
     update_time
   </sql>
-  <insert id="insertSelective" keyColumn="ticket_id" keyProperty="ticket_id" parameterType="com.icss.etc.ticket.entity.Ticket" useGeneratedKeys="true">
+  <insert id="insert" keyColumn="ticket_id" keyProperty="ticketId" parameterType="com.icss.etc.ticket.entity.Ticket" useGeneratedKeys="true">
     <!--@mbg.generated-->
-    insert into t_ticket
-    <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="type_id != null">
-        type_id,
-      </if>
-      <if test="title != null">
-        title,
-      </if>
-      <if test="content != null">
-        content,
-      </if>
-      <if test="processor_id != null">
-        processor_id,
-      </if>
-      <if test="department_id != null">
-        department_id,
-      </if>
-      <if test="priority != null">
-        priority,
-      </if>
-      <if test="status != null">
-        `status`,
-      </if>
-      <if test="expect_finish_time != null">
-        expect_finish_time,
-      </if>
-      <if test="actual_finish_time != null">
-        actual_finish_time,
-      </if>
-      <if test="is_deleted != null">
-        is_deleted,
-      </if>
-      <if test="create_by != null">
-        create_by,
-      </if>
-      <if test="update_by != null">
-        update_by,
-      </if>
-      <if test="create_time != null">
-        create_time,
-      </if>
-      <if test="update_time != null">
-        update_time,
-      </if>
-    </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="type_id != null">
-        #{type_id,jdbcType=BIGINT},
-      </if>
-      <if test="title != null">
-        #{title,jdbcType=VARCHAR},
-      </if>
-      <if test="content != null">
-        #{content,jdbcType=LONGVARCHAR},
-      </if>
-      <if test="processor_id != null">
-        #{processor_id,jdbcType=BIGINT},
-      </if>
-      <if test="department_id != null">
-        #{department_id,jdbcType=BIGINT},
-      </if>
-      <if test="priority != null">
-        #{priority,jdbcType=TINYINT},
-      </if>
-      <if test="status != null">
-        #{status,jdbcType=TINYINT},
-      </if>
-      <if test="expect_finish_time != null">
-        #{expect_finish_time,jdbcType=TIMESTAMP},
-      </if>
-      <if test="actual_finish_time != null">
-        #{actual_finish_time,jdbcType=TIMESTAMP},
-      </if>
-      <if test="is_deleted != null">
-        #{is_deleted,jdbcType=TINYINT},
-      </if>
-      <if test="create_by != null">
-        #{create_by,jdbcType=BIGINT},
-      </if>
-      <if test="update_by != null">
-        #{update_by,jdbcType=BIGINT},
-      </if>
-      <if test="create_time != null">
-        #{create_time,jdbcType=TIMESTAMP},
-      </if>
-      <if test="update_time != null">
-        #{update_time,jdbcType=TIMESTAMP},
-      </if>
-    </trim>
+    insert into t_ticket (type_id, title, content, 
+      processor_id, department_id, priority, 
+      `status`, expect_finish_time, actual_finish_time, 
+      is_deleted, create_by, update_by, 
+      create_time, update_time)
+    values (#{typeId,jdbcType=BIGINT}, #{title,jdbcType=VARCHAR}, #{content,jdbcType=LONGVARCHAR}, 
+      #{processorId,jdbcType=BIGINT}, #{departmentId,jdbcType=BIGINT}, #{priority,jdbcType=TINYINT}, 
+      #{status,jdbcType=TINYINT}, #{expectFinishTime,jdbcType=TIMESTAMP}, #{actualFinishTime,jdbcType=TIMESTAMP}, 
+      #{isDeleted,jdbcType=TINYINT}, #{createBy,jdbcType=BIGINT}, #{updateBy,jdbcType=BIGINT}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
   </insert>
-  <select id="selectByAll" resultMap="BaseResultMap">
-        <!--@mbg.generated-->
-        select
-        <include refid="Base_Column_List" />
-        from t_ticket
+    <select id="getDeptStats" resultType="com.icss.etc.ticket.entity.dto.DeptTicketStatsDTO">
+        SELECT
+        COUNT(*) as totalCount,
+        SUM(IF(status = 0, 1, 0)) as pendingCount,
+        SUM(IF(status = 1, 1, 0)) as processingCount,
+        SUM(IF(status = 2, 1, 0)) as completedCount,
+        SUM(IF(status = 3, 1, 0)) as closedCount,
+        AVG(TIMESTAMPDIFF(HOUR, create_time,
+        IF(status IN (2,3), actual_finish_time, NOW()))) as avgProcessTime,
+        ROUND(SUM(IF(status IN (2,3), 1, 0)) * 100.0 /
+        NULLIF(COUNT(*), 0), 2) as completionRate,
+        (SELECT AVG(evaluation_score)
+        FROM t_ticket_record
+        WHERE operation_type = 'EVALUATE'
+        AND ticket_id IN (SELECT ticket_id FROM t_ticket WHERE department_id = #{deptId})
+        ) as satisfactionRate
+        FROM t_ticket
+        WHERE department_id = #{deptId}
+        AND is_deleted = 0
+    </select>
+
+  <update id="update">
+      update t_ticket
+      <set>
+        <if test="typeId!= null">type_id = #{typeId,jdbcType=BIGINT},</if>
+        <if test="title != null">title = #{title,jdbcType=VARCHAR},</if>
+        <if test="content!= null">content = #{content,jdbcType=LONGVARCHAR},</if>
+        <if test="processorId != null">processor_id = #{processorId,jdbcType=BIGINT},</if>
+        <if test="departmentId != null">department_id = #{departmentId,jdbcType=BIGINT},</if>
+        <if test="priority != null">priority = #{priority,jdbcType=TINYINT},</if>
+        <if test="status != null">`status` = #{status,jdbcType=TINYINT},</if>
+        <if test="expectFinishTime != null">expect_finish_time = #{expectFinishTime,jdbcType=TIMESTAMP},</if>
+        <if test="actualFinishTime != null">actual_finish_time = #{actualFinishTime,jdbcType=TIMESTAMP},</if>
+        <if test="isDeleted != null">is_deleted = #{isDeleted,jdbcType=TINYINT},</if>
+          update_by = #{updateBy,jdbcType=BIGINT},
+          update_time = default
+      </set>
+      where ticket_id = #{ticketId,jdbcType=BIGINT}
+    </update>
+
+  <update id="deleteById">
+      update t_ticket set is_deleted = 1
+      where ticket_id = #{ticketId,jdbcType=BIGINT}
+    </update>
+
+  <select id="getById" resultMap="BaseResultMap">
+      select
+          <include refid="Base_Column_List" />
+      from t_ticket
+        where ticket_id = #{ticketId,jdbcType=BIGINT}
+      and is_deleted = 0
+    </select>
+
+  <select id="pageList" resultType="com.icss.etc.ticket.entity.Ticket">
+      select
+          <include refid="Base_Column_List" />
+      from t_ticket
+        where is_deleted = 0
+        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
+        <if test="queryDTO.processorId != null">and processor_id = #{queryDTO.processorId,jdbcType=BIGINT}</if>
+        <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>
+        <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
+        <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
+        <if test="queryDTO.startTime != null">and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}</if>
+        <if test="queryDTO.endTime != null">and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}</if>
+      order by create_time desc
+    </select>
+
+  <select id="count" resultType="long">
+      select count(1)
+      from t_ticket
+        where is_deleted = 0
+        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
+        <if test="queryDTO.processorId != null">and processor_id = #{queryDTO.processorId,jdbcType=BIGINT}</if>
+        <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>
+        <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
+        <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
+        <if test="queryDTO.startTime != null">and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}</if>
+        <if test="queryDTO.endTime != null">and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}</if>
+        order by create_time desc
+    </select>
+
+    <select id="selectForExport" resultType="com.icss.etc.ticket.entity.dto.TicketExportDTO">
+        SELECT
+        t.ticket_id as ticketCode,
+        t.title,
+        t.content,
+        d.department_name as departmentName,
+        u.real_name as processorName,
+        CASE t.status
+        WHEN 0 THEN '待处理'
+        WHEN 1 THEN '处理中'
+        WHEN 2 THEN '已完成'
+        WHEN 3 THEN '已关闭'
+        END as statusName,
+        CASE t.priority
+        WHEN 0 THEN '普通'
+        WHEN 1 THEN '紧急'
+        WHEN 2 THEN '非常紧急'
+        END as priorityName,
+        t.create_time as createTime,
+        t.expect_finish_time as expectFinishTime,
+        t.actual_finish_time as actualFinishTime
+        FROM t_ticket t
+        LEFT JOIN t_department d ON t.department_id = d.department_id
+        LEFT JOIN t_user u ON t.processor_id = u.user_id
         <where>
-            <if test="ticket_id != null">
-                and ticket_id=#{ticket_id,jdbcType=BIGINT}
-            </if>
-            <if test="type_id != null">
-                and type_id=#{type_id,jdbcType=BIGINT}
-            </if>
-            <if test="title != null and title != ''">
-                and title=#{title,jdbcType=VARCHAR}
-            </if>
-            <if test="content != null and content != ''">
-                and content=#{content,jdbcType=LONGVARCHAR}
-            </if>
-            <if test="processor_id != null">
-                and processor_id=#{processor_id,jdbcType=BIGINT}
-            </if>
-            <if test="department_id != null">
-                and department_id=#{department_id,jdbcType=BIGINT}
-            </if>
-            <if test="priority != null">
-                and priority=#{priority,jdbcType=TINYINT}
+            t.is_deleted = 0
+            <if test="keyword != null and keyword != ''">
+                AND (t.title LIKE CONCAT('%',#{keyword},'%')
+                OR t.content LIKE CONCAT('%',#{keyword},'%'))
             </if>
             <if test="status != null">
-                and `status`=#{status,jdbcType=TINYINT}
+                AND t.status = #{status}
             </if>
-            <if test="expect_finish_time != null">
-                and expect_finish_time=#{expect_finish_time,jdbcType=TIMESTAMP}
+            <if test="priority != null">
+                AND t.priority = #{priority}
             </if>
-            <if test="actual_finish_time != null">
-                and actual_finish_time=#{actual_finish_time,jdbcType=TIMESTAMP}
+            <if test="departmentId != null">
+                AND t.department_id = #{departmentId}
             </if>
-            <if test="is_deleted != null">
-                and is_deleted=#{is_deleted,jdbcType=TINYINT}
+            <if test="processorId != null">
+                AND t.processor_id = #{processorId}
             </if>
-            <if test="create_by != null">
-                and create_by=#{create_by,jdbcType=BIGINT}
+            <if test="startTime != null">
+                AND t.create_time >= #{startTime}
             </if>
-            <if test="update_by != null">
-                and update_by=#{update_by,jdbcType=BIGINT}
-            </if>
-            <if test="create_time != null">
-                and create_time=#{create_time,jdbcType=TIMESTAMP}
-            </if>
-            <if test="update_time != null">
-                and update_time=#{update_time,jdbcType=TIMESTAMP}
+            <if test="endTime != null">
+                AND t.create_time &lt;= #{endTime}
             </if>
         </where>
+        ORDER BY t.create_time DESC
     </select>
-  <update id="updateBatchSelective" parameterType="java.util.List">
-    <!--@mbg.generated-->
-    update t_ticket
-    <trim prefix="set" suffixOverrides=",">
-      <trim prefix="type_id = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.type_id != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.type_id,jdbcType=BIGINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="title = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.title != null and item.title != ''">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.title,jdbcType=VARCHAR}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="content = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.content != null and item.content != ''">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.content,jdbcType=LONGVARCHAR}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="processor_id = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.processor_id != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.processor_id,jdbcType=BIGINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="department_id = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.department_id != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.department_id,jdbcType=BIGINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="priority = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.priority != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.priority,jdbcType=TINYINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="`status` = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.status != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.status,jdbcType=TINYINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="expect_finish_time = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.expect_finish_time != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.expect_finish_time,jdbcType=TIMESTAMP}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="actual_finish_time = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.actual_finish_time != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.actual_finish_time,jdbcType=TIMESTAMP}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="is_deleted = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.is_deleted != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.is_deleted,jdbcType=TINYINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="create_by = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.create_by != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.create_by,jdbcType=BIGINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="update_by = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.update_by != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.update_by,jdbcType=BIGINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="create_time = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.create_time != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.create_time,jdbcType=TIMESTAMP}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="update_time = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.update_time != null">
-            when ticket_id = #{item.ticket_id,jdbcType=BIGINT} then #{item.update_time,jdbcType=TIMESTAMP}
-          </if>
-        </foreach>
-      </trim>
-    </trim>
-    where ticket_id in
-    <foreach close=")" collection="list" item="item" open="(" separator=", ">
-      #{item.ticket_id,jdbcType=BIGINT}
-    </foreach>
-  </update>
-  <insert id="batchInsert" keyColumn="ticket_id" keyProperty="ticket_id" parameterType="map" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into t_ticket
-    (type_id, title, content, processor_id, department_id, priority, `status`, expect_finish_time, 
-      actual_finish_time, is_deleted, create_by, update_by, create_time, update_time)
-    values
-    <foreach collection="list" item="item" separator=",">
-      (#{item.type_id,jdbcType=BIGINT}, #{item.title,jdbcType=VARCHAR}, #{item.content,jdbcType=LONGVARCHAR}, 
-        #{item.processor_id,jdbcType=BIGINT}, #{item.department_id,jdbcType=BIGINT}, #{item.priority,jdbcType=TINYINT}, 
-        #{item.status,jdbcType=TINYINT}, #{item.expect_finish_time,jdbcType=TIMESTAMP}, 
-        #{item.actual_finish_time,jdbcType=TIMESTAMP}, #{item.is_deleted,jdbcType=TINYINT}, 
-        #{item.create_by,jdbcType=BIGINT}, #{item.update_by,jdbcType=BIGINT}, #{item.create_time,jdbcType=TIMESTAMP}, 
-        #{item.update_time,jdbcType=TIMESTAMP})
-    </foreach>
-  </insert>
 
-    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-        select ticket_id,
-               type_id,
-               title,
-               content,
-               processor_id,
-               department_id,
-               priority,
-               status,
-               expect_finish_time,
-               actual_finish_time,
-               is_deleted,
-               create_by,
-               update_by,
-               create_time,
-               update_time
-        from t_ticket
-        where ticket_id = #{ticket_id,jdbcType=BIGINT}
-          and is_deleted = 0
+  <select id="getMyTickets" resultMap="BaseResultMap">
+      select
+          <include refid="Base_Column_List" />
+      from t_ticket
+        where create_by = #{userId,jdbcType=BIGINT}
+        and is_deleted = 0
+        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
+        <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>
+        <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
+        <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
+        <if test="queryDTO.startTime != null">and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}</if>
+        <if test="queryDTO.endTime != null">and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}</if>
+      order by create_time desc
     </select>
-    <select id="selectAll" resultType="com.icss.etc.ticket.entity.Ticket">
-        select ticket_id,
-               type_id,
-               title,
-               content,
-               processor_id,
-               department_id,
-               priority,
-               status,
-               expect_finish_time,
-               actual_finish_time,
-               is_deleted,
-               create_by,
-               update_by,
-               create_time,
-               update_time
-        from t_ticket
-        where is_deleted = 0
-        order by create_time desc
+
+  <select id="getTodoTickets" resultMap="BaseResultMap">
+      select
+            <include refid="Base_Column_List" />
+      from t_ticket
+        where processor_id = #{userId,jdbcType=BIGINT}
+        and is_deleted = 0
+        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
+        <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>
+        <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
+        <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
+        <if test="queryDTO.startTime != null">and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}</if>
+        <if test="queryDTO.endTime != null">and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}</if>
+      order by create_time
     </select>
-    <select id="selectByCondition" resultType="com.icss.etc.ticket.entity.Ticket">
+
+  <select id="getDeptTickets" resultMap="BaseResultMap">
         select
-              ticket_id,
-              type_id,
-              title,
-              content,
-              processor_id,
-              department_id,
-              priority,
-              status,
-              expect_finish_time,
-              actual_finish_time,
-              is_deleted,
-              create_by,
-              update_by,
-              create_time ,
-              update_time
+            <include refid="Base_Column_List" />
         from t_ticket
-        where is_deleted = 0
-        <if test="type_id != null">
-            and type_id = #{type_id,jdbcType=BIGINT}
-        </if>
-        <if test="title != null and title != ''">
-            and title = #{title,jdbcType=VARCHAR}
-        </if>
-        <if test="content != null and content != ''">
-            and content = #{content,jdbcType=VARCHAR}
-        </if>
-        <if test="processor_id != null">
-            and processor_id = #{processor_id,jdbcType=BIGINT}
-        </if>
-        <if test="department_id != null">
-            and department_id = #{department_id,jdbcType=BIGINT}
-        </if>
-        <if test="priority != null">
-            and priority = #{priority,jdbcType=TINYINT}
-        </if>
-        <if test="status != null">
-            and `status` = #{status,jdbcType=TINYINT}
-        </if>
-        <if test="expect_finish_time != null">
-            and expect_finish_time = #{expect_finish_time,jdbcType=TIMESTAMP}
-        </if>
-        <if test="actual_finish_time != null">
-            and actual_finish_time = #{actual_finish_time,jdbcType=TIMESTAMP}
-        </if>
-        <if test="create_by != null">
-            and create_by = #{create_by,jdbcType=BIGINT}
-        </if>
-        <if test="update_by != null">
-            and update_by = #{update_by,jdbcType=BIGINT}
-        </if>
-        <if test="create_time != null">
-            and create_time = #{create_time,jdbcType=TIMESTAMP}
-        </if>
-        <if test="update_time != null">
-            and update_time = #{update_time,jdbcType=TIMESTAMP}
-        </if>
+            where department_id = #{deptId,jdbcType=BIGINT}
+            and is_deleted = 0
+            <if test="queryDTO.keyword != null and queryDTO.keyword != ''">and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
+            <if test="queryDTO.processorId != null">and processor_id = #{queryDTO.processorId,jdbcType=BIGINT}</if>
+            <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
+            <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
+            <if test="queryDTO.startTime != null">and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}</if>
+            <if test="queryDTO.endTime != null">and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}</if>
         order by create_time desc
     </select>
-    <update id="deleteById" parameterType="java.lang.Long">
-        update t_ticket
-        set is_deleted = 1
-        where ticket_id = #{ticket_id,jdbcType=BIGINT}
+
+  <update id="updateStatus">
+      update t_ticket set `status` = #{status,jdbcType=TINYINT}, update_time = NOW()
+      , update_by = #{updateBy,jdbcType=BIGINT}
+      where ticket_id = #{ticketId,jdbcType=BIGINT} and is_deleted = 0
     </update>
-    <insert id="insertTicket" keyColumn="ticket_id" keyProperty="ticket_id" parameterType="com.icss.etc.ticket.entity.Ticket" useGeneratedKeys="true">
-        insert into t_ticket
-        <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="type_id != null">
-                type_id,
-            </if>
-            <if test="title != null and title != ''">
-                title,
-            </if>
-            <if test="content != null and content != ''">
-                content,
-            </if>
-            <if test="processor_id != null">
-                processor_id,
-            </if>
-            <if test="department_id != null">
-                department_id,
-            </if>
-            <if test="priority != null">
-                priority,
-            </if>
-            <if test="status != null">
-                `status`,
-            </if>
-            <if test="expect_finish_time != null">
-                expect_finish_time,
-            </if>
-            <if test="actual_finish_time != null">
-                actual_finish_time,
-            </if>
-            <if test="create_by != null">
-                create_by,
-            </if>
-            update_time
-        </trim>
-        <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="type_id != null">
-                #{type_id,jdbcType=BIGINT},
-            </if>
-            <if test="title != null and title != ''">
-                #{title,jdbcType=VARCHAR},
-            </if>
-            <if test="content != null and content != ''">
-                #{content,jdbcType=VARCHAR},
-            </if>
-            <if test="processor_id != null">
-                #{processor_id,jdbcType=BIGINT},
-            </if>
-            <if test="department_id != null">
-                #{department_id,jdbcType=BIGINT},
-            </if>
-            <if test="priority != null">
-                #{priority,jdbcType=TINYINT},
-            </if>
-            <if test="status != null">
-                #{status,jdbcType=TINYINT},
-            </if>
-            <if test="expect_finish_time != null">
-                #{expect_finish_time,jdbcType=TIMESTAMP},
-            </if>
-            <if test="actual_finish_time != null">
-                #{actual_finish_time,jdbcType=TIMESTAMP},
-            </if>
-            <if test="create_by != null">
-                #{create_by,jdbcType=BIGINT},
-            </if>
-            null,
-        </trim>
-    </insert>
-    <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.Ticket">
+
+  <update id="transferDept">
+        update t_ticket set department_id = #{deptId,jdbcType=BIGINT}, update_time = NOW()
+        , update_by = #{updateBy,jdbcType=BIGINT}
+        where ticket_id = #{ticketId,jdbcType=BIGINT} and is_deleted = 0
+    </update>
+
+    <select id="getTypesStats" resultType="com.icss.etc.ticket.entity.dto.TicketTypeStatsDTO">
+        SELECT
+            type_id,
+            type_name,
+            count,
+            ROUND(count * 100.0 / totalTickets, 2) AS proportion
+        FROM (
+                 SELECT
+                     t.type_id,
+                     t.type_name,
+                     COUNT(*) AS count
+                 FROM
+                     t_ticket_type t
+                         JOIN
+                     t_ticket tt ON t.type_id = tt.type_id
+                 WHERE
+                     tt.is_deleted = 0
+                 GROUP BY
+                     t.type_id, t.type_name
+             ) AS typeStats,
+             (SELECT COUNT(*) AS totalTickets FROM t_ticket WHERE is_deleted = 0) AS total
+    </select>
+
+  <select id="getWorkloadStats" resultType="com.icss.etc.ticket.entity.dto.WorkloadStatsDTO">
+      SELECT u.user_id                                                                  AS userId,
+             u.username                                                                 AS userName,
+             SUM(CASE WHEN t.status = 1 THEN 1 ELSE 0 END)                              AS processingCount,
+             SUM(CASE WHEN t.status = 2 THEN 1 ELSE 0 END)                              AS completedCount,
+             (SUM(CASE WHEN t.status = 2 THEN 1 ELSE 0 END) * 1.0 / COUNT(t.ticket_id)) AS workloadRate
+      FROM t_ticket t
+               JOIN
+           t_user u ON t.processor_id = u.user_id
+      WHERE t.department_id = #{deptId}
+        AND t.is_deleted = 0
+      GROUP BY u.user_id, u.username
+  </select>
+
+  <select id="getEfficiencyStats" resultType="com.icss.etc.ticket.entity.dto.EfficiencyStatsDTO">
+      SELECT u.user_id AS userId,
+             u.username AS userName,
+             AVG(TIMESTAMPDIFF(HOUR, t.create_time, t.actual_finish_time)) AS avgProcessTime
+      FROM t_ticket t
+               JOIN
+           t_user u ON t.processor_id = u.user_id
+      WHERE t.department_id = #{deptId}
+        AND t.is_deleted = 0
+      GROUP BY u.user_id, u.username
+    </select>
+
+    <select id="getProcessorStats" resultType="com.icss.etc.ticket.entity.dto.ProcessorStatsDTO">
+        SELECT
+            SUM(CASE WHEN t.status = 1 THEN 1 ELSE 0 END) AS processingCount,
+            SUM(CASE WHEN t.status = 2 THEN 1 ELSE 0 END) AS completedCount,
+            AVG(TIMESTAMPDIFF(SECOND, t.create_time, t.actual_finish_time)) AS avgProcessTime,
+            SUM(CASE WHEN t.actual_finish_time &lt;= t.expect_finish_time THEN 1 ELSE 0 END) * 1.0 / SUM(CASE WHEN t.status = 2 THEN 1 ELSE 0 END) AS onTimeRate,
+        AVG(tr.evaluation_score) AS satisfactionRate
+        FROM
+        t_ticket t
+        LEFT JOIN
+        t_ticket_record tr ON t.ticket_id = tr.ticket_id AND tr.operation_type = 3
+        WHERE
+        t.processor_id = #{processorId}
+        AND t.is_deleted = 0
+    </select>
+
+    <select id="getTrendStats" parameterType="map" resultType="com.icss.etc.ticket.entity.dto.TicketTrendDTO">
+        SELECT DATE(t.create_time)                                AS date,
+               COUNT(CASE WHEN t.status = 0 THEN 1 ELSE NULL END) AS newCount,
+               COUNT(CASE WHEN t.status = 2 THEN 1 ELSE NULL END) AS completedCount,
+               CASE
+                   WHEN COUNT(*) = 0 THEN 0
+                   ELSE COUNT(CASE WHEN t.status = 2 THEN 1 ELSE NULL END) * 1.0 / COUNT(*)
+                   END                                            AS completionRate
+        FROM t_ticket t
+        WHERE t.department_id = #{deptId}
+          AND t.create_time >= DATE_SUB(CURRENT_DATE, INTERVAL #{days} DAY)
+          AND t.is_deleted = 0
+        GROUP BY DATE(t.create_time)
+        ORDER BY DATE(t.create_time)
+    </select>
+
+    <update id="assignProcessor">
         update t_ticket
-        <set>
-            <if test="type_id != null">
-                type_id = #{type_id,jdbcType=BIGINT},
-            </if>
-            <if test="title != null and title != ''">
-                title = #{title,jdbcType=VARCHAR},
-            </if>
-            <if test="content != null and content != ''">
-                content = #{content,jdbcType=VARCHAR},
-            </if>
-            <if test="processor_id != null">
-                processor_id = #{processor_id,jdbcType=BIGINT},
-            </if>
-            <if test="department_id != null">
-                department_id = #{department_id,jdbcType=BIGINT},
-            </if>
-            <if test="priority != null">
-                priority = #{priority,jdbcType=TINYINT},
-            </if>
-            <if test="status != null">
-                `status` = #{status,jdbcType=TINYINT},
-            </if>
-            <if test="expect_finish_time != null">
-                expect_finish_time = #{expect_finish_time,jdbcType=TIMESTAMP},
-            </if>
-            <if test="actual_finish_time != null">
-                actual_finish_time = #{actual_finish_time,jdbcType=TIMESTAMP},
-            </if>
-            update_time = default
-        </set>
-        where ticket_id = #{ticket_id,jdbcType=BIGINT}
+        set processor_id = #{processorId,jdbcType=BIGINT},
+        update_time = NOW()
+        where ticket_id = #{ticketId,jdbcType=BIGINT}
+        and is_deleted = 0
     </update>
 </mapper>

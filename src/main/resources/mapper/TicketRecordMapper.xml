@@ -4,15 +4,15 @@
   <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.TicketRecord">
     <!--@mbg.generated-->
     <!--@Table t_ticket_record-->
-    <id column="record_id" jdbcType="BIGINT" property="record_id" />
-    <result column="ticket_id" jdbcType="BIGINT" property="ticket_id" />
-    <result column="operator_id" jdbcType="BIGINT" property="operator_id" />
-    <result column="operation_type" jdbcType="TINYINT" property="operation_type" />
-    <result column="operation_content" jdbcType="LONGVARCHAR" property="operation_content" />
-    <result column="evaluation_score" jdbcType="TINYINT" property="evaluation_score" />
-    <result column="evaluation_content" jdbcType="LONGVARCHAR" property="evaluation_content" />
-    <result column="is_deleted" jdbcType="TINYINT" property="is_deleted" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="create_time" />
+    <id column="record_id" jdbcType="BIGINT" property="recordId" />
+    <result column="ticket_id" jdbcType="BIGINT" property="ticketId" />
+    <result column="operator_id" jdbcType="BIGINT" property="operatorId" />
+    <result column="operation_type" jdbcType="TINYINT" property="operationType" />
+    <result column="operation_content" jdbcType="LONGVARCHAR" property="operationContent" />
+    <result column="evaluation_score" jdbcType="TINYINT" property="evaluationScore" />
+    <result column="evaluation_content" jdbcType="LONGVARCHAR" property="evaluationContent" />
+    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
@@ -24,72 +24,72 @@
     select 
     <include refid="Base_Column_List" />
     from t_ticket_record
-    where record_id = #{record_id,jdbcType=BIGINT}
+    where record_id = #{recordId,jdbcType=BIGINT}
   </select>
-  <insert id="insert" keyColumn="record_id" keyProperty="record_id" parameterType="com.icss.etc.ticket.entity.TicketRecord" useGeneratedKeys="true">
+  <insert id="insert" keyColumn="record_id" keyProperty="recordId" parameterType="com.icss.etc.ticket.entity.TicketRecord" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_ticket_record (ticket_id, operator_id, operation_type, 
       operation_content, evaluation_score, 
       evaluation_content, is_deleted, create_time
       )
-    values (#{ticket_id,jdbcType=BIGINT}, #{operator_id,jdbcType=BIGINT}, #{operation_type,jdbcType=TINYINT}, 
-      #{operation_content,jdbcType=LONGVARCHAR}, #{evaluation_score,jdbcType=TINYINT}, 
-      #{evaluation_content,jdbcType=LONGVARCHAR}, #{is_deleted,jdbcType=TINYINT}, #{create_time,jdbcType=TIMESTAMP}
+    values (#{ticketId,jdbcType=BIGINT}, #{operatorId,jdbcType=BIGINT}, #{operationType,jdbcType=TINYINT}, 
+      #{operationContent,jdbcType=LONGVARCHAR}, #{evaluationScore,jdbcType=TINYINT}, 
+      #{evaluationContent,jdbcType=LONGVARCHAR}, #{isDeleted,jdbcType=TINYINT}, #{createTime,jdbcType=TIMESTAMP}
       )
   </insert>
-  <insert id="insertSelective" keyColumn="record_id" keyProperty="record_id" parameterType="com.icss.etc.ticket.entity.TicketRecord" useGeneratedKeys="true">
+  <insert id="insertSelective" keyColumn="record_id" keyProperty="recordId" parameterType="com.icss.etc.ticket.entity.TicketRecord" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_ticket_record
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="ticket_id != null">
+      <if test="ticketId != null">
         ticket_id,
       </if>
-      <if test="operator_id != null">
+      <if test="operatorId != null">
         operator_id,
       </if>
-      <if test="operation_type != null">
+      <if test="operationType != null">
         operation_type,
       </if>
-      <if test="operation_content != null">
+      <if test="operationContent != null">
         operation_content,
       </if>
-      <if test="evaluation_score != null">
+      <if test="evaluationScore != null">
         evaluation_score,
       </if>
-      <if test="evaluation_content != null">
+      <if test="evaluationContent != null">
         evaluation_content,
       </if>
-      <if test="is_deleted != null">
+      <if test="isDeleted != null">
         is_deleted,
       </if>
-      <if test="create_time != null">
+      <if test="createTime != null">
         create_time,
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="ticket_id != null">
-        #{ticket_id,jdbcType=BIGINT},
+      <if test="ticketId != null">
+        #{ticketId,jdbcType=BIGINT},
       </if>
-      <if test="operator_id != null">
-        #{operator_id,jdbcType=BIGINT},
+      <if test="operatorId != null">
+        #{operatorId,jdbcType=BIGINT},
       </if>
-      <if test="operation_type != null">
-        #{operation_type,jdbcType=TINYINT},
+      <if test="operationType != null">
+        #{operationType,jdbcType=TINYINT},
       </if>
-      <if test="operation_content != null">
-        #{operation_content,jdbcType=LONGVARCHAR},
+      <if test="operationContent != null">
+        #{operationContent,jdbcType=LONGVARCHAR},
       </if>
-      <if test="evaluation_score != null">
-        #{evaluation_score,jdbcType=TINYINT},
+      <if test="evaluationScore != null">
+        #{evaluationScore,jdbcType=TINYINT},
       </if>
-      <if test="evaluation_content != null">
-        #{evaluation_content,jdbcType=LONGVARCHAR},
+      <if test="evaluationContent != null">
+        #{evaluationContent,jdbcType=LONGVARCHAR},
       </if>
-      <if test="is_deleted != null">
-        #{is_deleted,jdbcType=TINYINT},
+      <if test="isDeleted != null">
+        #{isDeleted,jdbcType=TINYINT},
       </if>
-      <if test="create_time != null">
-        #{create_time,jdbcType=TIMESTAMP},
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
       </if>
     </trim>
   </insert>
@@ -97,78 +97,78 @@
     <!--@mbg.generated-->
     update t_ticket_record
     <set>
-      <if test="ticket_id != null">
-        ticket_id = #{ticket_id,jdbcType=BIGINT},
+      <if test="ticketId != null">
+        ticket_id = #{ticketId,jdbcType=BIGINT},
       </if>
-      <if test="operator_id != null">
-        operator_id = #{operator_id,jdbcType=BIGINT},
+      <if test="operatorId != null">
+        operator_id = #{operatorId,jdbcType=BIGINT},
       </if>
-      <if test="operation_type != null">
-        operation_type = #{operation_type,jdbcType=TINYINT},
+      <if test="operationType != null">
+        operation_type = #{operationType,jdbcType=TINYINT},
       </if>
-      <if test="operation_content != null">
-        operation_content = #{operation_content,jdbcType=LONGVARCHAR},
+      <if test="operationContent != null">
+        operation_content = #{operationContent,jdbcType=LONGVARCHAR},
       </if>
-      <if test="evaluation_score != null">
-        evaluation_score = #{evaluation_score,jdbcType=TINYINT},
+      <if test="evaluationScore != null">
+        evaluation_score = #{evaluationScore,jdbcType=TINYINT},
       </if>
-      <if test="evaluation_content != null">
-        evaluation_content = #{evaluation_content,jdbcType=LONGVARCHAR},
+      <if test="evaluationContent != null">
+        evaluation_content = #{evaluationContent,jdbcType=LONGVARCHAR},
       </if>
-      <if test="is_deleted != null">
-        is_deleted = #{is_deleted,jdbcType=TINYINT},
+      <if test="isDeleted != null">
+        is_deleted = #{isDeleted,jdbcType=TINYINT},
       </if>
-      <if test="create_time != null">
-        create_time = #{create_time,jdbcType=TIMESTAMP},
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
       </if>
     </set>
-    where record_id = #{record_id,jdbcType=BIGINT}
+    where record_id = #{recordId,jdbcType=BIGINT}
   </update>
   <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.TicketRecord">
     <!--@mbg.generated-->
     update t_ticket_record
-    set ticket_id = #{ticket_id,jdbcType=BIGINT},
-      operator_id = #{operator_id,jdbcType=BIGINT},
-      operation_type = #{operation_type,jdbcType=TINYINT},
-      operation_content = #{operation_content,jdbcType=LONGVARCHAR},
-      evaluation_score = #{evaluation_score,jdbcType=TINYINT},
-      evaluation_content = #{evaluation_content,jdbcType=LONGVARCHAR},
-      is_deleted = #{is_deleted,jdbcType=TINYINT},
-      create_time = #{create_time,jdbcType=TIMESTAMP}
-    where record_id = #{record_id,jdbcType=BIGINT}
+    set ticket_id = #{ticketId,jdbcType=BIGINT},
+      operator_id = #{operatorId,jdbcType=BIGINT},
+      operation_type = #{operationType,jdbcType=TINYINT},
+      operation_content = #{operationContent,jdbcType=LONGVARCHAR},
+      evaluation_score = #{evaluationScore,jdbcType=TINYINT},
+      evaluation_content = #{evaluationContent,jdbcType=LONGVARCHAR},
+      is_deleted = #{isDeleted,jdbcType=TINYINT},
+      create_time = #{createTime,jdbcType=TIMESTAMP}
+    where record_id = #{recordId,jdbcType=BIGINT}
   </update>
   <select id="selectByAll" resultMap="BaseResultMap">
         <!--@mbg.generated-->
         select
-        <include refid="Base_Column_List"/>
+        <include refid="Base_Column_List" />
         from t_ticket_record
         <where>
-            <if test="record_id != null">
-                and record_id=#{record_id,jdbcType=BIGINT}
+            <if test="recordId != null">
+                and record_id=#{recordId,jdbcType=BIGINT}
             </if>
-            <if test="ticket_id != null">
-                and ticket_id=#{ticket_id,jdbcType=BIGINT}
+            <if test="ticketId != null">
+                and ticket_id=#{ticketId,jdbcType=BIGINT}
             </if>
-            <if test="operator_id != null">
-                and operator_id=#{operator_id,jdbcType=BIGINT}
+            <if test="operatorId != null">
+                and operator_id=#{operatorId,jdbcType=BIGINT}
             </if>
-            <if test="operation_type != null">
-                and operation_type=#{operation_type,jdbcType=TINYINT}
+            <if test="operationType != null">
+                and operation_type=#{operationType,jdbcType=TINYINT}
             </if>
-            <if test="operation_content != null">
-                and operation_content=#{operation_content,jdbcType=LONGVARCHAR}
+            <if test="operationContent != null">
+                and operation_content=#{operationContent,jdbcType=LONGVARCHAR}
             </if>
-            <if test="evaluation_score != null">
-                and evaluation_score=#{evaluation_score,jdbcType=TINYINT}
+            <if test="evaluationScore != null">
+                and evaluation_score=#{evaluationScore,jdbcType=TINYINT}
             </if>
-            <if test="evaluation_content != null">
-                and evaluation_content=#{evaluation_content,jdbcType=LONGVARCHAR}
+            <if test="evaluationContent != null">
+                and evaluation_content=#{evaluationContent,jdbcType=LONGVARCHAR}
             </if>
-            <if test="is_deleted != null">
-                and is_deleted=#{is_deleted,jdbcType=TINYINT}
+            <if test="isDeleted != null">
+                and is_deleted=#{isDeleted,jdbcType=TINYINT}
             </if>
-            <if test="create_time != null">
-                and create_time=#{create_time,jdbcType=TIMESTAMP}
+            <if test="createTime != null">
+                and create_time=#{createTime,jdbcType=TIMESTAMP}
             </if>
         </where>
     </select>
@@ -178,77 +178,77 @@
     <trim prefix="set" suffixOverrides=",">
       <trim prefix="ticket_id = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.ticket_id != null">
-            when record_id = #{item.record_id,jdbcType=BIGINT} then #{item.ticket_id,jdbcType=BIGINT}
+          <if test="item.ticketId != null">
+            when record_id = #{item.recordId,jdbcType=BIGINT} then #{item.ticketId,jdbcType=BIGINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="operator_id = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.operator_id != null">
-            when record_id = #{item.record_id,jdbcType=BIGINT} then #{item.operator_id,jdbcType=BIGINT}
+          <if test="item.operatorId != null">
+            when record_id = #{item.recordId,jdbcType=BIGINT} then #{item.operatorId,jdbcType=BIGINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="operation_type = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.operation_type != null">
-            when record_id = #{item.record_id,jdbcType=BIGINT} then #{item.operation_type,jdbcType=TINYINT}
+          <if test="item.operationType != null">
+            when record_id = #{item.recordId,jdbcType=BIGINT} then #{item.operationType,jdbcType=TINYINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="operation_content = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.operation_content != null">
-            when record_id = #{item.record_id,jdbcType=BIGINT} then #{item.operation_content,jdbcType=LONGVARCHAR}
+          <if test="item.operationContent != null">
+            when record_id = #{item.recordId,jdbcType=BIGINT} then #{item.operationContent,jdbcType=LONGVARCHAR}
           </if>
         </foreach>
       </trim>
       <trim prefix="evaluation_score = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.evaluation_score != null">
-            when record_id = #{item.record_id,jdbcType=BIGINT} then #{item.evaluation_score,jdbcType=TINYINT}
+          <if test="item.evaluationScore != null">
+            when record_id = #{item.recordId,jdbcType=BIGINT} then #{item.evaluationScore,jdbcType=TINYINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="evaluation_content = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.evaluation_content != null">
-            when record_id = #{item.record_id,jdbcType=BIGINT} then #{item.evaluation_content,jdbcType=LONGVARCHAR}
+          <if test="item.evaluationContent != null">
+            when record_id = #{item.recordId,jdbcType=BIGINT} then #{item.evaluationContent,jdbcType=LONGVARCHAR}
           </if>
         </foreach>
       </trim>
       <trim prefix="is_deleted = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.is_deleted != null">
-            when record_id = #{item.record_id,jdbcType=BIGINT} then #{item.is_deleted,jdbcType=TINYINT}
+          <if test="item.isDeleted != null">
+            when record_id = #{item.recordId,jdbcType=BIGINT} then #{item.isDeleted,jdbcType=TINYINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="create_time = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.create_time != null">
-            when record_id = #{item.record_id,jdbcType=BIGINT} then #{item.create_time,jdbcType=TIMESTAMP}
+          <if test="item.createTime != null">
+            when record_id = #{item.recordId,jdbcType=BIGINT} then #{item.createTime,jdbcType=TIMESTAMP}
           </if>
         </foreach>
       </trim>
     </trim>
     where record_id in
     <foreach close=")" collection="list" item="item" open="(" separator=", ">
-      #{item.record_id,jdbcType=BIGINT}
+      #{item.recordId,jdbcType=BIGINT}
     </foreach>
   </update>
-  <insert id="batchInsert" keyColumn="record_id" keyProperty="record_id" parameterType="map" useGeneratedKeys="true">
+  <insert id="batchInsert" keyColumn="record_id" keyProperty="recordId" parameterType="map" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_ticket_record
     (ticket_id, operator_id, operation_type, operation_content, evaluation_score, evaluation_content, 
       is_deleted, create_time)
     values
     <foreach collection="list" item="item" separator=",">
-      (#{item.ticket_id,jdbcType=BIGINT}, #{item.operator_id,jdbcType=BIGINT}, #{item.operation_type,jdbcType=TINYINT}, 
-        #{item.operation_content,jdbcType=LONGVARCHAR}, #{item.evaluation_score,jdbcType=TINYINT}, 
-        #{item.evaluation_content,jdbcType=LONGVARCHAR}, #{item.is_deleted,jdbcType=TINYINT}, 
-        #{item.create_time,jdbcType=TIMESTAMP})
+      (#{item.ticketId,jdbcType=BIGINT}, #{item.operatorId,jdbcType=BIGINT}, #{item.operationType,jdbcType=TINYINT}, 
+        #{item.operationContent,jdbcType=LONGVARCHAR}, #{item.evaluationScore,jdbcType=TINYINT}, 
+        #{item.evaluationContent,jdbcType=LONGVARCHAR}, #{item.isDeleted,jdbcType=TINYINT}, 
+        #{item.createTime,jdbcType=TIMESTAMP})
     </foreach>
   </insert>
 </mapper>

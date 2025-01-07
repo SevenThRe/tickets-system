@@ -5,77 +5,156 @@ import com.icss.etc.ticket.entity.Ticket;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.icss.etc.ticket.entity.dto.*;
 import org.apache.ibatis.annotations.Param;
 
 /**
- * {@code TicketMapper}
- *
+ * {@code TicketMapper} 工单数据访问层
+ *  处理工单相关的数据库操作
  * @author SevenThRe
  * @version 1.0
  * @since 1.0
  */
-
 public interface TicketMapper {
-
     /**
-     * insert record to table selective
-     *
-     * @param record the record
-     * @return insert count
+     * 创建工单
+     * @param ticket 工单信息
+     * @return 影响行数
      */
-    int insertSelective(Ticket record);
+    int insert(Ticket ticket);
 
     /**
-     * select by primary key
-     *
-     * @param ticket_id primary key
-     * @return object by primary key
+     * 更新工单
+     * @param ticket 工单信息
+     * @return 影响行数
      */
-    Ticket selectByPrimaryKey(Long ticket_id);
+    int update(Ticket ticket);
 
     /**
-     * update record
-     *
-     * @param record the updated record
-     * @return update count
+     * 伪删除工单
+     * @param ticketId 工单ID
+     * @return 影响行数
      */
-    int updateByPrimaryKey(Ticket record);
-
-    List<Ticket> selectByAll(Ticket ticket);
-
-    int updateBatchSelective(@Param("list") List<Ticket> list);
-
-    int batchInsert(@Param("list") List<Ticket> list);
+    int deleteById(Long ticketId);
 
     /**
-     * 插入工单，忽略空值
-     *
-     * @param record 工单对象
-     * @return 影响的行数
+     * 获取工单详情
+     * @param ticketId 工单ID
+     * @return 工单信息
      */
-    int insertTicket(Ticket record);
+    Ticket getById(Long ticketId);
 
     /**
-     * 根据工单ID删除工单
-     *
-     * @param ticket_id 工单ID
-     * @return 删除的行数
-     */
-    int deleteById(Long ticket_id);
-
-    /**
-     * 查询全部未删除工单
-     *
+     * 分页查询工单列表
+     * @param queryDTO 查询条件
      * @return 工单列表
      */
-    List<Ticket> selectAll();
+    List<Ticket> pageList(@Param("queryDTO") TicketQueryDTO queryDTO);
 
     /**
-     * 根据对象中不为空的属性查询工单
+     * 查询工单总数
      *
-     * @param condition 条件对象
+     * @param queryDTO 查询条件
+     * @return 总数
+     */
+    long count(@Param("queryDTO") TicketQueryDTO queryDTO);
+
+    /**
+     * 查询我的工单
+     * @param userId 用户ID
+     * @param queryDTO 查询条件
      * @return 工单列表
      */
-    List<Ticket> selectByCondition(Ticket condition);
+    List<Ticket> getMyTickets(@Param("userId") Long userId, @Param("queryDTO") TicketQueryDTO queryDTO);
 
+    /**
+     * 查询待办工单
+     * @param userId 用户ID
+     * @param queryDTO 查询条件
+     * @return 工单列表
+     */
+    List<Ticket> getTodoTickets(@Param("userId") Long userId, @Param("queryDTO") TicketQueryDTO queryDTO);
+
+    /**
+     * 查询部门工单
+     * @param deptId 部门ID
+     * @param queryDTO 查询条件
+     * @return 工单列表
+     */
+    List<Ticket> getDeptTickets(@Param("deptId") Long deptId, @Param("queryDTO") TicketQueryDTO queryDTO);
+
+    /**
+     * 更新工单状态
+     * @param ticketId 工单ID
+     * @param status 状态
+     * @param updateBy 更新人
+     * @return 影响行数
+     */
+    int updateStatus(@Param("ticketId") Long ticketId, @Param("status") Integer status, @Param("updateBy") Long updateBy);
+
+    /**
+     * 分配处理人
+     * @param ticketId 工单ID
+     * @param processorId 处理人ID
+     * @return 影响行数
+     */
+    int assignProcessor(@Param("ticketId") Long ticketId, @Param("processorId") Long processorId);
+
+    /**
+     * 转交部门
+     * @param ticketId 工单ID
+     * @param deptId 部门ID
+     * @return 影响行数
+     */
+    int transferDept(@Param("ticketId") Long ticketId, @Param("deptId") Long deptId, @Param("updateBy") Long updateBy);
+
+    /**
+     * 部门工单统计
+     * @param deptId 部门ID
+     * @return 统计结果
+     */
+    DeptTicketStatsDTO getDeptStats(Long deptId);
+
+    /**
+     * 处理人工作量统计
+     * @param processorId 处理人ID
+     * @return 统计结果
+     */
+    ProcessorStatsDTO getProcessorStats(Long processorId);
+
+    /**
+     * 工单类型分布统计
+     * @param deptId 部门ID
+     * @return 统计列表
+     */
+    List<TicketTypeStatsDTO> getTypesStats(Long deptId);
+
+    /**
+     * 工单趋势统计
+     * @param deptId 部门ID
+     * @param days 天数
+     * @return 统计列表
+     */
+    List<TicketTrendDTO> getTrendStats(@Param("deptId") Long deptId, @Param("days") Integer days);
+
+    /**
+     * 工作量统计
+     * @param deptId 部门ID
+     * @return 统计列表
+     */
+    List<WorkloadStatsDTO> getWorkloadStats(Long deptId);
+
+    /**
+     * 处理效率统计
+     * @param deptId 部门ID
+     * @return 统计列表
+     */
+    List<EfficiencyStatsDTO> getEfficiencyStats(Long deptId);
+
+    /**
+     * 导出工单列表
+     * @param queryDTO 查询条件
+     * @return 工单列表
+     */
+    List<TicketExportDTO> selectForExport(TicketQueryDTO queryDTO);
 }

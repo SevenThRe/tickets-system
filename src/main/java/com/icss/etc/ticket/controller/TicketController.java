@@ -34,7 +34,7 @@ public class TicketController {
     /**
      * 增加工单
      * @param ticket 工单对象
-     * @return
+     * @return 返回受影响的行数
      */
     @RequestMapping("add")
     public int add(Ticket ticket) {

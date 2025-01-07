@@ -3,8 +3,6 @@ package com.icss.etc.ticket.entity;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-
-import com.icss.etc.ticket.enums.BaseRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,22 +25,22 @@ public class Role implements Serializable {
     /**
      * 角色ID
      */
-    private Long role_id;
+    private Long roleId;
 
     /**
      * 角色名称
      */
-    private String role_name;
+    private String roleName;
 
     /**
      * 角色编码
      */
-    private String role_code;
+    private String roleCode;
 
     /**
      * 基础角色编码(ADMIN/DEPT/USER)
      */
-    private BaseRole base_role_code;
+    private String baseRoleCode;
 
     /**
      * 角色描述
@@ -57,22 +55,22 @@ public class Role implements Serializable {
     /**
      * 是否删除
      */
-    private Integer is_deleted;
+    private Integer isDeleted;
 
     /**
      * 创建人
      */
-    private Long create_by;
+    private Long createBy;
 
     /**
      * 创建时间
      */
-    private LocalDateTime create_time;
+    private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
-    private LocalDateTime update_time;
+    private LocalDateTime updateTime;
 
     @Serial
     private static final long serialVersionUID = 1L;

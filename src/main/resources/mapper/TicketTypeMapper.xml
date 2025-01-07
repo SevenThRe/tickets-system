@@ -4,12 +4,12 @@
   <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.TicketType">
     <!--@mbg.generated-->
     <!--@Table t_ticket_type-->
-    <id column="type_id" jdbcType="BIGINT" property="type_id" />
-    <result column="type_name" jdbcType="VARCHAR" property="type_name" />
+    <id column="type_id" jdbcType="BIGINT" property="typeId" />
+    <result column="type_name" jdbcType="VARCHAR" property="typeName" />
     <result column="status" jdbcType="TINYINT" property="status" />
-    <result column="is_deleted" jdbcType="TINYINT" property="is_deleted" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="create_time" />
-    <result column="update_time" jdbcType="TIMESTAMP" property="update_time" />
+    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
@@ -20,50 +20,50 @@
     select 
     <include refid="Base_Column_List" />
     from t_ticket_type
-    where type_id = #{type_id,jdbcType=BIGINT}
+    where type_id = #{typeId,jdbcType=BIGINT}
   </select>
-  <insert id="insert" keyColumn="type_id" keyProperty="type_id" parameterType="com.icss.etc.ticket.entity.TicketType" useGeneratedKeys="true">
+  <insert id="insert" keyColumn="type_id" keyProperty="typeId" parameterType="com.icss.etc.ticket.entity.TicketType" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_ticket_type (type_name, `status`, is_deleted, 
       create_time, update_time)
-    values (#{type_name,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT}, #{is_deleted,jdbcType=TINYINT}, 
-      #{create_time,jdbcType=TIMESTAMP}, #{update_time,jdbcType=TIMESTAMP})
+    values (#{typeName,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT}, #{isDeleted,jdbcType=TINYINT}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
   </insert>
-  <insert id="insertSelective" keyColumn="type_id" keyProperty="type_id" parameterType="com.icss.etc.ticket.entity.TicketType" useGeneratedKeys="true">
+  <insert id="insertSelective" keyColumn="type_id" keyProperty="typeId" parameterType="com.icss.etc.ticket.entity.TicketType" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_ticket_type
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="type_name != null">
+      <if test="typeName != null">
         type_name,
       </if>
       <if test="status != null">
         `status`,
       </if>
-      <if test="is_deleted != null">
+      <if test="isDeleted != null">
         is_deleted,
       </if>
-      <if test="create_time != null">
+      <if test="createTime != null">
         create_time,
       </if>
-      <if test="update_time != null">
+      <if test="updateTime != null">
         update_time,
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="type_name != null">
-        #{type_name,jdbcType=VARCHAR},
+      <if test="typeName != null">
+        #{typeName,jdbcType=VARCHAR},
       </if>
       <if test="status != null">
         #{status,jdbcType=TINYINT},
       </if>
-      <if test="is_deleted != null">
-        #{is_deleted,jdbcType=TINYINT},
+      <if test="isDeleted != null">
+        #{isDeleted,jdbcType=TINYINT},
       </if>
-      <if test="create_time != null">
-        #{create_time,jdbcType=TIMESTAMP},
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="update_time != null">
-        #{update_time,jdbcType=TIMESTAMP},
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
       </if>
     </trim>
   </insert>
@@ -71,57 +71,57 @@
     <!--@mbg.generated-->
     update t_ticket_type
     <set>
-      <if test="type_name != null">
-        type_name = #{type_name,jdbcType=VARCHAR},
+      <if test="typeName != null">
+        type_name = #{typeName,jdbcType=VARCHAR},
       </if>
       <if test="status != null">
         `status` = #{status,jdbcType=TINYINT},
       </if>
-      <if test="is_deleted != null">
-        is_deleted = #{is_deleted,jdbcType=TINYINT},
+      <if test="isDeleted != null">
+        is_deleted = #{isDeleted,jdbcType=TINYINT},
       </if>
-      <if test="create_time != null">
-        create_time = #{create_time,jdbcType=TIMESTAMP},
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="update_time != null">
-        update_time = #{update_time,jdbcType=TIMESTAMP},
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
       </if>
     </set>
-    where type_id = #{type_id,jdbcType=BIGINT}
+    where type_id = #{typeId,jdbcType=BIGINT}
   </update>
   <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.TicketType">
     <!--@mbg.generated-->
     update t_ticket_type
-    set type_name = #{type_name,jdbcType=VARCHAR},
+    set type_name = #{typeName,jdbcType=VARCHAR},
       `status` = #{status,jdbcType=TINYINT},
-      is_deleted = #{is_deleted,jdbcType=TINYINT},
-      create_time = #{create_time,jdbcType=TIMESTAMP},
-      update_time = #{update_time,jdbcType=TIMESTAMP}
-    where type_id = #{type_id,jdbcType=BIGINT}
+      is_deleted = #{isDeleted,jdbcType=TINYINT},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where type_id = #{typeId,jdbcType=BIGINT}
   </update>
   <select id="selectByAll" resultMap="BaseResultMap">
         <!--@mbg.generated-->
         select
-        <include refid="Base_Column_List"/>
+        <include refid="Base_Column_List" />
         from t_ticket_type
         <where>
-            <if test="type_id != null">
-                and type_id=#{type_id,jdbcType=BIGINT}
+            <if test="typeId != null">
+                and type_id=#{typeId,jdbcType=BIGINT}
             </if>
-            <if test="type_name != null">
-                and type_name=#{type_name,jdbcType=VARCHAR}
+            <if test="typeName != null">
+                and type_name=#{typeName,jdbcType=VARCHAR}
             </if>
             <if test="status != null">
                 and `status`=#{status,jdbcType=TINYINT}
             </if>
-            <if test="is_deleted != null">
-                and is_deleted=#{is_deleted,jdbcType=TINYINT}
+            <if test="isDeleted != null">
+                and is_deleted=#{isDeleted,jdbcType=TINYINT}
             </if>
-            <if test="create_time != null">
-                and create_time=#{create_time,jdbcType=TIMESTAMP}
+            <if test="createTime != null">
+                and create_time=#{createTime,jdbcType=TIMESTAMP}
             </if>
-            <if test="update_time != null">
-                and update_time=#{update_time,jdbcType=TIMESTAMP}
+            <if test="updateTime != null">
+                and update_time=#{updateTime,jdbcType=TIMESTAMP}
             </if>
         </where>
     </select>
@@ -131,53 +131,53 @@
     <trim prefix="set" suffixOverrides=",">
       <trim prefix="type_name = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.type_name != null">
-            when type_id = #{item.type_id,jdbcType=BIGINT} then #{item.type_name,jdbcType=VARCHAR}
+          <if test="item.typeName != null">
+            when type_id = #{item.typeId,jdbcType=BIGINT} then #{item.typeName,jdbcType=VARCHAR}
           </if>
         </foreach>
       </trim>
       <trim prefix="`status` = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
           <if test="item.status != null">
-            when type_id = #{item.type_id,jdbcType=BIGINT} then #{item.status,jdbcType=TINYINT}
+            when type_id = #{item.typeId,jdbcType=BIGINT} then #{item.status,jdbcType=TINYINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="is_deleted = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.is_deleted != null">
-            when type_id = #{item.type_id,jdbcType=BIGINT} then #{item.is_deleted,jdbcType=TINYINT}
+          <if test="item.isDeleted != null">
+            when type_id = #{item.typeId,jdbcType=BIGINT} then #{item.isDeleted,jdbcType=TINYINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="create_time = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.create_time != null">
-            when type_id = #{item.type_id,jdbcType=BIGINT} then #{item.create_time,jdbcType=TIMESTAMP}
+          <if test="item.createTime != null">
+            when type_id = #{item.typeId,jdbcType=BIGINT} then #{item.createTime,jdbcType=TIMESTAMP}
           </if>
         </foreach>
       </trim>
       <trim prefix="update_time = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.update_time != null">
-            when type_id = #{item.type_id,jdbcType=BIGINT} then #{item.update_time,jdbcType=TIMESTAMP}
+          <if test="item.updateTime != null">
+            when type_id = #{item.typeId,jdbcType=BIGINT} then #{item.updateTime,jdbcType=TIMESTAMP}
           </if>
         </foreach>
       </trim>
     </trim>
     where type_id in
     <foreach close=")" collection="list" item="item" open="(" separator=", ">
-      #{item.type_id,jdbcType=BIGINT}
+      #{item.typeId,jdbcType=BIGINT}
     </foreach>
   </update>
-  <insert id="batchInsert" keyColumn="type_id" keyProperty="type_id" parameterType="map" useGeneratedKeys="true">
+  <insert id="batchInsert" keyColumn="type_id" keyProperty="typeId" parameterType="map" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_ticket_type
     (type_name, `status`, is_deleted, create_time, update_time)
     values
     <foreach collection="list" item="item" separator=",">
-      (#{item.type_name,jdbcType=VARCHAR}, #{item.status,jdbcType=TINYINT}, #{item.is_deleted,jdbcType=TINYINT}, 
-        #{item.create_time,jdbcType=TIMESTAMP}, #{item.update_time,jdbcType=TIMESTAMP})
+      (#{item.typeName,jdbcType=VARCHAR}, #{item.status,jdbcType=TINYINT}, #{item.isDeleted,jdbcType=TINYINT}, 
+        #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP})
     </foreach>
   </insert>
 </mapper>

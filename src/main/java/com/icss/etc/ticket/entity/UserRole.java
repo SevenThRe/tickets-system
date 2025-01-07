@@ -25,17 +25,17 @@ public class UserRole implements Serializable {
     /**
      * 用户ID
      */
-    private Long user_id;
+    private Long userId;
 
     /**
      * 角色ID
      */
-    private Long role_id;
+    private Long roleId;
 
     /**
      * 创建时间
      */
-    private LocalDateTime create_time;
+    private LocalDateTime createTime;
 
     @Serial
     private static final long serialVersionUID = 1L;

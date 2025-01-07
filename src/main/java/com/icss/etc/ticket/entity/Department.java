@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
  * @version 1.0
  * @author SevenThRe
  */
-
+    
 /**
  * 部门表
  */
@@ -23,64 +23,69 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Department implements Serializable {
     /**
-     * 部门ID
-     */
-    private Long department_id;
+    * 部门ID
+    */
+    private Long departmentId;
 
     /**
-     * 部门名称
-     */
-    private String department_name;
+    * 部门名称
+    */
+    private String departmentName;
 
     /**
-     * 部门负责人ID
-     */
-    private Long manager_id;
+    * 部门负责人ID
+    */
+    private Long managerId;
 
     /**
-     * 父部门ID
-     */
-    private Long parent_id;
+    * 父部门ID
+    */
+    private Long parentId;
 
     /**
-     * 部门层级
-     */
-    private Integer dept_level;
+    * 部门层级
+    */
+    private Integer deptLevel;
 
     /**
-     * 部门描述
-     */
+    * 部门描述
+    */
     private String description;
 
     /**
-     * 状态：0-禁用，1-启用
-     */
+    * 状态：0-禁用，1-启用
+    */
     private Integer status;
 
     /**
-     * 是否删除
-     */
-    private Integer is_deleted;
+    * 是否删除
+    */
+    private Integer isDeleted;
 
     /**
-     * 创建人
-     */
-    private Long create_by;
+    * 创建人
+    */
+    private Long createBy;
 
     /**
-     * 更新人
-     */
-    private Long update_by;
+    * 更新人
+    */
+    private Long updateBy;
 
     /**
-     * 创建时间
-     */
-    private LocalDateTime create_time;
+    * 创建时间
+    */
+    private LocalDateTime createTime;
 
     /**
-     * 更新时间
-     */
-    private LocalDateTime update_time;
+    * 更新时间
+    */
+    private LocalDateTime updateTime;
+
+    /**
+    * 部门排序号
+    */
+    private Integer orderNum;
 
     @Serial
     private static final long serialVersionUID = 1L;

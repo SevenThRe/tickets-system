@@ -1,21 +1,24 @@
 package com.icss.etc.ticket.mapper;
 
 import com.icss.etc.ticket.entity.Theme;
+
 import java.time.LocalDateTime;
 import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 
 /**
- * {@code ThemeMapper} 
- * 
- * @since 1.0
- * @version 1.0
+ * {@code ThemeMapper}
+ *
  * @author SevenThRe
+ * @version 1.0
+ * @since 1.0
  */
-    
+
 public interface ThemeMapper {
     /**
      * insert record to table
+     *
      * @param record the record
      * @return insert count
      */
@@ -23,6 +26,7 @@ public interface ThemeMapper {
 
     /**
      * insert record to table selective
+     *
      * @param record the record
      * @return insert count
      */
@@ -30,13 +34,15 @@ public interface ThemeMapper {
 
     /**
      * select by primary key
-     * @param theme_id primary key
+     *
+     * @param themeId primary key
      * @return object by primary key
      */
-    Theme selectByPrimaryKey(String theme_id);
+    Theme selectByPrimaryKey(String themeId);
 
     /**
      * update record selective
+     *
      * @param record the updated record
      * @return update count
      */
@@ -44,6 +50,7 @@ public interface ThemeMapper {
 
     /**
      * update record
+     *
      * @param record the updated record
      * @return update count
      */
