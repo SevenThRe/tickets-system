@@ -61,4 +61,13 @@ public interface UserMapper {
     int updateBatchSelective(@Param("list") List<User> list);
 
     int batchInsert(@Param("list") List<User> list);
+
+
+//@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //  注册
+    int register(User user);
+
+    //登陆
+    User login(@Param("username") String username);
+
 }
