@@ -1,8 +1,6 @@
 package com.icss.etc.ticket.mapper;
 
 import com.icss.etc.ticket.entity.UserTheme;
-
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
