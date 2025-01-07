@@ -2,6 +2,7 @@ package com.icss.etc.ticket.mapper;
 
 import com.icss.etc.ticket.entity.RolePermission;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
@@ -34,10 +35,10 @@ public interface RolePermissionMapper {
     /**
      * 根据主键查询
      *
-     * @param role_id primary key
+     * @param roleId primary key
      * @return object by primary key
      */
-    RolePermission selectByPrimaryKey(@Param("role_id") Long role_id, @Param("permission_id") Long permission_id);
+    RolePermission selectByPrimaryKey(@Param("roleId") Long roleId, @Param("permissionId") Long permissionId);
 
     /**
      * update record

@@ -9,12 +9,17 @@ import com.icss.etc.ticket.enums.TicketStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 /**
  * {@code Ticket} 
  * 
  * @since 1.0
  * @version 1.0
  * @author SevenThRe
+ */
+
+/**
+ * 工单表
  */
 @Data
 @AllArgsConstructor
@@ -23,12 +28,12 @@ public class Ticket implements Serializable {
     /**
      * 工单ID
      */
-    private Long ticket_id;
+    private Long ticketId;
 
     /**
      * 工单类型ID
      */
-    private Long type_id;
+    private Long typeId;
 
     /**
      * 工单标题
@@ -43,12 +48,12 @@ public class Ticket implements Serializable {
     /**
      * 处理人ID
      */
-    private Long processor_id;
+    private Long processorId;
 
     /**
      * 处理部门ID
      */
-    private Long department_id;
+    private Long departmentId;
 
     /**
      * 优先级：0-普通，1-紧急，2-非常紧急
@@ -63,37 +68,37 @@ public class Ticket implements Serializable {
     /**
      * 期望完成时间
      */
-    private LocalDateTime expect_finish_time;
+    private LocalDateTime expectFinishTime;
 
     /**
      * 实际完成时间
      */
-    private LocalDateTime actual_finish_time;
+    private LocalDateTime actualFinishTime;
 
     /**
      * 是否删除
      */
-    private Integer is_deleted;
+    private Integer isDeleted;
 
     /**
      * 创建人
      */
-    private Long create_by;
+    private Long createBy;
 
     /**
      * 更新人
      */
-    private Long update_by;
+    private Long updateBy;
 
     /**
      * 创建时间
      */
-    private LocalDateTime create_time;
+    private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
-    private LocalDateTime update_time;
+    private LocalDateTime updateTime;
 
     @Serial
     private static final long serialVersionUID = 1L;

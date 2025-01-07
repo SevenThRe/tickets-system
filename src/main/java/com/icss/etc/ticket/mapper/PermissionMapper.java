@@ -1,21 +1,24 @@
 package com.icss.etc.ticket.mapper;
 
 import com.icss.etc.ticket.entity.Permission;
+
 import java.time.LocalDateTime;
 import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 
 /**
- * {@code PermissionMapper} 
- * 
- * @since 1.0
- * @version 1.0
+ * {@code PermissionMapper}
+ *
  * @author SevenThRe
+ * @version 1.0
+ * @since 1.0
  */
-    
+
 public interface PermissionMapper {
     /**
      * insert record to table
+     *
      * @param record the record
      * @return insert count
      */
@@ -23,6 +26,7 @@ public interface PermissionMapper {
 
     /**
      * insert record to table selective
+     *
      * @param record the record
      * @return insert count
      */
@@ -30,13 +34,15 @@ public interface PermissionMapper {
 
     /**
      * select by primary key
-     * @param permission_id primary key
+     *
+     * @param permissionId primary key
      * @return object by primary key
      */
-    Permission selectByPrimaryKey(Long permission_id);
+    Permission selectByPrimaryKey(Long permissionId);
 
     /**
      * update record selective
+     *
      * @param record the updated record
      * @return update count
      */
@@ -44,6 +50,7 @@ public interface PermissionMapper {
 
     /**
      * update record
+     *
      * @param record the updated record
      * @return update count
      */

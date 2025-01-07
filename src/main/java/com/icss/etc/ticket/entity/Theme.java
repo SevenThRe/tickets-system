@@ -8,55 +8,61 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * {@code Theme} 
- * 
- * @since 1.0
- * @version 1.0
+ * {@code Theme}
+ *
  * @author SevenThRe
+ * @version 1.0
+ * @since 1.0
  */
-    
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class Theme implements Serializable {
     /**
-    * 主题ID
-    */
-    private String theme_id;
+     * 主题ID
+     */
+    private String themeId;
 
     /**
-    * 主题名称
-    */
-    private String theme_name;
+     * 主题名称
+     */
+    private String themeName;
 
     /**
-    * 主题类型
-    */
-    private String theme_type;
+     * 主题类型
+     */
+    private String themeType;
 
     /**
-    * 是否系统主题
-    */
-    private Integer is_system;
+     * 是否系统主题
+     */
+    private Integer isSystem;
 
     /**
-    * 是否默认主题
-    */
-    private Integer is_default;
+     * 是否默认主题
+     */
+    private Integer isDefault;
 
     /**
-    * 主题配置JSON
-    */
-    private String config_json;
+     * 主题配置JSON
+     */
+    private String configJson;
 
     /**
-    * 创建人
-    */
-    private Long create_by;
+     * 创建人
+     */
+    private Long createBy;
 
-    private LocalDateTime create_time;
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
 
-    private LocalDateTime update_time;
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updateTime;
 
     @Serial
     private static final long serialVersionUID = 1L;

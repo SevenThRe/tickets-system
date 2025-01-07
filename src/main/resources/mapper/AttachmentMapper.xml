@@ -4,15 +4,15 @@
   <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Attachment">
     <!--@mbg.generated-->
     <!--@Table t_attachment-->
-    <id column="attachment_id" jdbcType="BIGINT" property="attachment_id" />
-    <result column="ticket_id" jdbcType="BIGINT" property="ticket_id" />
-    <result column="file_name" jdbcType="VARCHAR" property="file_name" />
-    <result column="file_path" jdbcType="VARCHAR" property="file_path" />
-    <result column="file_size" jdbcType="BIGINT" property="file_size" />
-    <result column="file_type" jdbcType="VARCHAR" property="file_type" />
-    <result column="is_deleted" jdbcType="TINYINT" property="is_deleted" />
-    <result column="create_by" jdbcType="BIGINT" property="create_by" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="create_time" />
+    <id column="attachment_id" jdbcType="BIGINT" property="attachmentId" />
+    <result column="ticket_id" jdbcType="BIGINT" property="ticketId" />
+    <result column="file_name" jdbcType="VARCHAR" property="fileName" />
+    <result column="file_path" jdbcType="VARCHAR" property="filePath" />
+    <result column="file_size" jdbcType="BIGINT" property="fileSize" />
+    <result column="file_type" jdbcType="VARCHAR" property="fileType" />
+    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
+    <result column="create_by" jdbcType="BIGINT" property="createBy" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
@@ -24,70 +24,70 @@
     select 
     <include refid="Base_Column_List" />
     from t_attachment
-    where attachment_id = #{attachment_id,jdbcType=BIGINT}
+    where attachment_id = #{attachmentId,jdbcType=BIGINT}
   </select>
-  <insert id="insert" keyColumn="attachment_id" keyProperty="attachment_id" parameterType="com.icss.etc.ticket.entity.Attachment" useGeneratedKeys="true">
+  <insert id="insert" keyColumn="attachment_id" keyProperty="attachmentId" parameterType="com.icss.etc.ticket.entity.Attachment" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_attachment (ticket_id, file_name, file_path, 
       file_size, file_type, is_deleted, 
       create_by, create_time)
-    values (#{ticket_id,jdbcType=BIGINT}, #{file_name,jdbcType=VARCHAR}, #{file_path,jdbcType=VARCHAR}, 
-      #{file_size,jdbcType=BIGINT}, #{file_type,jdbcType=VARCHAR}, #{is_deleted,jdbcType=TINYINT}, 
-      #{create_by,jdbcType=BIGINT}, #{create_time,jdbcType=TIMESTAMP})
+    values (#{ticketId,jdbcType=BIGINT}, #{fileName,jdbcType=VARCHAR}, #{filePath,jdbcType=VARCHAR}, 
+      #{fileSize,jdbcType=BIGINT}, #{fileType,jdbcType=VARCHAR}, #{isDeleted,jdbcType=TINYINT}, 
+      #{createBy,jdbcType=BIGINT}, #{createTime,jdbcType=TIMESTAMP})
   </insert>
-  <insert id="insertSelective" keyColumn="attachment_id" keyProperty="attachment_id" parameterType="com.icss.etc.ticket.entity.Attachment" useGeneratedKeys="true">
+  <insert id="insertSelective" keyColumn="attachment_id" keyProperty="attachmentId" parameterType="com.icss.etc.ticket.entity.Attachment" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_attachment
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="ticket_id != null">
+      <if test="ticketId != null">
         ticket_id,
       </if>
-      <if test="file_name != null">
+      <if test="fileName != null">
         file_name,
       </if>
-      <if test="file_path != null">
+      <if test="filePath != null">
         file_path,
       </if>
-      <if test="file_size != null">
+      <if test="fileSize != null">
         file_size,
       </if>
-      <if test="file_type != null">
+      <if test="fileType != null">
         file_type,
       </if>
-      <if test="is_deleted != null">
+      <if test="isDeleted != null">
         is_deleted,
       </if>
-      <if test="create_by != null">
+      <if test="createBy != null">
         create_by,
       </if>
-      <if test="create_time != null">
+      <if test="createTime != null">
         create_time,
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="ticket_id != null">
-        #{ticket_id,jdbcType=BIGINT},
+      <if test="ticketId != null">
+        #{ticketId,jdbcType=BIGINT},
       </if>
-      <if test="file_name != null">
-        #{file_name,jdbcType=VARCHAR},
+      <if test="fileName != null">
+        #{fileName,jdbcType=VARCHAR},
       </if>
-      <if test="file_path != null">
-        #{file_path,jdbcType=VARCHAR},
+      <if test="filePath != null">
+        #{filePath,jdbcType=VARCHAR},
       </if>
-      <if test="file_size != null">
-        #{file_size,jdbcType=BIGINT},
+      <if test="fileSize != null">
+        #{fileSize,jdbcType=BIGINT},
       </if>
-      <if test="file_type != null">
-        #{file_type,jdbcType=VARCHAR},
+      <if test="fileType != null">
+        #{fileType,jdbcType=VARCHAR},
       </if>
-      <if test="is_deleted != null">
-        #{is_deleted,jdbcType=TINYINT},
+      <if test="isDeleted != null">
+        #{isDeleted,jdbcType=TINYINT},
       </if>
-      <if test="create_by != null">
-        #{create_by,jdbcType=BIGINT},
+      <if test="createBy != null">
+        #{createBy,jdbcType=BIGINT},
       </if>
-      <if test="create_time != null">
-        #{create_time,jdbcType=TIMESTAMP},
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
       </if>
     </trim>
   </insert>
@@ -95,78 +95,78 @@
     <!--@mbg.generated-->
     update t_attachment
     <set>
-      <if test="ticket_id != null">
-        ticket_id = #{ticket_id,jdbcType=BIGINT},
+      <if test="ticketId != null">
+        ticket_id = #{ticketId,jdbcType=BIGINT},
       </if>
-      <if test="file_name != null">
-        file_name = #{file_name,jdbcType=VARCHAR},
+      <if test="fileName != null">
+        file_name = #{fileName,jdbcType=VARCHAR},
       </if>
-      <if test="file_path != null">
-        file_path = #{file_path,jdbcType=VARCHAR},
+      <if test="filePath != null">
+        file_path = #{filePath,jdbcType=VARCHAR},
       </if>
-      <if test="file_size != null">
-        file_size = #{file_size,jdbcType=BIGINT},
+      <if test="fileSize != null">
+        file_size = #{fileSize,jdbcType=BIGINT},
       </if>
-      <if test="file_type != null">
-        file_type = #{file_type,jdbcType=VARCHAR},
+      <if test="fileType != null">
+        file_type = #{fileType,jdbcType=VARCHAR},
       </if>
-      <if test="is_deleted != null">
-        is_deleted = #{is_deleted,jdbcType=TINYINT},
+      <if test="isDeleted != null">
+        is_deleted = #{isDeleted,jdbcType=TINYINT},
       </if>
-      <if test="create_by != null">
-        create_by = #{create_by,jdbcType=BIGINT},
+      <if test="createBy != null">
+        create_by = #{createBy,jdbcType=BIGINT},
       </if>
-      <if test="create_time != null">
-        create_time = #{create_time,jdbcType=TIMESTAMP},
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
       </if>
     </set>
-    where attachment_id = #{attachment_id,jdbcType=BIGINT}
+    where attachment_id = #{attachmentId,jdbcType=BIGINT}
   </update>
   <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.Attachment">
     <!--@mbg.generated-->
     update t_attachment
-    set ticket_id = #{ticket_id,jdbcType=BIGINT},
-      file_name = #{file_name,jdbcType=VARCHAR},
-      file_path = #{file_path,jdbcType=VARCHAR},
-      file_size = #{file_size,jdbcType=BIGINT},
-      file_type = #{file_type,jdbcType=VARCHAR},
-      is_deleted = #{is_deleted,jdbcType=TINYINT},
-      create_by = #{create_by,jdbcType=BIGINT},
-      create_time = #{create_time,jdbcType=TIMESTAMP}
-    where attachment_id = #{attachment_id,jdbcType=BIGINT}
+    set ticket_id = #{ticketId,jdbcType=BIGINT},
+      file_name = #{fileName,jdbcType=VARCHAR},
+      file_path = #{filePath,jdbcType=VARCHAR},
+      file_size = #{fileSize,jdbcType=BIGINT},
+      file_type = #{fileType,jdbcType=VARCHAR},
+      is_deleted = #{isDeleted,jdbcType=TINYINT},
+      create_by = #{createBy,jdbcType=BIGINT},
+      create_time = #{createTime,jdbcType=TIMESTAMP}
+    where attachment_id = #{attachmentId,jdbcType=BIGINT}
   </update>
   <select id="selectByAll" resultMap="BaseResultMap">
         <!--@mbg.generated-->
         select
-        <include refid="Base_Column_List"/>
+        <include refid="Base_Column_List" />
         from t_attachment
         <where>
-            <if test="attachment_id != null">
-                and attachment_id=#{attachment_id,jdbcType=BIGINT}
+            <if test="attachmentId != null">
+                and attachment_id=#{attachmentId,jdbcType=BIGINT}
             </if>
-            <if test="ticket_id != null">
-                and ticket_id=#{ticket_id,jdbcType=BIGINT}
+            <if test="ticketId != null">
+                and ticket_id=#{ticketId,jdbcType=BIGINT}
             </if>
-            <if test="file_name != null">
-                and file_name=#{file_name,jdbcType=VARCHAR}
+            <if test="fileName != null">
+                and file_name=#{fileName,jdbcType=VARCHAR}
             </if>
-            <if test="file_path != null">
-                and file_path=#{file_path,jdbcType=VARCHAR}
+            <if test="filePath != null">
+                and file_path=#{filePath,jdbcType=VARCHAR}
             </if>
-            <if test="file_size != null">
-                and file_size=#{file_size,jdbcType=BIGINT}
+            <if test="fileSize != null">
+                and file_size=#{fileSize,jdbcType=BIGINT}
             </if>
-            <if test="file_type != null">
-                and file_type=#{file_type,jdbcType=VARCHAR}
+            <if test="fileType != null">
+                and file_type=#{fileType,jdbcType=VARCHAR}
             </if>
-            <if test="is_deleted != null">
-                and is_deleted=#{is_deleted,jdbcType=TINYINT}
+            <if test="isDeleted != null">
+                and is_deleted=#{isDeleted,jdbcType=TINYINT}
             </if>
-            <if test="create_by != null">
-                and create_by=#{create_by,jdbcType=BIGINT}
+            <if test="createBy != null">
+                and create_by=#{createBy,jdbcType=BIGINT}
             </if>
-            <if test="create_time != null">
-                and create_time=#{create_time,jdbcType=TIMESTAMP}
+            <if test="createTime != null">
+                and create_time=#{createTime,jdbcType=TIMESTAMP}
             </if>
         </where>
     </select>
@@ -176,76 +176,76 @@
     <trim prefix="set" suffixOverrides=",">
       <trim prefix="ticket_id = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.ticket_id != null">
-            when attachment_id = #{item.attachment_id,jdbcType=BIGINT} then #{item.ticket_id,jdbcType=BIGINT}
+          <if test="item.ticketId != null">
+            when attachment_id = #{item.attachmentId,jdbcType=BIGINT} then #{item.ticketId,jdbcType=BIGINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="file_name = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.file_name != null">
-            when attachment_id = #{item.attachment_id,jdbcType=BIGINT} then #{item.file_name,jdbcType=VARCHAR}
+          <if test="item.fileName != null">
+            when attachment_id = #{item.attachmentId,jdbcType=BIGINT} then #{item.fileName,jdbcType=VARCHAR}
           </if>
         </foreach>
       </trim>
       <trim prefix="file_path = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.file_path != null">
-            when attachment_id = #{item.attachment_id,jdbcType=BIGINT} then #{item.file_path,jdbcType=VARCHAR}
+          <if test="item.filePath != null">
+            when attachment_id = #{item.attachmentId,jdbcType=BIGINT} then #{item.filePath,jdbcType=VARCHAR}
           </if>
         </foreach>
       </trim>
       <trim prefix="file_size = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.file_size != null">
-            when attachment_id = #{item.attachment_id,jdbcType=BIGINT} then #{item.file_size,jdbcType=BIGINT}
+          <if test="item.fileSize != null">
+            when attachment_id = #{item.attachmentId,jdbcType=BIGINT} then #{item.fileSize,jdbcType=BIGINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="file_type = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.file_type != null">
-            when attachment_id = #{item.attachment_id,jdbcType=BIGINT} then #{item.file_type,jdbcType=VARCHAR}
+          <if test="item.fileType != null">
+            when attachment_id = #{item.attachmentId,jdbcType=BIGINT} then #{item.fileType,jdbcType=VARCHAR}
           </if>
         </foreach>
       </trim>
       <trim prefix="is_deleted = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.is_deleted != null">
-            when attachment_id = #{item.attachment_id,jdbcType=BIGINT} then #{item.is_deleted,jdbcType=TINYINT}
+          <if test="item.isDeleted != null">
+            when attachment_id = #{item.attachmentId,jdbcType=BIGINT} then #{item.isDeleted,jdbcType=TINYINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="create_by = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.create_by != null">
-            when attachment_id = #{item.attachment_id,jdbcType=BIGINT} then #{item.create_by,jdbcType=BIGINT}
+          <if test="item.createBy != null">
+            when attachment_id = #{item.attachmentId,jdbcType=BIGINT} then #{item.createBy,jdbcType=BIGINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="create_time = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.create_time != null">
-            when attachment_id = #{item.attachment_id,jdbcType=BIGINT} then #{item.create_time,jdbcType=TIMESTAMP}
+          <if test="item.createTime != null">
+            when attachment_id = #{item.attachmentId,jdbcType=BIGINT} then #{item.createTime,jdbcType=TIMESTAMP}
           </if>
         </foreach>
       </trim>
     </trim>
     where attachment_id in
     <foreach close=")" collection="list" item="item" open="(" separator=", ">
-      #{item.attachment_id,jdbcType=BIGINT}
+      #{item.attachmentId,jdbcType=BIGINT}
     </foreach>
   </update>
-  <insert id="batchInsert" keyColumn="attachment_id" keyProperty="attachment_id" parameterType="map" useGeneratedKeys="true">
+  <insert id="batchInsert" keyColumn="attachment_id" keyProperty="attachmentId" parameterType="map" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_attachment
     (ticket_id, file_name, file_path, file_size, file_type, is_deleted, create_by, create_time
       )
     values
     <foreach collection="list" item="item" separator=",">
-      (#{item.ticket_id,jdbcType=BIGINT}, #{item.file_name,jdbcType=VARCHAR}, #{item.file_path,jdbcType=VARCHAR}, 
-        #{item.file_size,jdbcType=BIGINT}, #{item.file_type,jdbcType=VARCHAR}, #{item.is_deleted,jdbcType=TINYINT}, 
-        #{item.create_by,jdbcType=BIGINT}, #{item.create_time,jdbcType=TIMESTAMP})
+      (#{item.ticketId,jdbcType=BIGINT}, #{item.fileName,jdbcType=VARCHAR}, #{item.filePath,jdbcType=VARCHAR}, 
+        #{item.fileSize,jdbcType=BIGINT}, #{item.fileType,jdbcType=VARCHAR}, #{item.isDeleted,jdbcType=TINYINT}, 
+        #{item.createBy,jdbcType=BIGINT}, #{item.createTime,jdbcType=TIMESTAMP})
     </foreach>
   </insert>
 </mapper>

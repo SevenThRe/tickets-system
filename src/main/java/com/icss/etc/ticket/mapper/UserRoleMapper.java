@@ -35,10 +35,10 @@ public interface UserRoleMapper {
     /**
      * select by primary key
      *
-     * @param user_id primary key
+     * @param userId primary key
      * @return object by primary key
      */
-    UserRole selectByPrimaryKey(@Param("user_id") Long user_id, @Param("role_id") Long role_id);
+    UserRole selectByPrimaryKey(@Param("userId") Long userId, @Param("roleId") Long roleId);
 
     /**
      * update record selective

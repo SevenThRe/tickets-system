@@ -1,64 +1,57 @@
 package com.icss.etc.ticket.mapper;
 
-import com.icss.etc.ticket.entity.UserTheme;
-
+import com.icss.etc.ticket.entity.Position;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import org.apache.ibatis.annotations.Param;
 
 /**
- * {@code UserThemeMapper}
- *
- * @author SevenThRe
- * @version 1.0
+ * {@code PositionMapper} 
+ * 
  * @since 1.0
+ * @version 1.0
+ * @author SevenThRe
  */
-
-public interface UserThemeMapper {
+    
+public interface PositionMapper {
     /**
      * insert record to table
-     *
      * @param record the record
      * @return insert count
      */
-    int insert(UserTheme record);
+    int insert(Position record);
 
     /**
      * insert record to table selective
-     *
      * @param record the record
      * @return insert count
      */
-    int insertSelective(UserTheme record);
+    int insertSelective(Position record);
 
     /**
      * select by primary key
-     *
-     * @param userId primary key
+     * @param id primary key
      * @return object by primary key
      */
-    UserTheme selectByPrimaryKey(@Param("userId") Long userId, @Param("themeId") String themeId);
+    Position selectByPrimaryKey(Long id);
 
     /**
      * update record selective
-     *
      * @param record the updated record
      * @return update count
      */
-    int updateByPrimaryKeySelective(UserTheme record);
+    int updateByPrimaryKeySelective(Position record);
 
     /**
      * update record
-     *
      * @param record the updated record
      * @return update count
      */
-    int updateByPrimaryKey(UserTheme record);
+    int updateByPrimaryKey(Position record);
 
-    List<UserTheme> selectByAll(UserTheme userTheme);
+    List<Position> selectByAll(Position position);
 
-    int updateBatchSelective(@Param("list") List<UserTheme> list);
+    int updateBatchSelective(@Param("list") List<Position> list);
 
-    int batchInsert(@Param("list") List<UserTheme> list);
+    int batchInsert(@Param("list") List<Position> list);
 }

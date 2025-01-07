@@ -4,11 +4,11 @@
   <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.UserTheme">
     <!--@mbg.generated-->
     <!--@Table sys_user_theme-->
-    <id column="user_id" jdbcType="BIGINT" property="user_id" />
-    <id column="theme_id" jdbcType="VARCHAR" property="theme_id" />
-    <result column="is_current" jdbcType="TINYINT" property="is_current" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="create_time" />
-    <result column="update_time" jdbcType="TIMESTAMP" property="update_time" />
+    <id column="user_id" jdbcType="BIGINT" property="userId" />
+    <id column="theme_id" jdbcType="VARCHAR" property="themeId" />
+    <result column="is_current" jdbcType="TINYINT" property="isCurrent" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
@@ -19,51 +19,51 @@
     select 
     <include refid="Base_Column_List" />
     from sys_user_theme
-    where user_id = #{user_id,jdbcType=BIGINT}
-      and theme_id = #{theme_id,jdbcType=VARCHAR}
+    where user_id = #{userId,jdbcType=BIGINT}
+      and theme_id = #{themeId,jdbcType=VARCHAR}
   </select>
   <insert id="insert" parameterType="com.icss.etc.ticket.entity.UserTheme">
     <!--@mbg.generated-->
     insert into sys_user_theme (user_id, theme_id, is_current, 
       create_time, update_time)
-    values (#{user_id,jdbcType=BIGINT}, #{theme_id,jdbcType=VARCHAR}, #{is_current,jdbcType=TINYINT}, 
-      #{create_time,jdbcType=TIMESTAMP}, #{update_time,jdbcType=TIMESTAMP})
+    values (#{userId,jdbcType=BIGINT}, #{themeId,jdbcType=VARCHAR}, #{isCurrent,jdbcType=TINYINT}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" parameterType="com.icss.etc.ticket.entity.UserTheme">
     <!--@mbg.generated-->
     insert into sys_user_theme
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="user_id != null">
+      <if test="userId != null">
         user_id,
       </if>
-      <if test="theme_id != null">
+      <if test="themeId != null">
         theme_id,
       </if>
-      <if test="is_current != null">
+      <if test="isCurrent != null">
         is_current,
       </if>
-      <if test="create_time != null">
+      <if test="createTime != null">
         create_time,
       </if>
-      <if test="update_time != null">
+      <if test="updateTime != null">
         update_time,
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="user_id != null">
-        #{user_id,jdbcType=BIGINT},
+      <if test="userId != null">
+        #{userId,jdbcType=BIGINT},
       </if>
-      <if test="theme_id != null">
-        #{theme_id,jdbcType=VARCHAR},
+      <if test="themeId != null">
+        #{themeId,jdbcType=VARCHAR},
       </if>
-      <if test="is_current != null">
-        #{is_current,jdbcType=TINYINT},
+      <if test="isCurrent != null">
+        #{isCurrent,jdbcType=TINYINT},
       </if>
-      <if test="create_time != null">
-        #{create_time,jdbcType=TIMESTAMP},
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="update_time != null">
-        #{update_time,jdbcType=TIMESTAMP},
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
       </if>
     </trim>
   </insert>
@@ -71,48 +71,48 @@
     <!--@mbg.generated-->
     update sys_user_theme
     <set>
-      <if test="is_current != null">
-        is_current = #{is_current,jdbcType=TINYINT},
+      <if test="isCurrent != null">
+        is_current = #{isCurrent,jdbcType=TINYINT},
       </if>
-      <if test="create_time != null">
-        create_time = #{create_time,jdbcType=TIMESTAMP},
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="update_time != null">
-        update_time = #{update_time,jdbcType=TIMESTAMP},
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
       </if>
     </set>
-    where user_id = #{user_id,jdbcType=BIGINT}
-      and theme_id = #{theme_id,jdbcType=VARCHAR}
+    where user_id = #{userId,jdbcType=BIGINT}
+      and theme_id = #{themeId,jdbcType=VARCHAR}
   </update>
   <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.UserTheme">
     <!--@mbg.generated-->
     update sys_user_theme
-    set is_current = #{is_current,jdbcType=TINYINT},
-      create_time = #{create_time,jdbcType=TIMESTAMP},
-      update_time = #{update_time,jdbcType=TIMESTAMP}
-    where user_id = #{user_id,jdbcType=BIGINT}
-      and theme_id = #{theme_id,jdbcType=VARCHAR}
+    set is_current = #{isCurrent,jdbcType=TINYINT},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where user_id = #{userId,jdbcType=BIGINT}
+      and theme_id = #{themeId,jdbcType=VARCHAR}
   </update>
   <select id="selectByAll" resultMap="BaseResultMap">
         <!--@mbg.generated-->
         select
-        <include refid="Base_Column_List"/>
+        <include refid="Base_Column_List" />
         from sys_user_theme
         <where>
-            <if test="user_id != null">
-                and user_id=#{user_id,jdbcType=BIGINT}
+            <if test="userId != null">
+                and user_id=#{userId,jdbcType=BIGINT}
             </if>
-            <if test="theme_id != null">
-                and theme_id=#{theme_id,jdbcType=VARCHAR}
+            <if test="themeId != null">
+                and theme_id=#{themeId,jdbcType=VARCHAR}
             </if>
-            <if test="is_current != null">
-                and is_current=#{is_current,jdbcType=TINYINT}
+            <if test="isCurrent != null">
+                and is_current=#{isCurrent,jdbcType=TINYINT}
             </if>
-            <if test="create_time != null">
-                and create_time=#{create_time,jdbcType=TIMESTAMP}
+            <if test="createTime != null">
+                and create_time=#{createTime,jdbcType=TIMESTAMP}
             </if>
-            <if test="update_time != null">
-                and update_time=#{update_time,jdbcType=TIMESTAMP}
+            <if test="updateTime != null">
+                and update_time=#{updateTime,jdbcType=TIMESTAMP}
             </if>
         </where>
     </select>
@@ -122,29 +122,29 @@
     <trim prefix="set" suffixOverrides=",">
       <trim prefix="is_current = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.is_current != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.is_current,jdbcType=TINYINT}
+          <if test="item.isCurrent != null">
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.isCurrent,jdbcType=TINYINT}
           </if>
         </foreach>
       </trim>
       <trim prefix="create_time = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.create_time != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.create_time,jdbcType=TIMESTAMP}
+          <if test="item.createTime != null">
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.createTime,jdbcType=TIMESTAMP}
           </if>
         </foreach>
       </trim>
       <trim prefix="update_time = case" suffix="end,">
         <foreach collection="list" index="index" item="item">
-          <if test="item.update_time != null">
-            when user_id = #{item.user_id,jdbcType=BIGINT} then #{item.update_time,jdbcType=TIMESTAMP}
+          <if test="item.updateTime != null">
+            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.updateTime,jdbcType=TIMESTAMP}
           </if>
         </foreach>
       </trim>
     </trim>
     where user_id in
     <foreach close=")" collection="list" item="item" open="(" separator=", ">
-      #{item.user_id,jdbcType=BIGINT}
+      #{item.userId,jdbcType=BIGINT}
     </foreach>
   </update>
   <insert id="batchInsert" parameterType="map">
@@ -153,8 +153,8 @@
     (user_id, theme_id, is_current, create_time, update_time)
     values
     <foreach collection="list" item="item" separator=",">
-      (#{item.user_id,jdbcType=BIGINT}, #{item.theme_id,jdbcType=VARCHAR}, #{item.is_current,jdbcType=TINYINT}, 
-        #{item.create_time,jdbcType=TIMESTAMP}, #{item.update_time,jdbcType=TIMESTAMP})
+      (#{item.userId,jdbcType=BIGINT}, #{item.themeId,jdbcType=VARCHAR}, #{item.isCurrent,jdbcType=TINYINT}, 
+        #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP})
     </foreach>
   </insert>
 </mapper>

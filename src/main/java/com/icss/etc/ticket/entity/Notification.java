@@ -3,6 +3,8 @@ package com.icss.etc.ticket.entity;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import com.icss.etc.ticket.enums.NotifyType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +16,7 @@ import lombok.NoArgsConstructor;
  * @version 1.0
  * @author SevenThRe
  */
-    
+
 /**
  * 通知表
  */
@@ -23,44 +25,44 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Notification implements Serializable {
     /**
-    * 通知ID
-    */
-    private Long notification_id;
+     * 通知ID
+     */
+    private Long notificationId;
 
     /**
-    * 接收用户ID
-    */
-    private Long user_id;
+     * 接收用户ID
+     */
+    private Long userId;
 
     /**
-    * 相关工单ID
-    */
-    private Long ticket_id;
+     * 相关工单ID
+     */
+    private Long ticketId;
 
     /**
-    * 通知类型：0-工单分配，1-工单转交，2-工单完成，3-其他
-    */
-    private Integer notify_type;
+     * 通知类型：0-工单分配，1-工单转交，2-工单完成，3-其他
+     */
+    private NotifyType notifyType;
 
     /**
-    * 通知内容
-    */
+     * 通知内容
+     */
     private String content;
 
     /**
-    * 是否已读：0-未读，1-已读
-    */
-    private Integer is_read;
+     * 是否已读：0-未读，1-已读
+     */
+    private Integer isRead;
 
     /**
-    * 是否删除
-    */
-    private Integer is_deleted;
+     * 是否删除
+     */
+    private Integer isDeleted;
 
     /**
-    * 创建时间
-    */
-    private LocalDateTime create_time;
+     * 创建时间
+     */
+    private LocalDateTime createTime;
 
     @Serial
     private static final long serialVersionUID = 1L;

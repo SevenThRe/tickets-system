@@ -55,7 +55,7 @@ create table t_department
     department_name varchar(50)                        not null comment '部门名称',
     manager_id      bigint                             null comment '部门负责人ID',
     parent_id       bigint                             null comment '父部门ID',
-    dept_level      int                                not null comment '部门层级',
+    dept_level      tinyint                            not null comment '部门层级',
     description     varchar(200)                       null comment '部门描述',
     status          tinyint  default 1                 not null comment '状态：0-禁用，1-启用',
     is_deleted      tinyint  default 0                 not null comment '是否删除',
@@ -63,6 +63,9 @@ create table t_department
     update_by       bigint                             null comment '更新人',
     create_time     datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     update_time     datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    order_num       int      default 0                 null comment '部门排序号',
+    constraint idx_orderNum_parent
+        unique (parent_id, order_num) comment '父部门ID和序号的唯一索引',
     constraint uk_dept_name
         unique (department_name) comment '部门名称唯一索引'
 )
@@ -116,6 +119,22 @@ create table t_permission
 )
     comment '权限表' charset = utf8mb4;
 
+create table t_position
+(
+    id          bigint auto_increment comment '主键ID'
+        primary key,
+    code        varchar(50)                        not null comment '职位编码',
+    name        varchar(50)                        not null comment '职位名称',
+    dept_id     bigint                             null comment '所属部门ID',
+    status      tinyint  default 1                 null comment '状态(0-禁用 1-启用)',
+    order_num   int      default 0                 null comment '排序号',
+    create_time datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time datetime                           null on update CURRENT_TIMESTAMP comment '更新时间',
+    constraint uk_code
+        unique (code)
+)
+    comment '职位表';
+
 create table t_role
 (
     role_id        bigint auto_increment comment '角色ID'
@@ -150,7 +169,6 @@ create table t_ticket
     type_id            bigint                             not null comment '工单类型ID',
     title              varchar(100)                       not null comment '工单标题',
     content            text                               not null comment '工单内容',
-    creator_id         bigint                             not null comment '创建人ID',
     processor_id       bigint                             null comment '处理人ID',
     department_id      bigint                             not null comment '处理部门ID',
     priority           tinyint  default 0                 not null comment '优先级：0-普通，1-紧急，2-非常紧急',
@@ -161,13 +179,9 @@ create table t_ticket
     create_by          bigint                             null comment '创建人',
     update_by          bigint                             null comment '更新人',
     create_time        datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    update_time        datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间'
+    update_time        datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间'
 )
     comment '工单表' charset = utf8mb4;
-
-create index creator_id
-    on t_ticket (creator_id)
-    comment '创建人索引';
 
 create index idx_department
     on t_ticket (department_id)
@@ -232,6 +246,7 @@ create table t_user
     update_by     bigint                             null comment '更新人',
     create_time   datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     update_time   datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    position_id   bigint                             null comment '职位ID',
     constraint uk_username
         unique (username) comment '用户名唯一索引'
 )
