@@ -58,14 +58,6 @@ public interface DepartmentMapper {
 
 
     /**
-     * update record selective
-     *
-     * @param record the updated record
-     * @return update count
-     */
-    int updateByPrimaryKeySelective(Department record);
-
-    /**
      * update record
      *
      * @param record the updated record
