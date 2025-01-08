@@ -6,11 +6,6 @@
  * @author SevenThRe
  * @created 2024-01-06
  */
-/**
- * DepartmentManagement.js
- * 部门管理页面控制器
- * 实现部门的增删改查和人员管理等功能
- */
 class DepartmentManagement {
     constructor() {
         // 缓存DOM元素引用
@@ -19,6 +14,40 @@ class DepartmentManagement {
         this.$membersList = $('#membersList');
         this.$departmentForm = $('#departmentForm');
         this.$searchResults = $('#memberSearchResults');
+
+
+        this.validationRules = {
+            departmentName: {
+                required: true,
+                minLength: 2,
+                maxLength: 50,
+                message: '部门名称长度必须在2-50个字符之间'
+            },
+            managerId: {
+                required: false,
+                message: '请选择部门负责人'
+            },
+            deptLevel: {
+                required: true,
+                validator: (value) => Number(value) >= 1 && Number(value) <= 5,
+                message: '部门层级必须在1-5之间'
+            },
+            description: {
+                required: false,
+                maxLength: 200,
+                message: '部门描述不能超过200个字符'
+            },
+            status: {
+                required: true,
+                validator: (value) => value === '0' || value === '1',
+                message: '状态值无效'
+            },
+            orderNum: {
+                required: true,
+                validator: (value) => Number.isInteger(Number(value)) && Number(value) >= 0,
+                message: '排序号必须是非负整数'
+            }
+        };
 
         // 状态管理
         this.state = {
@@ -31,7 +60,7 @@ class DepartmentManagement {
             selectedMembers: new Set(), // 选中待添加的成员
             isEdit: false            // 是否处理编辑状态
         };
-
+        this._bindFormValidation();
         this.$departmentTree.on('click', '.department-node', (e) => {
             this._handleDepartmentNodeClick(e);
         });
@@ -84,6 +113,181 @@ class DepartmentManagement {
     }
 
 
+    /**
+     * 验证单个字段
+     * @param {string} fieldName - 字段名称
+     * @returns {boolean} - 验证结果
+     * @private
+     */
+    _validateField(fieldName) {
+        const rules = this.validationRules[fieldName];
+        if (!rules) return true;
+
+        // 如果是编辑状态且该字段不需要在编辑时验证，则直接返回true
+        if (this.state.currentDepartment && rules.validateOnEdit === false) {
+            return true;
+        }
+
+        const $field = this.$departmentForm.find(`[name="${fieldName}"]`);
+        const value = $field.val()?.trim() || '';
+
+        // 必填验证
+        if (rules.required && !value) {
+            this._setFieldInvalid($field, rules.message || '此项不能为空');
+            return false;
+        }
+
+        // 长度验证
+        if (rules.minLength && value.length < rules.minLength) {
+            this._setFieldInvalid($field, `最小长度为${rules.minLength}个字符`);
+            return false;
+        }
+
+        if (rules.maxLength && value.length > rules.maxLength) {
+            this._setFieldInvalid($field, `最大长度为${rules.maxLength}个字符`);
+            return false;
+        }
+
+        // 正则验证
+        if (rules.pattern && !rules.pattern.test(value)) {
+            this._setFieldInvalid($field, rules.message);
+            return false;
+        }
+
+        // 自定义验证
+        if (rules.validator && !rules.validator(value)) {
+            this._setFieldInvalid($field, rules.message);
+            return false;
+        }
+
+        // 验证通过，设置成功状态
+        this._setFieldValid($field);
+        return true;
+    }
+
+
+
+    /**
+     * 填充部门表单
+     * @param {Object} department - 部门信息
+     */
+    _fillDepartmentForm(department) {
+        $('#departmentId').val(department.departmentId);  // 隐藏字段，仅用于回显
+        $('#departmentName').val(department.departmentName);
+        $('#managerId').val(department.managerId);
+        $('#parentDepartment').val(department.parentId);
+        $('#deptLevel').val(department.deptLevel);
+        $('#description').val(department.description);
+        $('#status').prop('checked', department.status === 1);
+        $('#orderNum').val(department.orderNum);
+    }
+
+    /**
+     * 获取表单数据
+     * @returns {Object} 表单数据
+     */
+    _getDepartmentFormData() {
+        return {
+            departmentId: this.state.currentDepartment?.departmentId, // 编辑时使用
+            departmentName: $('#departmentName').val().trim(),
+            managerId: $('#managerId').val() || null,
+            parentId: $('#parentDepartment').val() || null,
+            deptLevel: Number($('#deptLevel').val()),
+            description: $('#description').val()?.trim() || null,
+            status: $('#status').prop('checked') ? 1 : 0,
+            orderNum: Number($('#orderNum').val()),
+            iconClass: 'fa fa-folder' // 默认图标
+        };
+    }
+
+    /**
+     * 处理保存部门
+     */
+    async _handleSaveDepartment(e) {
+        e.preventDefault();
+
+        if (!this._validateForm()) {
+            return;
+        }
+
+        const formData = this._getDepartmentFormData();
+        const isEdit = !!this.state.currentDepartment;
+
+        try {
+            this._disableForm(true);
+            const response = await $.ajax({
+                url: isEdit ?
+                    `/api/departments/${this.state.currentDepartment.departmentId}` :
+                    '/api/departments',
+                method: isEdit ? 'PUT' : 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData)
+            });
+
+            if (response.code === 200) {
+                this._showSuccess(isEdit ? '更新部门成功' : '创建部门成功');
+                await this._loadDepartmentTrees();
+                if (isEdit) {
+                    await this._selectDepartment(this.state.currentDepartment.departmentId);
+                }
+                this.departmentModal.hide();
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (error) {
+            this._showError(error.message || '保存失败');
+        } finally {
+            this._disableForm(false);
+        }
+    }
+
+
+
+
+
+
+
+    /**
+     * 绑定表单验证事件
+     * @private
+     */
+    _bindFormValidation() {
+        // 为每个需要验证的字段绑定blur事件
+        Object.keys(this.validationRules).forEach(fieldName => {
+            const $field = this.$departmentForm.find(`[name="${fieldName}"]`);
+
+            // 绑定失去焦点事件
+            $field.on('blur', (e) => {
+                this._validateField(fieldName);
+            });
+
+            // 对于select元素，同时绑定change事件
+            if ($field.is('select')) {
+                $field.on('change', (e) => {
+                    this._validateField(fieldName);
+                });
+            }
+
+            // 对于input元素，绑定input事件进行实时验证
+            if ($field.is('input:not([type="number"])')) {
+                $field.on('input', (e) => {
+                    // 使用防抖避免频繁验证
+                    clearTimeout(this.validateTimer);
+                    this.validateTimer = setTimeout(() => {
+                        this._validateField(fieldName);
+                    }, 300);
+                });
+            }
+        });
+
+        // 绑定表单提交事件
+        this.$departmentForm.on('submit', (e) => {
+            e.preventDefault();
+            if (this._validateForm()) {
+                this._handleSaveDepartment(e);
+            }
+        });
+    }
 
 
     /**
@@ -117,6 +321,10 @@ class DepartmentManagement {
 
         // 表单提交事件
         this.$departmentForm.on('submit', (e) => this._handleSubmitDepartment(e));
+        this.$departmentForm.find('input, select').on('blur', (e) => {
+            const fieldName = $(e.target).attr('name');
+            this._validateField(fieldName);
+        });
 
         // 成员移除事件
         this.$membersList.on('click', '.remove-member', (e) => {
@@ -131,31 +339,10 @@ class DepartmentManagement {
         this.$departmentForm.find('input, select').on('blur', (e) => {
             this._validateField($(e.target).attr('name'));
         });
+
+
     }
 
-    /**
-     * 验证表单字段
-     * @param {string} field - 字段名
-     * @private
-     */
-    _validateField(field) {
-        const $field = $(`#${field}`);
-        const value = $field.val();
-        const rules = this.validationRules[field];
-        if (!rules) return;
-
-        const isValid = rules.required ? value.trim() : true;
-        const message = isValid ? '' : rules.message;
-
-        $field.removeClass('is-invalid').removeClass('is-valid');
-        if (!isValid) {
-            $field.addClass('is-invalid');
-        } else {
-            $field.addClass('is-valid');
-        }
-
-        $field.next('.invalid-feedback').text(message);
-    }
 
     /**
      * 加载部门数据
@@ -232,7 +419,11 @@ class DepartmentManagement {
                 }
             }
         });
-
+         // 绑定选择事件
+        this.$departmentTree.on('select_node.jstree', (e, data) => {
+            const departmentId = data.node.id;
+            this._selectDepartment(departmentId);
+        });
         // 默认展开所有节点
         this.$departmentTree.jstree('open_all');
     }
@@ -256,35 +447,7 @@ class DepartmentManagement {
         };
         return data.map(dept => prepareNode(dept, null));
     }
-    /**
-     * 选择部门
-     * @param {string} departmentId - 部门ID
-     * @private
-     */
-    async _selectDepartment(departmentId) {
-        try {
-            const response = await $.ajax({
-                url: `/api/departments/${departmentId}`,
-                method: 'GET'
-            });
 
-            if(response.code === 200) {
-                this.state.currentDepartment = response.data;
-                this._updateDepartmentForm();
-                await this._loadDepartmentMembers();
-
-                // 更新选中状态样式
-                $('.department-node').removeClass('active');
-                $(`.department-node[data-id="${departmentId}"]`).addClass('active');
-            } else {
-                throw new Error(response.message || '加载部门详情失败');
-            }
-
-        } catch (error) {
-            console.error('加载部门详情失败:', error);
-            this._showError('加载部门详情失败');
-        }
-    }
 
     /**
      * 更新部门表单
@@ -360,7 +523,7 @@ class DepartmentManagement {
 
         try {
             const response = await $.ajax({
-                url: `/api/departments/${this.state.currentDepartment.departmentId}/members`,
+                url: `/api/departments/members/${this.state.currentDepartment.departmentId}`,
                 method: 'GET'
             });
 
@@ -402,26 +565,6 @@ class DepartmentManagement {
         `).join('');
 
         this.$membersList.html(html || '<tr><td colspan="6" class="text-center">暂无成员</td></tr>');
-    }
-
-    /**
-     * 处理添加部门按钮点击
-     * @private
-     */
-    _handleAddDepartment() {
-        // 重置表单
-        this.$departmentForm[0].reset();
-        $('#departmentId').val('');
-
-        // 更新父部门选项
-        this._updateParentOptions();
-
-        // 设置默认值
-        $('#departmentOrder').val(0);
-
-        this.state.isEdit = false;
-        $('#departmentModalTitle').text('新建部门');
-        this.departmentModal.show();
     }
 
     /**
@@ -474,41 +617,6 @@ class DepartmentManagement {
     }
 
     /**
-     * 处理删除部门
-     * @private
-     */
-    async _handleDeleteDepartment() {
-        if (!this.state.currentDepartment) return;
-
-        if (!confirm('确定要删除该部门吗？删除后无法恢复。')) {
-            return;
-        }
-
-        try {
-            const response = await $.ajax({
-                url: `/api/departments/${this.state.currentDepartment.departmentId}`,
-                method: 'DELETE'
-            });
-
-            if(response.code === 200) {
-                this._showSuccess('删除部门成功');
-                this.state.currentDepartment = null;
-                await this._refreshDepartments();
-
-                // 清空表单
-                this.$departmentForm[0].reset();
-                this.$membersList.empty();
-            } else {
-                throw new Error(response.message || '删除部门失败');
-            }
-
-        } catch (error) {
-            console.error('删除部门失败:', error);
-            this._showError(error.message || '删除部门失败');
-        }
-    }
-
-    /**
      * 处理添加成员
      * @private
      */
@@ -527,39 +635,6 @@ class DepartmentManagement {
         this.addMemberModal.show();
     }
 
-    /**
-     * 处理成员搜索
-     * @private
-     */
-    async _handleMemberSearch(e) {
-        const keyword = e.target.value.trim();
-        if (!keyword) {
-            this.state.searchResults = [];
-            this._renderSearchResults();
-            return;
-        }
-
-        try {
-            const response = await $.ajax({
-                url: '/api/users/search',
-                method: 'GET',
-                data: {
-                    keyword,
-                    excludeDepartmentId: this.state.currentDepartment.departmentId
-                }
-            });
-
-            if(response.code === 200) {
-                this.state.searchResults = response.data;
-                this._renderSearchResults();
-            } else {
-                throw new Error(response.message || '搜索用户失败');
-            }
-        } catch (error) {
-            console.error('搜索用户失败:', error);
-            this._showError(error.message || '搜索用户失败');
-        }
-    }
     /**
      * 渲染搜索结果
      * @private
@@ -690,24 +765,7 @@ class DepartmentManagement {
         return true;
     }
 
-    /**
-     * 获取部门表单数据
-     * @returns {Object} 表单数据
-     * @private
-     */
-    _getDepartmentFormData() {
-        const formData = new FormData(this.$departmentForm[0]);
-        return {
-            departmentId: this.state.isEdit ? this.state.currentDepartment.departmentId : null,
-            departmentName: formData.get('name').trim(),
-            departmentCode: formData.get('code').trim(),
-            parentId: formData.get('parentId') || null,
-            managerId: formData.get('managerId') || null,
-            orderNum: Number(formData.get('orderNum')),
-            description: formData.get('description').trim(),
-            deptLevel: Number(formData.get('deptLevel'))
-        };
-    }
+
 
     /**
      * 刷新部门树
@@ -758,19 +816,6 @@ class DepartmentManagement {
         }
     }
 
-    /**
-     * 显示错误信息
-     * @private
-     */
-    _showError(message) {
-        const alertHtml = `
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        this.$container.prepend(alertHtml);
-    }
 
     /**
      * 显示成功信息
@@ -815,13 +860,235 @@ class DepartmentManagement {
         this.state = null;
     }
 
+    /**
+     *  回显部门树节点
+     * @param e - 点击事件
+     * @private
+     */
     _handleDepartmentNodeClick(e) {
-        const $node = $(e.currentTarget);
-        const departmentId = $node.data('id');
+        const selectedNode = $('#departmentTree').jstree('get_selected', true)[0];
+        if (!selectedNode) return;
 
-        // 执行查询操作
-        this._selectDepartment(departmentId);
+        const departmentId = selectedNode.id;
+        this._selectDepartment(departmentId); // 加载部门详情和成员
     }
+
+    /**
+     * 失去焦点时验证字段
+     * @private
+     */
+    _bindFieldValidation() {
+        this.$departmentForm.find('input,select').on('blur', (e) => {
+            const $field = $(e.target);
+            const fieldName = $field.attr('name');
+            this._validateField(fieldName);
+        });
+    }
+
+
+    /**
+     * 选择部门
+     * @param {string} departmentId - 部门ID
+     * @private
+     */
+    async _selectDepartment(departmentId) {
+        try {
+            this._showLoading();
+
+            const response = await $.ajax({
+                url: `/api/departments/detail/${departmentId}`,
+                method: 'GET'
+            });
+
+            if(response.code === 200) {
+                this.state.currentDepartment = response.data;
+                // 回填表单数据
+                this._fillDepartmentForm(response.data);
+                // 加载部门成员
+                await this._loadDepartmentMembers(departmentId);
+            } else {
+                throw new Error(response.message);
+            }
+
+        } catch(error) {
+            this._showError('加载部门信息失败:' + error.message);
+        } finally {
+            this._hideLoading();
+        }
+    }
+
+
+
+
+    /**
+     * 处理删除部门
+     * @private
+     */
+    async _handleDeleteDepartment() {
+        if(!this.state.currentDepartment) {
+            this._showError('请先选择部门');
+            return;
+        }
+
+        // 二次确认
+        if(!confirm('确认要删除该部门吗?删除后不可恢复!')) {
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: `/api/departments/del/${this.state.currentDepartment.departmentId}`,
+                method: 'DELETE'
+            });
+
+            if(response.code === 200) {
+                this._showSuccess('删除成功');
+                this.state.currentDepartment = null;
+                // 清空表单
+                this.$departmentForm[0].reset();
+                // 重新加载部门树
+                await this._loadDepartmentTrees();
+            } else {
+                throw new Error(response.message);
+            }
+
+        } catch(error) {
+            this._showError('删除失败:' + error.message);
+        }
+    }
+
+    /**
+     * 处理添加部门
+     * @private
+     */
+    _handleAddDepartment() {
+        // 重置表单和状态
+        this.$departmentForm[0].reset();
+        this.state.currentDepartment = null;
+        // 移除验证状态
+        this.$departmentForm.find('.is-invalid, .is-valid').removeClass('is-invalid is-valid');
+        this.$departmentForm.find('.invalid-feedback').remove();
+
+        // 设置默认值
+        $('#departmentLevel').val(1);
+        $('#departmentOrder').val(0);
+
+        // 显示弹窗
+        this.departmentModal.show();
+    }
+
+    /**
+     * 处理编辑部门
+     * @private
+     */
+    _handleEditDepartment() {
+        if(!this.state.currentDepartment) {
+            this._showError('请先选择部门');
+            return;
+        }
+
+        // 回填当前部门数据
+        this._fillDepartmentForm(this.state.currentDepartment);
+        // 显示弹窗
+        this.departmentModal.show();
+    }
+
+
+
+    // 修改后的成员搜索方法
+    async _handleMemberSearch(e) {
+        const keyword = e.target.value.trim();
+        if (!keyword) {
+            this.state.searchResults = [];
+            this._renderSearchResults();
+            return;
+        }
+
+        try {
+            // 直接使用 jQuery ajax
+            const response = await $.ajax({
+                url: '/api/users/search',
+                method: 'GET',
+                data: {
+                    keyword: keyword,
+                    excludeDepartmentId: this.state.currentDepartment?.departmentId || ''
+                }
+            });
+
+            if(response.code === 200) {
+                this.state.searchResults = response.data;
+                this._renderSearchResults();
+            } else {
+                throw new Error(response.message || '搜索用户失败');
+            }
+        } catch (error) {
+            console.error('搜索用户失败:', error);
+            this._showError('搜索用户失败');
+        }
+    }
+
+
+    /**
+     * 设置字段有效状态
+     * @param {jQuery} $field - 字段jQuery对象
+     * @private
+     */
+    _setFieldValid($field) {
+        $field
+            .removeClass('is-invalid')
+            .addClass('is-valid')
+            .closest('.form-group')
+            .find('.invalid-feedback')
+            .remove();
+    }
+
+    /**
+     * 验证整个表单
+     * @returns {boolean} - 验证结果
+     * @private
+     */
+    _validateForm() {
+        let isValid = true;
+        Object.keys(this.validationRules).forEach(fieldName => {
+            if (!this._validateField(fieldName)) {
+                isValid = false;
+            }
+        });
+        return isValid;
+    }
+
+    /**
+     * 重置表单验证状态
+     * @private
+     */
+    _resetFormValidation() {
+        this.$departmentForm
+            .find('.is-valid, .is-invalid')
+            .removeClass('is-valid is-invalid');
+        this.$departmentForm
+            .find('.invalid-feedback')
+            .remove();
+    }
+
+
+
+    // 显示错误信息
+    _showError(message) {
+        // 使用Bootstrap的alert
+        const alertHtml = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        $('#main').prepend(alertHtml);
+
+        // 3秒后自动消失
+        setTimeout(() => {
+            $('.alert').alert('close');
+        }, 3000);
+
+        }
 }
 
 // 页面加载完成后初始化

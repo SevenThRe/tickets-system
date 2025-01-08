@@ -49,4 +49,10 @@ public class AuthController {
             return R.FAIL(CodeEnum.USERNAME_OR_PASSWORD_ERROR);
         }
     }
+
+    @RequestMapping("/logout")
+    public R logout(User user) {
+        userService.logout(user);
+        return R.OK("登出成功");
+    }
 }

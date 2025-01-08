@@ -47,43 +47,65 @@
                     <div class="card-body">
                         <!-- 部门信息表单 -->
                         <form id="departmentForm" class="mb-4">
+                            <!-- 隐藏的ID字段，仅用于回显 -->
+<!--                            <input type="hidden" id="departmentId" name="departmentId">-->
+
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label">部门名称</label>
-                                    <input type="text" class="form-control" id="departmentName" name="name" required>
+                                    <input type="text" class="form-control"
+                                           id="departmentName" name="departmentName" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">部门编码</label>
-                                    <input type="text" class="form-control" id="departmentCode" name="code" required>
+                                    <label class="form-label">部门ID</label>
+                                    <input type="text" class="form-control"
+                                           id="departmentId" name="departmentId" required readonly>
                                 </div>
                             </div>
+
                             <div class="mb-3">
                                 <label class="form-label">部门层级</label>
-                                <input type="number" class="form-control" id="departmentLevel" name="deptLevel" min="1" max="5" value="1">
+                                <input type="number" class="form-control"
+                                       id="deptLevel" name="deptLevel"
+                                       min="1" max="5" value="1" required>
                                 <div class="form-text">最大支持5级部门</div>
                             </div>
+
                             <div class="mb-3">
                                 <label class="form-label">上级部门</label>
                                 <select class="form-select" id="parentDepartment" name="parentId">
                                     <option value="">无上级部门</option>
                                 </select>
                             </div>
+
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">部门主管</label>
-                                    <select class="form-select" id="departmentManager" name="managerId">
-                                        <option value="">请选择部门主管</option>
+                                    <label class="form-label">部门负责人</label>
+                                    <select class="form-select" id="managerId" name="managerId">
+                                        <option value="">请选择部门负责人</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">排序号</label>
-                                    <input type="number" class="form-control" id="departmentOrder" name="orderNum" value="0">
+                                    <input type="number" class="form-control"
+                                           id="orderNum" name="orderNum" value="0" required>
                                 </div>
                             </div>
+
                             <div class="mb-3">
                                 <label class="form-label">部门描述</label>
-                                <textarea class="form-control" id="departmentDesc" name="description" rows="3"></textarea>
+                                <textarea class="form-control" id="description"
+                                          name="description" rows="3"></textarea>
                             </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input"
+                                           id="status" name="status" checked>
+                                    <label class="form-check-label" for="status">启用部门</label>
+                                </div>
+                            </div>
+
                             <div class="form-actions">
                                 <button type="submit" class="btn btn-primary" id="saveDepartmentBtn">保存</button>
                                 <button type="button" class="btn btn-danger ms-2" id="deleteDepartmentBtn">删除</button>

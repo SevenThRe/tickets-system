@@ -24,7 +24,7 @@ public class DepartmentController {
         return R.OK(departmentService.selectAll());
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping("/detail/{id}")
     public R getDepartmentById(@PathVariable("id") Long department_id){
         return R.OK(departmentService.selectByDpartmentId(department_id));
     }
@@ -47,7 +47,7 @@ public class DepartmentController {
     }
 
     //TODO:更改API接口
-    @GetMapping("/users/{id}")
+    @GetMapping("/members/{id}")
     public R getDeptMemberByDeptId(@PathVariable("id") Long department_id){
         return R.OK(userService.selectByDepartmentId(department_id));
     }

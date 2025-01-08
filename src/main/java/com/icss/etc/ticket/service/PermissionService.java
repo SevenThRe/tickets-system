@@ -1,12 +1,10 @@
-package com.icss.etc.ticket.mapper;
+package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.Permission;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
 import com.icss.etc.ticket.entity.Role2;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * {@code PermissionMapper}
@@ -16,7 +14,7 @@ import org.apache.ibatis.annotations.Param;
  * @since 1.0
  */
 
-public interface PermissionMapper {
+public interface PermissionService {
 
     //增加权限
     int insertPermission(Permission permission);

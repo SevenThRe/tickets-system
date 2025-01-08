@@ -44,4 +44,6 @@ public interface UserService {
      * @return 返回结果
      */
     Integer deleteUser(DeptMemberDTO deptMemberDTO);
+
+    void logout(User user);
 }
