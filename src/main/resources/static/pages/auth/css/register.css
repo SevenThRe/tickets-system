@@ -1,334 +1,89 @@
 @import url('https://fonts.googleapis.com/css?family=Open+Sans');
 
-body {
-    font-family: 'Open Sans', sans-serif;
-    margin: 30px 0;
-    background-color: #f2f2f2;
-    min-height: 100vh;
+*{
+    margin: 0px;/*所有的外边距为0*/
+    padding: 0px;/*所有的内边距为0*/
+    box-sizing: border-box;/*规定两个并排的带边框的框*/
+}
+body{
+    background-color: #F5F5F5; /* 设置淡灰色的纯色背景 */
+    background-image: url("https://ts1.cn.mm.bing.net/th/id/R-C.fea5b2817c23a2c6cace058f7e7c03db?rik=sanxd%2fWDKakAEA&riu=http%3a%2f%2fwww.kuaipng.com%2fUploads%2fpic%2fb%2f2018%2f11-28%2f54308%2fbeijing_pic_54308_1200_600.jpg&ehk=vymJDtaGraZ%2bavNqYee7MRZFH4NRRk3rrIfc61UoJls%3d&risl=&pid=ImgRaw&r=0"); /* 保留原有的背景图片 */
+    background-repeat: no-repeat; /* 防止图片重复 */
+    background-size: cover; /* 让图片覆盖整个页面，可能会裁剪部分图片 */
+    background-position: center center; /* 使图片居中显示 */
+    background-attachment: fixed; /* 使图片相对于视口固定，当页面滚动时，图片不会滚动 */
+    padding-top: 5%;
+}
+.register-container{
+    width: 700px;
+    height: 700px;
+    border: 3px solid #EEEEEE;/*solid 定义实线*/
+    background-color: white;
+    margin: auto;
+    padding: 2rem;
+    border-radius: 20px;
+    background-color: #F0F8FF;
+}
+.register-box{
+    float: left;
+    margin: 15px;
+}
+.register-box>h2:first-child{
+    color: #1F51FF;
+    font-size: 30px;
+}
+.register-box>p:last-child{
+    color: #A6A6A6;
+    font-size: 20px;
 }
 
-.register-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 1rem;
+.rg_center{
+    float: left;
 }
 
-.register-box {
-    width: 100%;
-    max-width: 400px;
-    padding: 3rem;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.rg_right{
+    float: right;
+    margin: 15px;
+    padding-left: 50px;
+}
+.rg_right p{
+    font-size: 15px;
+}
+.rg_right p a{
+    color: coral;
+}
+.td_left{
+    width: 100px;
+    text-align: right;
+    height: 45px;
+    vertical-align: middle;
+}
+.td_right{
+    padding-left: 50px;
+    border-radius: 10px;
+    padding-bottom: 20px;
+}
+#username,#realName,#password,#confirmPassword,#email,#departmentId,#positionId,#phone{
+    width: 400px;
+    height: 32px;
+    border: 1px solid #A6A6A6;
+    /*设置边框圆角*/
+    border-radius: 5px;
+    padding-left: 10px;
+}
+#checkcode{
+    width: 110px;
+}
+#img_check{
+    height: 32px;
+    vertical-align: middle;/*设置图片的位置垂直居中*/
+}
+#btn_sub{
+    width: 100px;
+    height: 40px;
+    background-color: #FFD026;
+    border: 1px solid #FFD026;
+    padding-left: 10px;
 }
 
-.register-header {
-    text-align: center;
-    margin-bottom: 2rem;
-}
 
-.register-header h2 {
-    margin-bottom: 2rem;
-    color: #333;
-    font-weight: 600;
-}
-
-.logo {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.logo i {
-    border: 1px solid #ccc;
-    padding: 1em;
-    border-radius: 100%;
-    background-color: #f2f2f2;
-    font-size: 2em;
-    color: #3b82f6;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.input-group-text {
-    background-color: transparent;
-    border-right: none;
-}
-
-.input-group .form-control {
-    border-left: none;
-}
-
-.input-group .form-control:focus {
-    border-color: #3b82f6;
-    box-shadow: none;
-}
-
-.input-group-text i {
-    color: #6b7280;
-}
-
-.form-text {
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-top: 0.25rem;
-}
-
-.btn-primary {
-    background-color: #3b82f6;
-    border-color: #3b82f6;
-    padding: 0.6rem 1rem;
-    font-weight: 500;
-}
-
-.btn-primary:hover {
-    background-color: #2563eb;
-    border-color: #2563eb;
-}
-
-.alert-danger {
-    margin-bottom: 1rem;
-    border-radius: 4px;
-    font-size: 0.875rem;
-}
-
-.invalid-feedback {
-    font-size: 0.75rem;
-}
-
-/* 注册按钮加载状态 */
-.btn-loading {
-    position: relative;
-    color: transparent !important;
-}
-
-.btn-loading::after {
-    content: '';
-    position: absolute;
-    width: 1rem;
-    height: 1rem;
-    top: 50%;
-    left: 50%;
-    margin: -0.5rem 0 0 -0.5rem;
-    border: 2px solid #ffffff;
-    border-radius: 50%;
-    border-right-color: transparent;
-    animation: spin 0.75s linear infinite;
-}
-
-@keyframes spin {
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* 暗色主题支持 */
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: #111827;
-    }
-
-    .register-box {
-        background-color: #1f2937;
-        border-color: #374151;
-    }
-
-    .register-header h2 {
-        color: #f9fafb;
-    }
-
-    .logo i {
-        background-color: #374151;
-        border-color: #4b5563;
-        color: #60a5fa;
-    }
-    /* 修改输入框组样式 */
-    .input-group {
-        position: relative;
-        display: flex;
-        flex-wrap: nowrap;  /* 防止换行 */
-        align-items: stretch;
-        width: 100%;
-    }
-
-    /* 密码切换按钮样式 */
-    .input-group .btn-outline-secondary {
-        border-left: none;
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-        padding: 0.375rem 0.75rem;
-        z-index: 3;  /* 确保按钮在错误提示之上 */
-    }
-
-    /* 当输入框有验证状态时的样式 */
-    .input-group .form-control.is-invalid,
-    .input-group .form-control.is-valid {
-        z-index: 2;  /* 确保输入框在错误提示之上 */
-    }
-
-    /* 错误提示样式 */
-    .invalid-feedback {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100%;
-        margin-top: 0.25rem;
-        font-size: 0.875rem;
-        color: #dc3545;
-    }
-
-    /* 输入框组间距 */
-    .form-group {
-        position: relative;
-        margin-bottom: 1.5rem;  /* 增加底部间距以容纳错误提示 */
-        padding-bottom: 1rem;   /* 添加内边距防止错误提示覆盖下一个元素 */
-    }
-
-    /* 密码输入框特殊处理 */
-    .input-group .form-control[type="password"],
-    .input-group .form-control[type="text"] {
-        border-right: none;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-    }
-
-    /* 密码切换按钮悬停状态 */
-    .input-group .btn-outline-secondary:hover {
-        background-color: transparent;
-        color: #6c757d;
-    }
-
-    /* 确保输入框组在验证状态下保持一致的边框颜色 */
-    .input-group .form-control.is-invalid,
-    .input-group .btn-outline-secondary {
-        border-color: #ced4da;
-    }
-
-    .input-group .form-control.is-invalid:focus,
-    .input-group .btn-outline-secondary:focus {
-        border-color: #86b7fe;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-
-    /* 输入框组样式修复 */
-    .input-group {
-        position: relative;
-        display: flex !important; /* 强制使用flex布局 */
-        flex-wrap: nowrap !important; /* 禁止换行 */
-        align-items: stretch;
-        width: 100%;
-    }
-
-    /* 输入框样式 */
-    .input-group .form-control {
-        position: relative;
-        flex: 1 1 auto;
-        width: 1%; /* 这会让输入框自适应剩余宽度 */
-        min-width: 0;
-    }
-
-    /* 密码输入框容器样式 */
-    .password-field {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-
-    /* 密码输入框样式 */
-    .password-field input {
-        width: 100%;
-        padding-right: 40px; /* 为图标预留空间 */
-    }
-
-    /* 密码切换按钮样式 */
-    .toggle-password {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-        color: #6c757d;
-        background: none;
-        border: none;
-        padding: 0;
-        z-index: 10;
-    }
-
-    .toggle-password:hover {
-        color: #495057;
-    }
-
-    /* 密码切换图标样式 */
-    .toggle-password {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-        color: #6c757d;
-        z-index: 10;
-        font-size: 1.1em;
-        padding: 2px;
-    }
-
-    .toggle-password:hover {
-        color: #495057;
-    }
-
-
-    /* 确保输入框和按钮的边框样式 */
-    .input-group > :not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) {
-        margin-left: -1px;
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-    }
-
-    .input-group > :not(:last-child):not(.dropdown-toggle):not(.dropdown-menu):not(.form-floating) {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-    }
-
-    /* 错误状态下保持布局 */
-    .input-group .form-control.is-invalid {
-        border-right: 0;
-        z-index: 2;
-    }
-
-    .input-group .form-control.is-invalid:focus {
-        z-index: 3;
-    }
-
-    /* 错误提示的位置调整 */
-    .invalid-feedback {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        z-index: 5;
-    }
-
-    /* 调整表单组的间距 */
-    .form-group {
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.5rem;
-    }
-
-    .form-control {
-        background-color: #374151;
-        border-color: #4b5563;
-        color: #f9fafb;
-    }
-
-    .form-control:focus {
-        background-color: #374151;
-        border-color: #60a5fa;
-        color: #f9fafb;
-    }
-
-    .form-text {
-        color: #d1d5db;
-    }
-}

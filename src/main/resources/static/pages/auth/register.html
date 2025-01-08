@@ -9,144 +9,68 @@
     <link href="/pages/auth/css/register.css" rel="stylesheet">
 </head>
 <body>
-<div class="register-container">
-    <div class="register-box">
-        <div class="register-header">
-            <h2>欢迎加入!</h2>
-            <div class="logo">
-                <i class="bi bi-shield-plus"></i>
-            </div>
-            <p class="text-muted">创建您的账户</p>
-        </div>
 
-        <div class="alert alert-danger d-none" id="errorAlert"></div>
 
-        <form id="registerForm" class="needs-validation" novalidate>
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="bi bi-person"></i>
-                    </span>
-                    <input type="text"
-                           class="form-control"
-                           id="username"
-                           name="username"
-                           placeholder="用户名"
-                           required>
-                </div>
-                <div class="form-text">用户名只能包含字母、数字和下划线，3-20个字符</div>
-            </div>
+ <div class="register-container">
 
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="bi bi-person-badge"></i>
-                    </span>
-                    <input type="text"
-                           class="form-control"
-                           id="realName"
-                           name="realName"
-                           placeholder="真实姓名"
-                           required>
-                </div>
-            </div>
+     <div class="rg_center">
+         <div class="register-box" >
+             <h2>欢迎加入!</h2>
+             <p>创建您的账户</p>
+         </div>
+         <div class="rg_form">
+             <form action="#" method="post">
+                 <table>
+                     <tr><!--label 标签的作用是当点击文字也会跳到文本输出框-->
+                         <!--for属性与ID属性对应规定 label 绑定到哪个表单元素。-->
+                         <td class="td_left"><label for="username">用户名</label> </td>
+                         <td class="td_right" ><input type="text" name="username" id="username" placeholder="用户名只能包含字母、数字和下划线，3-20个字符"> </td>
+                     </tr>
 
-            <div class="form-group">
-                <div class="password-field">
-                    <input type="password"
-                           class="form-control"
-                           id="password"
-                           name="password"
-                           placeholder="密码"
-                           required>
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            id="toggleConfirmPassword">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                </div>
-                <div class="form-text">密码必须包含字母和数字，6-20个字符</div>
-            </div>
+                     <tr>
+                         <td class="td_left"><label for="realName">真实姓名</label> </td>
+                         <td class="td_right"><input type="text" name="realName" id="realName"> </td>
+                     </tr>
+                     <tr>
+                         <td class="td_left"><label for="password">密码</label> </td>
+                         <td class="td_right"><input type="password" name="password" id="password" placeholder="密码必须包含字母和数字，6-20个字符" > </td>
+                     </tr>
+                     <tr>
+                         <td class="td_left"><label for="confirmPassword">确认密码</label> </td>
+                         <td class="td_right"><input type="password" name="confirmPassword" id="confirmPassword"> </td>
+                     </tr>
+                     <tr><!--label 标签的作用是当点击文字也会跳到文本输出框-->
+                         <td class="td_left"><label for="email">邮箱</label> </td>
+                         <td class="td_right"><input type="email" name="email" id="email"> </td>
+                     </tr>
+                     <tr>
+                         <td class="td_left"><label for="departmentId">选择部门</label></td>
+                         <td class="td_right"><select name="departmentId" id="departmentId"><option value="">请选择</option></select> </td>
+                     </tr>
+                     <tr>
+                         <td class="td_left"><label for="positionId">选择职位</label></td>
+                         <td class="td_right"><select name="positionId" id="positionId"><option value="">请选择</option></select> </td>
+                     </tr>
+                     <tr>
+                         <td class="td_left"><label for="phone">手机号</label> </td>
+                         <td class="td_right"><input type="tel" name="phone" id="phone" > </td>
+                     </tr>
 
-            <div class="form-group">
-                <div class="password-field">
-                    <input type="password"
-                           class="form-control"
-                           id="confirmPassword"
-                           name="confirmPassword"
-                           placeholder="确认密码"
-                           required>
-                </div>
-            </div>
+                     <tr>
+                         <td colspan="2" align="center">
+                             <input type="submit" value="注册" id="submitBtn" class="btn btn-primary w-50">
+                         </td>
+                     </tr>
 
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="bi bi-envelope"></i>
-                    </span>
-                    <input type="email"
-                           class="form-control"
-                           id="email"
-                           name="email"
-                           placeholder="邮箱"
-                           required>
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="bi bi-building"></i>
-                    </span>
-                    <select class="form-select"
-                            id="departmentId"
-                            name="departmentId"
-                            required>
-                        <option value="">选择部门</option>
-                    </select>
-                </div>
-            </div>
+                 </table>
+             </form>
+         </div>
+     </div>
+     <div class="rg_right">
+         <p>已有账号？<a href="/pages/auth/login.html" class="text-primary">立即登录</a> </p>
+     </div>
+ </div>
 
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="bi bi-person-badge-fill"></i>
-                    </span>
-                    <select class="form-select"
-                            id="positionId"
-                            name="positionId"
-                            required
-                            disabled>
-                        <option value="">选择职位</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i class="bi bi-phone"></i>
-                    </span>
-                    <input type="tel"
-                           class="form-control"
-                           id="phone"
-                           name="phone"
-                           placeholder="手机号"
-                           required>
-                </div>
-            </div>
-
-            <button type="submit"
-                    class="btn btn-primary w-100"
-                    id="submitBtn">
-                注册
-            </button>
-
-            <div class="mt-3 text-center">
-                <span class="text-muted">已有账号?</span>
-                <a href="/pages/auth/login.html" class="text-primary">立即登录</a>
-            </div>
-        </form>
-    </div>
-</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
@@ -159,3 +83,76 @@
 <script src="/pages/auth/js/register.js"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
