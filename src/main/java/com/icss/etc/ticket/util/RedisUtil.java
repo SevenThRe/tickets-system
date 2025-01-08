@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public final class RedisUtil {
+public final class RedisUtil<T> {
 	@Autowired
 	private RedisTemplate<String, Object> redisTemplate;
 
@@ -88,8 +88,8 @@ public final class RedisUtil {
 	 * @param key 键
 	 * @return 值
 	 */
-	public Object get(String key) {
-		return key == null ? null : redisTemplate.opsForValue().get(key);
+	public T get(String key) {
+		return key == null ? null : (T) redisTemplate.opsForValue().get(key);
 	}
 
 	/**
