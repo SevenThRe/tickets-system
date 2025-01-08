@@ -1,6 +1,8 @@
 package com.icss.etc.ticket.enums;
 
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * {@code OperationType}
@@ -9,7 +11,7 @@ import lombok.Getter;
  * @version 1.0
  * @since 1.0
  */
-@Getter
+@Slf4j
 public enum OperationType {
     /**
      * 创建
@@ -40,6 +42,25 @@ public enum OperationType {
 
     OperationType(int value) {
         this.value = value;
+    }
+
+
+    @JsonValue
+    public int getValue() {
+        return value;
+    }
+
+    @JsonCreator
+    public static OperationType fromValue(int value) {
+        for (OperationType operationType : OperationType.values()) {
+            if (operationType.getValue() == value) {
+                return operationType;
+            }
+        }
+        if (log.isErrorEnabled()) {
+            log.error("Invalid value for OperationType: %d, return CREATE".formatted(value));
+        }
+        return OperationType.CREATE;
     }
 
 }

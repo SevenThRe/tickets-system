@@ -1,4 +1,4 @@
-package com.icss.etc.ticket.entity.dto;
+package com.icss.etc.ticket.entity.dto.ticket;
 
 import com.icss.etc.ticket.annotation.ExcelColumn;
 import lombok.Data;

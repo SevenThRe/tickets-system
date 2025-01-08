@@ -1,6 +1,8 @@
 package com.icss.etc.ticket.enums;
 
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * {@code NotifyType}
@@ -10,7 +12,7 @@ import lombok.Getter;
  * @since 1.0
  */
 
-@Getter
+@Slf4j
 public enum NotifyType {
 
     /**
@@ -34,4 +36,22 @@ public enum NotifyType {
         this.value = value;
     }
 
+    @JsonCreator
+    public static NotifyType fromValue(int value) {
+        for (NotifyType notifyType : NotifyType.values()) {
+            if (notifyType.getValue() == value) {
+                return notifyType;
+            }
+        }
+        if (log.isErrorEnabled()){
+            log.error("Invalid value for NotifyType: %d, return ASSIGN".formatted(value));
+        }
+        return NotifyType.ASSIGN;
+    }
+
+
+    @JsonValue
+    public int getValue() {
+        return value;
+    }
 }

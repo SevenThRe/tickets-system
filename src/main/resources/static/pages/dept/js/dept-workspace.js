@@ -80,7 +80,7 @@ class DepartmentWorkspace extends BaseComponent {
         // 初始化模态框
         this.assignModal = new bootstrap.Modal('#assignModal');
 
-        this._loadTicketsOptimized = _.throttle(this._loadTicketsRaw.bind(this), 300)
+        // this._loadTicketsOptimized = _.throttle(this._loadTicketsRaw.bind(this), 300)
 
         // 初始化组件
         this.init();
@@ -758,6 +758,221 @@ class DepartmentWorkspace extends BaseComponent {
         }
 
         super.destroy();
+    }
+
+    /**
+     * 工单处理方法
+     * @private
+     */
+    async _handleProcess() {
+        const note = $('#operationNote').val().trim();
+        if (!note) {
+            this.showError('请输入处理说明');
+            return;
+        }
+
+        try {
+            await window.requestUtil.put(
+                `/api/tickets/${this.state.currentTicket.ticketId}/process`,
+                { note }
+            );
+
+            this.showSuccess('工单处理成功');
+            await this._loadTickets();
+            this._updateTicketDetail();
+
+        } catch (error) {
+            this._handleError(error, '处理失败');
+        }
+    }
+
+    /**
+     * 完成工单
+     * @private
+     */
+    async _handleComplete() {
+        const note = $('#operationNote').val().trim();
+        if (!note) {
+            this.showError('请输入完成说明');
+            return;
+        }
+
+        try {
+            await window.requestUtil.put(
+                `/api/tickets/${this.state.currentTicket.ticketId}/complete`,
+                { note }
+            );
+
+            this.showSuccess('工单已完成');
+            await this._loadTickets();
+            this._updateTicketDetail();
+
+        } catch (error) {
+            this._handleError(error, '完成失败');
+        }
+    }
+
+    /**
+     * 显示转交工单模态框
+     * @private
+     */
+    _handleTransfer() {
+        // 检查是否有工单选中
+        if(!this.state.currentTicket) {
+            this.showError('请先选择工单');
+            return;
+        }
+
+        this._showTransferModal();
+    }
+
+    /**
+     * 转交工单模态框
+     * @private
+     */
+    _showTransferModal() {
+        const modal = $(`
+        <div class="modal fade" id="transferModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">转交工单</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="transferForm">
+                            <div class="mb-3">
+                                <label class="form-label required">转交说明</label>
+                                <textarea class="form-control" id="transferNote" 
+                                    rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label required">转交给</label>
+                                <select class="form-select" id="transferTo" required>
+                                    ${this._renderProcessorOptions()}
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" 
+                            data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" 
+                            id="confirmTransferBtn">确认转交</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `);
+
+        // 添加到body并显示
+        $('body').append(modal);
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+
+        // 绑定确认事件
+        $('#confirmTransferBtn').click(() => {
+            this._handleConfirmTransfer(modalInstance);
+        });
+
+        // 模态框关闭时移除
+        modal.on('hidden.bs.modal', () => {
+            modal.remove();
+        });
+    }
+
+    /**
+     * 处理转交确认
+     * @private
+     */
+    async _handleConfirmTransfer(modalInstance) {
+        const note = $('#transferNote').val().trim();
+        const transferToId = $('#transferTo').val();
+
+        if(!note || !transferToId) {
+            this.showError('请填写完整信息');
+            return;
+        }
+
+        try {
+            await window.requestUtil.post(
+                `/api/tickets/${this.state.currentTicket.ticketId}/transfer`,
+                {
+                    processorId: transferToId,
+                    note: note
+                }
+            );
+
+            modalInstance.hide();
+            this.showSuccess('工单转交成功');
+            await this._loadTickets();
+            this._updateTicketDetail();
+
+        } catch (error) {
+            this._handleError(error, '转交失败');
+        }
+    }
+
+    /**
+     * 关闭工单
+     * @private
+     */
+    async _handleClose() {
+        const note = $('#operationNote').val().trim();
+        if (!note) {
+            this.showError('请输入关闭原因');
+            return;
+        }
+
+        if (!confirm('确定要关闭此工单吗？')) {
+            return;
+        }
+
+        try {
+            await window.requestUtil.put(
+                `/api/tickets/${this.state.currentTicket.ticketId}/close`,
+                { note }
+            );
+
+            this.showSuccess('工单已关闭');
+            await this._loadTickets();
+            this._updateTicketDetail();
+
+        } catch (error) {
+            this._handleError(error, '关闭失败');
+        }
+    }
+
+    /**
+     * 处理工单分配提交
+     * @private
+     */
+    async _handleAssignSubmit() {
+        const processorId = $('#processorList input[name="processor"]:checked').val();
+        const expectFinishTime = $('#expectFinishTime').val();
+
+        if (!processorId) {
+            this.showError('请选择处理人');
+            return;
+        }
+
+        try {
+            // 获取待分配的工单ID列表
+            const tickets = this.state.tickets.filter(t => !t.processorId);
+
+            await window.requestUtil.post('/api/tickets/batch-assign', {
+                tickets: tickets.map(t => t.ticketId),
+                processorId,
+                expectFinishTime
+            });
+
+            this.assignModal.hide();
+            this.showSuccess('工单分配成功');
+            await this._loadTickets();
+
+        } catch (error) {
+            this._handleError(error, '分配失败');
+        }
     }
 
 

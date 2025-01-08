@@ -46,6 +46,13 @@ window.Const = {
                     3: 'text-muted'
                 }
             },
+            TRANSFER: {
+                MIN_NOTE_LENGTH: 10,
+                MAX_NOTE_LENGTH: 200
+            },
+            ASSIGN: {
+                MAX_BATCH_SIZE: 20  // 最大批量分配数量
+            },
             PRIORITY: Object.freeze({
                 NORMAL: 0,
                 URGENT: 1,
@@ -336,7 +343,8 @@ window.Const = {
             POST_LOGIN: '/auth/login',
             POST_LOGOUT: '/auth/logout',
             POST_REFRESH: '/auth/refresh',
-            POST_RESET_PASSWORD: '/auth/reset-password'
+            POST_RESET_PASSWORD: '/auth/reset-password',
+            POST_REGISTER: '/auth/register'
         },
         USER: {
             GET_LIST: '/users',
@@ -377,7 +385,7 @@ window.Const = {
         },
         DEPT: {
             // 部门接口
-            GET_CURRENT: '/departments/current',
+            GET_CURRENT: (id) => `/departments/current/${id}`,
             GET_STATS: {
                 OVERVIEW: '/departments/stats/overview',
                 TRENDS: '/departments/stats/trends',
@@ -385,6 +393,8 @@ window.Const = {
                 WORKLOADS: '/departments/stats/workloads',
                 EFFICIENCY: '/departments/stats/efficiency'
             },
+            GET_LIST: '/departments/list',
+
             GET_PROCESSORS: '/departments/processors',
             GET_TICKET_LIST: '/departments/tickets',
             GET_TICKET_DETAIL: (id) => `/departments/tickets/${id}`,

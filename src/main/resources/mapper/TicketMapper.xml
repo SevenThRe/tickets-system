@@ -120,7 +120,7 @@
         order by create_time desc
     </select>
 
-    <select id="selectForExport" resultType="com.icss.etc.ticket.entity.dto.TicketExportDTO">
+    <select id="selectForExport" resultType="com.icss.etc.ticket.entity.dto.ticket.TicketExportDTO">
         SELECT
         t.ticket_id as ticketCode,
         t.title,
@@ -229,7 +229,7 @@
         where ticket_id = #{ticketId,jdbcType=BIGINT} and is_deleted = 0
     </update>
 
-    <select id="getTypesStats" resultType="com.icss.etc.ticket.entity.dto.TicketTypeStatsDTO">
+    <select id="getTypesStats" resultType="com.icss.etc.ticket.entity.dto.ticket.TicketTypeStatsDTO">
         SELECT
             type_id,
             type_name,
@@ -294,7 +294,7 @@
         AND t.is_deleted = 0
     </select>
 
-    <select id="getTrendStats" parameterType="map" resultType="com.icss.etc.ticket.entity.dto.TicketTrendDTO">
+    <select id="getTrendStats" parameterType="map" resultType="com.icss.etc.ticket.entity.dto.ticket.TicketTrendDTO">
         SELECT DATE(t.create_time)                                AS date,
                COUNT(CASE WHEN t.status = 0 THEN 1 ELSE NULL END) AS newCount,
                COUNT(CASE WHEN t.status = 2 THEN 1 ELSE NULL END) AS completedCount,

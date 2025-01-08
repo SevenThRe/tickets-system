@@ -30,7 +30,6 @@ public enum CodeEnum {
     USERNAME_EXIST(400, "用户名已存在");
 
 
-
     @Getter
     @Setter
     private int code;
@@ -38,6 +37,5 @@ public enum CodeEnum {
     @Getter
     @Setter
     private String msg;
-
 
 }

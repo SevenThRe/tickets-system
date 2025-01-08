@@ -1,6 +1,7 @@
 package com.icss.etc.ticket.entity;
 
 import com.icss.etc.ticket.enums.CodeEnum;
+import com.icss.etc.ticket.enums.TicketEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -72,4 +73,18 @@ public class R<T> {
                 .msg(codeEnum.getMsg())
                 .build();
     }
+
+    /**
+     * 用于构建失败的响应，携带状态码和消息，不携带数据
+     * @param ticketEnum 状态码和消息
+     * @return 响应对象
+     * @param <T> 响应的数据类型
+     */
+    public static <T> R<T> FAIL(TicketEnum ticketEnum) {
+        return R.<T>builder()
+                .code(ticketEnum.getCode())
+                .msg(ticketEnum.getMessage())
+                .build();
+    }
+
 }

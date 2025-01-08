@@ -53,6 +53,11 @@ public enum TicketEnum {
      * "工单信息非法"
      */
     TICKET_INFO_ILLEGAL(-10, "工单信息非法"),
+
+    /**
+     * "工单已删除"
+     */
+    TICKET_DELETED(-11, "工单已被删除过"),
     ;
 
     private final int code;

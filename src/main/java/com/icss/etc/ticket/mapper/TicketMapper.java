@@ -2,10 +2,13 @@ package com.icss.etc.ticket.mapper;
 
 import com.icss.etc.ticket.entity.Ticket;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import com.icss.etc.ticket.entity.dto.*;
+import com.icss.etc.ticket.entity.dto.ticket.TicketExportDTO;
+import com.icss.etc.ticket.entity.dto.ticket.TicketQueryDTO;
+import com.icss.etc.ticket.entity.dto.ticket.TicketTrendDTO;
+import com.icss.etc.ticket.entity.dto.ticket.TicketTypeStatsDTO;
 import org.apache.ibatis.annotations.Param;
 
 /**
