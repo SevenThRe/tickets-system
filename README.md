@@ -79,8 +79,6 @@ project-root/
 │       │   ├── theme-store.js
 │       │   └── user-store.js
 │       └── utils/
-│           ├── bootstrap-icons.js
-│           ├── cache-manager.js
 │           ├── event-bus.js
 │           ├── pagination-util.js
 │           ├── permission-control.js

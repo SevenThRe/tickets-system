@@ -17,7 +17,7 @@ import org.apache.ibatis.annotations.Param;
 
 public interface DepartmentMapper {
     /**
-     * insert record to table
+     * insert record departmentMapper table
      *
      * @param record the record
      * @return insert count
@@ -39,15 +39,6 @@ public interface DepartmentMapper {
      * @return object by primary key
      */
     Department selectByPrimaryKey(Long departmentId);
-
-    /**
-     * update record selective
-     *
-     * @param record the updated record
-     * @return update count
-     */
-    int updateByPrimaryKeySelective(Department record);
-
     /**
      * 根据父部门ID查询子部门列表
      *
@@ -56,22 +47,56 @@ public interface DepartmentMapper {
      */
     List<Department> selectSubDepartments(Long parent_id);
 
-
     /**
-     * update record
-     *
-     * @param record the updated record
-     * @return update count
+     * 查询所有状态正常未删除的部门列表
+     * @return department list
+     */
+    List<Department> selectAll();
+    /**
+     * 修改部门信息
+     * @param record  部门信息DTO
+     * @return 修改结果
      */
     int updateByPrimaryKey(Department record);
 
+    /**
+     * 查询部门列表
+     * @param department department object
+     * @return department list
+     */
     List<Department> selectByAll(Department department);
 
+    /**
+     * 批量更新部门
+     * @param list department list
+     * @return update count
+     */
     int updateBatchSelective(@Param("list") List<Department> list);
 
+    /**
+     * 批量插入部门
+     * @param list department list
+     * @return insert count
+     */
     int batchInsert(@Param("list") List<Department> list);
 
-//   查询部门详情
+    /**
+     * 查询部门详情
+     * @param department_id 部门ID
+     * @return department object
+     */
     Department selectByDpartmentId(Long department_id);
+
+    /**
+     * @return 部门表根节点集合
+     */
+    List<Department> selectParentAll();
+
+    /**
+     * 删除部门
+     * @param department_id 部门ID
+     * @return 删除结果
+     */
+    int deleteByPrimaryKey(Long department_id);
 
 }

@@ -94,4 +94,10 @@ public class Department implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 部门图标
+     */
+    private String iconClass;
+
 }

@@ -17,7 +17,6 @@
     <result column="update_by" jdbcType="BIGINT" property="updateBy" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
-    <result column="position_id" jdbcType="BIGINT" property="positionId" />
   </resultMap>
 
 
@@ -62,7 +61,7 @@
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
     user_id, username, `password`, real_name, department_id, email, phone, `status`, 
-    is_deleted, create_by, update_by, create_time, update_time, position_id
+    is_deleted, create_by, update_by, create_time, update_time
   </sql>
 
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
@@ -77,13 +76,11 @@
     insert into t_user (username, `password`, real_name, 
       department_id, email, phone, 
       `status`, is_deleted, create_by, 
-      update_by, create_time, update_time, 
-      position_id)
+      create_time)
     values (#{username,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, #{realName,jdbcType=VARCHAR}, 
       #{departmentId,jdbcType=BIGINT}, #{email,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR}, 
       #{status,jdbcType=TINYINT}, #{isDeleted,jdbcType=TINYINT}, #{createBy,jdbcType=BIGINT}, 
-      #{updateBy,jdbcType=BIGINT}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, 
-      #{positionId,jdbcType=BIGINT})
+      #{createTime,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" keyColumn="user_id" keyProperty="userId" parameterType="com.icss.etc.ticket.entity.User" useGeneratedKeys="true">
     <!--@mbg.generated-->
@@ -122,12 +119,7 @@
       <if test="createTime != null">
         create_time,
       </if>
-      <if test="updateTime != null">
         update_time,
-      </if>
-      <if test="positionId != null">
-        position_id,
-      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="username != null">
@@ -163,12 +155,7 @@
       <if test="createTime != null">
         #{createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="updateTime != null">
-        #{updateTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="positionId != null">
-        #{positionId,jdbcType=BIGINT},
-      </if>
+      null,
     </trim>
   </insert>
   <update id="updateByPrimaryKeySelective" parameterType="com.icss.etc.ticket.entity.User">
@@ -211,9 +198,6 @@
       <if test="updateTime != null">
         update_time = #{updateTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="positionId != null">
-        position_id = #{positionId,jdbcType=BIGINT},
-      </if>
     </set>
     where user_id = #{userId,jdbcType=BIGINT}
   </update>
@@ -231,8 +215,7 @@
       create_by = #{createBy,jdbcType=BIGINT},
       update_by = #{updateBy,jdbcType=BIGINT},
       create_time = #{createTime,jdbcType=TIMESTAMP},
-      update_time = #{updateTime,jdbcType=TIMESTAMP},
-      position_id = #{positionId,jdbcType=BIGINT}
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
     where user_id = #{userId,jdbcType=BIGINT}
   </update>
   <select id="selectByAll" resultMap="BaseResultMap">
@@ -279,9 +262,6 @@
             </if>
             <if test="updateTime != null">
                 and update_time=#{updateTime,jdbcType=TIMESTAMP}
-            </if>
-            <if test="positionId != null">
-                and position_id=#{positionId,jdbcType=BIGINT}
             </if>
         </where>
     </select>
@@ -373,13 +353,6 @@
           </if>
         </foreach>
       </trim>
-      <trim prefix="position_id = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.positionId != null">
-            when user_id = #{item.userId,jdbcType=BIGINT} then #{item.positionId,jdbcType=BIGINT}
-          </if>
-        </foreach>
-      </trim>
     </trim>
     where user_id in
     <foreach close=")" collection="list" item="item" open="(" separator=", ">
@@ -396,8 +369,41 @@
       (#{item.username,jdbcType=VARCHAR}, #{item.password,jdbcType=VARCHAR}, #{item.realName,jdbcType=VARCHAR}, 
         #{item.departmentId,jdbcType=BIGINT}, #{item.email,jdbcType=VARCHAR}, #{item.phone,jdbcType=VARCHAR}, 
         #{item.status,jdbcType=TINYINT}, #{item.isDeleted,jdbcType=TINYINT}, #{item.createBy,jdbcType=BIGINT}, 
-        #{item.updateBy,jdbcType=BIGINT}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP}, 
-        #{item.positionId,jdbcType=BIGINT})
+        #{item.updateBy,jdbcType=BIGINT}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP},
+        )
     </foreach>
   </insert>
+
+  <select id="selectByDepartmentId" resultType="com.icss.etc.ticket.entity.vo.DeptMemberVO">
+    select
+      u.user_id as userId,
+      u.real_name as realName,
+      u.email as email,
+      u.status as status,
+      r.role_name as roleName
+    from t_user u
+    left join t_user_role ur on u.user_id = ur.user_id
+    left join t_role r on ur.role_id = r.role_id
+    where u.department_id = #{departmentId,jdbcType=BIGINT}
+    and u.is_deleted = 0 and u.status = 1
+     and r.is_deleted = 0
+     and r.status = 1
+    order by u.user_id asc , u.create_time desc
+  </select>
+
+  <update id="addUser">
+    update t_user
+    set department_id = #{departmentId,jdbcType=BIGINT}
+    where user_id = #{userId,jdbcType=BIGINT}
+      and is_deleted = 0
+      and status = 1
+  </update>
+
+  <delete id="deleteUser">
+    update t_user
+    set department_id = null
+    where user_id = #{userId,jdbcType=BIGINT}
+      and is_deleted = 0
+      and status = 1
+  </delete>
 </mapper>

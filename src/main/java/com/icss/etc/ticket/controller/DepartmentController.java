@@ -1,41 +1,30 @@
 package com.icss.etc.ticket.controller;
 
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
+
 import com.icss.etc.ticket.entity.Department;
 import com.icss.etc.ticket.entity.R;
-import com.icss.etc.ticket.entity.dto.ticket.TicketQueryDTO;
+import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
 import com.icss.etc.ticket.service.DepartmentService;
+import com.icss.etc.ticket.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/api/departments")
+@RequestMapping("/departments")
 public class DepartmentController {
     @Autowired
     private DepartmentService departmentService;
+    @Autowired
+    private UserService userService;
 
-    public void setDepartmentService(DepartmentService departmentService) {
-        this.departmentService = departmentService;
+
+    @GetMapping("")
+    public R list() {
+        return R.OK(departmentService.selectAll());
     }
 
-    @GetMapping("list")
-    public R list(Department queryDTO,Integer pageNum,Integer pageSize) {
-        PageHelper.startPage(pageNum, pageSize);
-        PageInfo<Department> pageInfo = new PageInfo<>(departmentService.selectByAll(new Department()));
-        Map<String, Object> map = new HashMap<>();
-        map.put("total", pageInfo.getTotal());
-        map.put("list", pageInfo.getList());
-        return R.OK(map);
-    }
-
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
     public R getDepartmentById(@PathVariable("id") Long department_id){
         return R.OK(departmentService.selectByDpartmentId(department_id));
     }
@@ -45,6 +34,60 @@ public class DepartmentController {
     public R getSubDepartmentById(@PathVariable("id") Long department_id){
         return R.OK(departmentService.selectSubDepartments(department_id));
     }
+
+
+
+    /**
+     * 部门权限树
+     * @return R
+     */
+    @GetMapping("/trees")
+    public R getDepartmentTree() {
+        return R.OK(departmentService.getDepartmentTree());
+    }
+
+    //TODO:更改API接口
+    @GetMapping("/users/{id}")
+    public R getDeptMemberByDeptId(@PathVariable("id") Long department_id){
+        return R.OK(userService.selectByDepartmentId(department_id));
+    }
+
+    @PostMapping("/addUser")
+    public R addUser(DeptMemberDTO deptMemberDTO) {
+        return R.OK(userService.addUser(deptMemberDTO));
+    }
+
+    @DeleteMapping("/deleteUser")
+    public R deleteUser(DeptMemberDTO deptMemberDTO) {
+        return R.OK(userService.deleteUser(deptMemberDTO));
+    }
+    /**
+     * 新增部门
+     * @param department 部门对象
+     */
+    @PostMapping("/add")
+    public R addDepartment(@RequestBody Department department) {
+        return R.OK(departmentService.insert(department));
+    }
+
+    /**
+     *  修改部门
+     * @param department 部门对象
+     */
+    @PutMapping("/update")
+    public R updateDepartment(@RequestBody Department department) {
+        return R.OK(departmentService.updateByPrimaryKey(department));
+    }
+
+    /**
+     * 删除部门
+     * @param department_id 部门ID
+     */
+    @DeleteMapping("/delete/{id}")
+    public R deleteDepartment(@PathVariable("id") Long department_id) {
+        return R.OK(departmentService.deleteByPrimaryKey(department_id));
+    }
+
 
 
 

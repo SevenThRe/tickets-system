@@ -1,20 +1,30 @@
 package com.icss.etc.ticket.service.impl;
 
+import com.icss.etc.ticket.entity.Department;
 import com.icss.etc.ticket.entity.Ticket;
+import com.icss.etc.ticket.entity.TicketRecord;
+import com.icss.etc.ticket.entity.User;
 import com.icss.etc.ticket.entity.dto.*;
-import com.icss.etc.ticket.entity.dto.ticket.TicketExportDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketQueryDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketTrendDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketTypeStatsDTO;
+import com.icss.etc.ticket.entity.dto.ticket.*;
+import com.icss.etc.ticket.entity.vo.TicketVO;
+import com.icss.etc.ticket.enums.OperationType;
 import com.icss.etc.ticket.enums.TicketEnum;
 import com.icss.etc.ticket.enums.TicketStatus;
+import com.icss.etc.ticket.mapper.DepartmentMapper;
 import com.icss.etc.ticket.mapper.TicketMapper;
+import com.icss.etc.ticket.mapper.TicketRecordMapper;
+import com.icss.etc.ticket.mapper.UserMapper;
 import com.icss.etc.ticket.service.TicketService;
+import com.icss.etc.ticket.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName
@@ -24,14 +34,16 @@ import java.util.List;
  * @Version 1.0
  */
 @Service
+@Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class TicketServiceImpl implements TicketService {
+
     private final TicketMapper ticketMapper;
+    private final TicketRecordMapper ticketRecordMapper;
 
-    public TicketServiceImpl(TicketMapper ticketMapper) {
-        this.ticketMapper = ticketMapper;
-    }
+    private final DepartmentMapper departmentMapper;
 
+    private final UserMapper userMapper;
     /**
      *  校验工单是否合法
      * @param ticket 工单实体
@@ -69,6 +81,115 @@ public class TicketServiceImpl implements TicketService {
         }
         return 0;
     }
+
+
+    public TicketServiceImpl(TicketMapper ticketMapper, TicketRecordMapper ticketRecordMapper, DepartmentMapper departmentMapper, UserMapper userMapper) {
+        this.ticketMapper = ticketMapper;
+        this.ticketRecordMapper = ticketRecordMapper;
+        this.departmentMapper = departmentMapper;
+        this.userMapper = userMapper;
+    }
+
+    @Override
+    public int processTicket(Long ticketId, String note) {
+        // 获取工单信息
+        Ticket ticket = ticketMapper.getById(ticketId);
+        if (ticket == null) {
+            throw new IllegalArgumentException("工单不存在");
+        }
+
+        // 校验工单状态
+        if (ticket.getStatus() != TicketStatus.PENDING) {
+            throw new IllegalStateException("工单状态异常，只有待处理的工单可以开始处理");
+        }
+
+        // 更新工单状态
+        ticket.setStatus(TicketStatus.PROCESSING);
+        ticket.setProcessorId(SecurityUtils.getCurrentUserId());
+        ticket.setUpdateBy(SecurityUtils.getCurrentUserId());
+        ticket.setUpdateTime(LocalDateTime.now());
+
+        // 记录操作日志
+        TicketRecord record = new TicketRecord();
+        record.setTicketId(ticketId);
+        record.setOperationType(OperationType.HANDLE);
+        record.setOperationContent(note);
+        record.setOperatorId(SecurityUtils.getCurrentUserId());
+        record.setCreateTime(LocalDateTime.now());
+        record.setIsDeleted(0);
+        ticketRecordMapper.insert(record);
+
+        return ticketMapper.update(ticket);
+    }
+
+    @Override
+    public int resolveTicket(Long ticketId, String note) {
+        // 获取工单信息
+        Ticket ticket = ticketMapper.getById(ticketId);
+        if (ticket == null) {
+            throw new IllegalArgumentException("工单不存在");
+        }
+
+        // 校验工单状态
+        if (ticket.getStatus() != TicketStatus.PROCESSING) {
+            throw new IllegalStateException("工单状态异常，只有处理中的工单可以完成");
+        }
+
+        // 更新工单状态
+        ticket.setStatus(TicketStatus.COMPLETED);
+        ticket.setActualFinishTime(LocalDateTime.now());
+        ticket.setUpdateBy(SecurityUtils.getCurrentUserId());
+        ticket.setUpdateTime(LocalDateTime.now());
+
+        // 记录操作日志
+        TicketRecord record = new TicketRecord();
+        record.setTicketId(ticketId);
+        record.setOperationType(OperationType.FINISH);
+        record.setOperationContent(note);
+        record.setOperatorId(SecurityUtils.getCurrentUserId());
+        record.setCreateTime(LocalDateTime.now());
+        record.setIsDeleted(0);
+        ticketRecordMapper.insert(record);
+
+        return ticketMapper.update(ticket);
+    }
+
+    @Override
+    public int closeTicket(Long ticketId, String note) {
+        // 获取工单信息
+        Ticket ticket = ticketMapper.getById(ticketId);
+        if (ticket == null) {
+            throw new IllegalArgumentException("工单不存在");
+        }
+
+        // 校验工单状态
+        if (ticket.getStatus() == TicketStatus.CLOSED) {
+            throw new IllegalStateException("工单已关闭");
+        }
+
+        // 更新工单状态
+        ticket.setStatus(TicketStatus.CLOSED);
+        ticket.setUpdateBy(SecurityUtils.getCurrentUserId());
+        ticket.setUpdateTime(LocalDateTime.now());
+
+        // 记录操作日志
+        TicketRecord record = new TicketRecord();
+        record.setTicketId(ticketId);
+        record.setOperationType(OperationType.CLOSE);
+        record.setOperationContent(note);
+        record.setOperatorId(SecurityUtils.getCurrentUserId());
+        record.setCreateTime(LocalDateTime.now());
+        record.setIsDeleted(0);
+        ticketRecordMapper.insert(record);
+
+        return ticketMapper.update(ticket);
+    }
+
+    @Override
+    public int addRecord(TicketRecord record) {
+        return ticketRecordMapper.insert(record);
+    }
+
 
 
     @Override
@@ -122,8 +243,33 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public List<Ticket> pageList(TicketQueryDTO queryDTO) {
-        return ticketMapper.pageList(queryDTO);
+    public List<TicketVO> pageList(TicketQueryDTO queryDTO) {
+        List<Ticket> tickets = ticketMapper.pageList(queryDTO);
+        //Ticket 转换 TicketVO
+        // 其他属性的映射
+        List<TicketVO> collect = tickets.stream()
+                .map(ticket -> {
+                    // 其他属性的映射
+                    return TicketVO.builder()
+                            .ticketId(ticket.getTicketId())
+                            .title(ticket.getTitle())
+                            .departmentName(Optional.ofNullable(departmentMapper.selectByPrimaryKey(ticket.getDepartmentId()))
+                                    .map(Department::getDepartmentName)
+                                    .orElse(null))
+                            .processorName(Optional.ofNullable(userMapper.selectByPrimaryKey(ticket.getProcessorId()))
+                                    .map(User::getRealName)
+                                    .orElse(null))
+                            .status(ticket.getStatus())
+                            .priority(ticket.getPriority())
+                            .createTime(ticket.getCreateTime())
+                            .expectFinishTime(ticket.getExpectFinishTime())
+                            .build();
+                })
+                .toList();
+
+        return collect;
+
+
     }
 
     @Override
@@ -207,5 +353,10 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public List<TicketExportDTO> selectForExport(TicketQueryDTO queryDTO) {
         return ticketMapper.selectForExport(queryDTO);
+    }
+
+
+    public UserMapper getUserMapper() {
+        return userMapper;
     }
 }

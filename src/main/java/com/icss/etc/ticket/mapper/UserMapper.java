@@ -1,5 +1,7 @@
 package com.icss.etc.ticket.mapper;
 
+import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
+import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
 
@@ -65,6 +67,25 @@ public interface UserMapper {
 
     int batchInsert(@Param("list") List<User> list);
 
+    /**
+     * 根据部门ID查询用户列表
+     * @param departmentId 部门ID
+     * @return 用户列表
+     */
+    List<DeptMemberVO> selectByDepartmentId(Long departmentId);
 
 
+    /**
+     * 根据部门ID和用户ID添加用户
+     * @param deptMemberDTO 部门ID和用户ID
+     * @return  添加结果
+     */
+    Integer addUser(DeptMemberDTO deptMemberDTO);
+
+    /**
+     * 根据部门ID和用户ID删除用户
+     * @param deptMemberDTO 部门ID和用户ID
+     * @return  删除结果
+     */
+    Integer deleteUser(DeptMemberDTO deptMemberDTO);
 }

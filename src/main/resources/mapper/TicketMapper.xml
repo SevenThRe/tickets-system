@@ -96,13 +96,27 @@
           <include refid="Base_Column_List" />
       from t_ticket
         where is_deleted = 0
-        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
+      <if test="queryDTO.keyword != null and queryDTO.keyword != ''">
+          and (title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')
+          or content like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')
+          or (select username from t_user where username like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%'))
+          or ticket_id like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%'))
+      </if>
         <if test="queryDTO.processorId != null">and processor_id = #{queryDTO.processorId,jdbcType=BIGINT}</if>
         <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>
         <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
         <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
-        <if test="queryDTO.startTime != null">and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}</if>
-        <if test="queryDTO.endTime != null">and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}</if>
+      <choose>
+          <when test="queryDTO.startTime != null and queryDTO.endTime != null">
+              and create_time between #{queryDTO.startTime,jdbcType=TIMESTAMP} and #{queryDTO.endTime,jdbcType=TIMESTAMP}
+          </when>
+          <when test="queryDTO.startTime != null and queryDTO.endTime == null">
+              and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}
+          </when>
+          <when test="queryDTO.startTime == null and queryDTO.endTime != null">
+              and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}
+          </when>
+      </choose>
       order by create_time, ticket_id
     </select>
 
@@ -115,9 +129,17 @@
         <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>
         <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
         <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
-        <if test="queryDTO.startTime != null">and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}</if>
-        <if test="queryDTO.endTime != null">and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}</if>
-        order by create_time desc
+      <choose>
+          <when test="queryDTO.startTime != null and queryDTO.endTime != null">
+              and create_time between #{queryDTO.startTime,jdbcType=TIMESTAMP} and #{queryDTO.endTime,jdbcType=TIMESTAMP}
+          </when>
+          <when test="queryDTO.startTime != null and queryDTO.endTime == null">
+              and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}
+          </when>
+          <when test="queryDTO.startTime == null and queryDTO.endTime != null">
+              and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}
+          </when>
+      </choose>
     </select>
 
     <select id="selectForExport" resultType="com.icss.etc.ticket.entity.dto.ticket.TicketExportDTO">

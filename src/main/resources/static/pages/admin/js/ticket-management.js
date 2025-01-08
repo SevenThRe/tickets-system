@@ -7,18 +7,31 @@ class TicketManagement extends BaseComponent {
         super({
             container: '#main',
             events: {
+                // 搜索和筛选
                 'submit #searchForm': '_handleSearch',
                 'click #resetBtn': '_handleReset',
                 'click #exportBtn': '_handleExport',
+
+                // 工单操作
                 'click #createTicketBtn': '_showCreateTicketModal',
                 'click #saveTicketBtn': '_handleSaveTicket',
                 'click .view-ticket': '_handleViewTicket',
                 'click #closeDetailBtn': '_handleCloseDetail',
+
+                // 工单状态操作
                 'click #processTicketBtn': '_handleProcessTicket',
                 'click #resolveTicketBtn': '_handleResolveTicket',
                 'click #transferTicketBtn': '_showTransferModal',
                 'click #confirmTransferBtn': '_handleTransferTicket',
-                'click #closeTicketBtn': '_handleCloseTicket'
+                'click #closeTicketBtn': '_handleCloseTicket',
+
+                // 表单操作
+                'change #statusFilter': '_handleSearch',
+                'change #priorityFilter': '_handleSearch',
+                'change #departmentFilter': '_handleSearch',
+                'change #assigneeFilter': '_handleSearch',
+                'change #startDate': '_handleSearch',
+                'change #endDate': '_handleSearch'
             }
         });
 
@@ -96,7 +109,55 @@ class TicketManagement extends BaseComponent {
             this._showTicketDetail(ticketId);
         }
     }
+    /**
+     * 显示创建工单模态框
+     */
+    _showCreateTicketModal() {
+        // 重置表单
+        $('#ticketForm')[0].reset();
+        $('#ticketModalTitle').text('新建工单');
+        this.ticketModal.show();
+    }
+    /**
+     * 处理工单保存
+     */
+    async _handleSaveTicket() {
+        if(!this._validateTicketForm()) {
+            return;
+        }
 
+        try {
+            const formData = new FormData($('#ticketForm')[0]);
+            const ticketData = {
+                title: formData.get('title'),
+                content: formData.get('content'),
+                departmentId: formData.get('department'),
+                priority: formData.get('priority'),
+                expectFinishTime: formData.get('expectFinishTime')
+            };
+
+            const isEdit = !!this.state.currentTicket;
+            const url = isEdit ?
+                window.Const.API.TICKET.PUT_UPDATE(this.state.currentTicket.id) :
+                window.Const.API.TICKET.POST_CREATE;
+
+            await window.requestUtil[isEdit ? 'put' : 'post'](url, ticketData);
+
+            // 处理附件上传
+            const files = $('#attachments')[0].files;
+            if(files.length > 0) {
+                await this._uploadAttachments(files);
+            }
+
+            this.ticketModal.hide();
+            this.showSuccess(`工单${isEdit ? '更新' : '创建'}成功`);
+            await this._loadTickets();
+
+        } catch(error) {
+            console.error('保存工单失败:', error);
+            this.showError('保存工单失败');
+        }
+    }
     /**
      * 加载部门数据
      */
@@ -309,29 +370,20 @@ class TicketManagement extends BaseComponent {
      * 显示工单详情
      */
     async _handleViewTicket(e) {
-        const ticketId = $(e.currentTarget).data('id');
-        // 从缓存Map中获取工单详情
-        const ticket = this.ticketMap.get(ticketId);
+        const ticketId = $(e.currentTarget).closest('tr').data('id');
+        if(!ticketId) {
+            console.error('未找到工单ID');
+            return;
+        }
 
-        if(ticket) {
-            this.state.currentTicket = ticket;
-            this._updateTicketDetail();
-            $('.ticket-detail-panel').addClass('show');
-        } else {
-            // 缓存未命中,请求API
-            try {
-                const response = await window.requestUtil.get(Const.API.TICKET.GET_DETAIL(ticketId));
-                this.state.currentTicket = response.data;
-                // 加入缓存
-                this.ticketMap.set(ticketId, response.data);
-                this._updateTicketDetail();
-                $('.ticket-detail-panel').addClass('show');
-            } catch (error) {
-                console.error('加载工单详情失败:', error);
-                this.showError('加载工单详情失败');
-            }
+        try {
+            await this._showTicketDetail(ticketId);
+        } catch(error) {
+            console.error('查看工单详情失败:', error);
+            this.showError('查看工单详情失败');
         }
     }
+
     /**
      * 渲染时间线
      */
@@ -518,47 +570,6 @@ class TicketManagement extends BaseComponent {
         }
     }
 
-    /**
-     * 处理创建/编辑工单
-     */
-    async _handleSaveTicket() {
-        if(!this._validateTicketForm()) {
-            return;
-        }
-
-        const formData = new FormData($('#ticketForm')[0]);
-        const ticketData = {
-            title: formData.get('title'),
-            content: formData.get('content'),
-            departmentId: formData.get('department'),
-            priority: formData.get('priority'),
-            expectFinishTime: formData.get('expectFinishTime')
-        };
-
-        try {
-            const isEdit = !!this.state.currentTicket;
-            const url = isEdit ?
-                window.Const.API.TICKET.GET_DETAIL(this.state.currentTicket.id) :
-                window.Const.API.TICKET.POST_CREATE;
-            const method = isEdit ? 'put' : 'post';
-
-            await window.requestUtil[method](url, ticketData);
-
-            // 处理附件上传
-            const files = $('#attachments')[0].files;
-            if(files.length > 0) {
-                await this._uploadAttachments(files);
-            }
-
-            this.ticketModal.hide();
-            this.showSuccess(`工单${isEdit ? '更新' : '创建'}成功`);
-            await this._loadTickets();
-
-        } catch(error) {
-            console.error('保存工单失败:', error);
-            this.showError('保存工单失败');
-        }
-    }
 
     /**
      * 验证工单表单
@@ -736,7 +747,7 @@ class TicketManagement extends BaseComponent {
                 <td>${window.utils.getRelativeTime(ticket.createTime)}</td>
                 <td>
                     <button class="btn btn-sm btn-outline-primary view-ticket" 
-                            data-id="${ticket.ticketId}">
+                            data-ticket="${ticket}">
                         <i class="bi bi-eye"></i> 查看
                     </button>
                 </td>

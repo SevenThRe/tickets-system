@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,6 +22,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class User implements Serializable {
     /**
      * 用户ID
@@ -86,11 +88,6 @@ public class User implements Serializable {
      * 更新时间
      */
     private LocalDateTime updateTime;
-
-    /**
-     * 职位ID
-     */
-    private Long positionId;
 
     @Serial
     private static final long serialVersionUID = 1L;

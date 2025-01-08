@@ -2,22 +2,19 @@ package com.icss.etc.ticket.entity.vo;
 
 import com.icss.etc.ticket.enums.Priority;
 import com.icss.etc.ticket.enums.TicketStatus;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime; /**
  * 工单信息响应DTO
  */
 @Data
+@Builder
 public class TicketVO {
     /**
      * 工单ID
      */
     private Long ticketId;
-
-    /**
-     * 工单编号
-     */
-    private String ticketCode;
 
     /**
      * 标题

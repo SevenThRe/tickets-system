@@ -1,11 +1,13 @@
 package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.Ticket;
+import com.icss.etc.ticket.entity.TicketRecord;
 import com.icss.etc.ticket.entity.dto.*;
 import com.icss.etc.ticket.entity.dto.ticket.TicketExportDTO;
 import com.icss.etc.ticket.entity.dto.ticket.TicketQueryDTO;
 import com.icss.etc.ticket.entity.dto.ticket.TicketTrendDTO;
 import com.icss.etc.ticket.entity.dto.ticket.TicketTypeStatsDTO;
+import com.icss.etc.ticket.entity.vo.TicketVO;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -52,7 +54,7 @@ public interface TicketService {
      * @param queryDTO 查询条件
      * @return 工单列表
      */
-    List<Ticket> pageList(@Param("queryDTO") TicketQueryDTO queryDTO);
+    List<TicketVO> pageList(@Param("queryDTO") TicketQueryDTO queryDTO);
 
     /**
      * 查询工单总数
@@ -160,4 +162,36 @@ public interface TicketService {
      * @return 工单列表
      */
     List<TicketExportDTO> selectForExport(TicketQueryDTO queryDTO);
+
+
+    /**
+     * 开始处理工单
+     * @param ticketId 工单ID
+     * @param note 处理说明
+     * @return 影响行数
+     */
+    int processTicket(Long ticketId, String note);
+
+    /**
+     * 完成工单
+     * @param ticketId 工单ID
+     * @param note 完成说明
+     * @return 影响行数
+     */
+    int resolveTicket(Long ticketId, String note);
+
+    /**
+     * 关闭工单
+     * @param ticketId 工单ID
+     * @param note 关闭说明
+     * @return 影响行数
+     */
+    int closeTicket(Long ticketId, String note);
+
+    /**
+     * 添加工单记录
+     * @param record 工单记录
+     * @return 影响行数
+     */
+    int addRecord(TicketRecord record);
 }

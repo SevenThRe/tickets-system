@@ -2,250 +2,189 @@ package com.icss.etc.ticket.controller;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.icss.etc.ticket.annotation.RedisOperation;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.Ticket;
-import com.icss.etc.ticket.entity.dto.*;
+import com.icss.etc.ticket.entity.dto.ticket.CloseTicketRequest;
+import com.icss.etc.ticket.entity.dto.ticket.ProcessTicketRequest;
+import com.icss.etc.ticket.entity.dto.ticket.TransferTicketRequest;
 import com.icss.etc.ticket.entity.dto.ticket.TicketExportDTO;
 import com.icss.etc.ticket.entity.dto.ticket.TicketQueryDTO;
 import com.icss.etc.ticket.entity.dto.ticket.TicketTrendDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketTypeStatsDTO;
+import com.icss.etc.ticket.entity.vo.TicketVO;
+import com.icss.etc.ticket.enums.TicketEnum;
+import com.icss.etc.ticket.enums.TicketStatus;
 import com.icss.etc.ticket.service.TicketService;
+import com.icss.etc.ticket.util.SecurityUtils;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * {@code TicketController} 类用于处理与 {@code Ticket} 相关的请求。
- * @since 1.0
- * @version 1.0
- * @author SevenThRe
- */
-
-/*
-*     GET_LIST: '/tickets/list',
-            GET_MY_TICKETS:'/tickets/my',
-            POST_CREATE: '/tickets/create',
-            GET_TODOS: '/tickets/todos',        // 获取待办工单
-            GET_RECENT: '/tickets/recent',      // 获取最近工单
-            GET_STATISTICS: '/tickets/statistics',  // 获取工单统计
-            GET_DETAIL: id => `/tickets/${id}`,       // 获取工单详情
-            PUT_PROCESS: id => `/tickets/${id}/process`,  // 提交工单处理
-            PUT_UPLOAD: id => `/tickets/${id}/attachments`,  // 上传工单附件
-            PUT_RESOLVE: id => `/tickets/${id}/resolve`,
-            POST_TRANSFER: id => `/tickets/${id}/transfer`,
-            PUT_CLOSE: id => `/tickets/${id}/close`,
-            POST_UPLOAD: '/tickets/attachments',
-            GET_ATTACHMENT: id => `/tickets/${id}/attachments`,
-            DELETE_ATTACHMENT: id => `/attachments/${id}`,
-            DOWNLOAD_ATTACHMENT: id => `/attachments/${id}/download`,
-            BATCH_DOWNLOAD: '/tickets/attachments/batch-download',
-            *
-            * */
-
-
 @RestController
-@RequestMapping("tickets")
+@RequestMapping("/tickets")
+@Slf4j
 public class TicketController {
     private final TicketService ticketService;
 
     public TicketController(TicketService ticketService) {
         this.ticketService = ticketService;
     }
-
     /**
      * 创建工单
-     * @param ticket 工单信息
-     * @return 影响行数
      */
-    @PostMapping("create" )
-    public R create(Ticket ticket) {
+    @PostMapping("/create")
+    public R<Void> create(@RequestBody @Valid Ticket ticket) {
+        ticket.setCreateBy(SecurityUtils.getCurrentUserId());
+        ticket.setCreateTime(LocalDateTime.now());
+        ticket.setStatus(TicketStatus.PENDING);
+        ticket.setIsDeleted(0);
         return ticketService.insert(ticket) > 0 ? R.OK() : R.FAIL();
     }
 
     /**
      * 获取工单列表
-     * @param queryDTO 查询条件
-     * @return 工单列表
      */
-    @RedisOperation(type = RedisOperation.OperationType.QUERY)
-    @RequestMapping("list")
-    public R list(TicketQueryDTO queryDTO) {
-        PageHelper.startPage(queryDTO.pageNum(), queryDTO.pageSize());
-        PageInfo<Ticket> pageInfo = new PageInfo<>(ticketService.pageList(queryDTO));
-        Map<String, Object> map = new HashMap<>();
-        map.put("total", pageInfo.getTotal());
-        map.put("list", pageInfo.getList());
-        return R.OK(map);
+    @GetMapping("/list")
+    public R<Map<String, Object>> list(TicketQueryDTO queryDTO) {
+        PageHelper.startPage(queryDTO.getPageNum(), queryDTO.getPageSize());
+        PageInfo<TicketVO> pageInfo = new PageInfo<>(ticketService.pageList(queryDTO));
+        Map<String, Object> result = new HashMap<>(2);
+        result.put("total", pageInfo.getTotal());
+        result.put("list", pageInfo.getList());
+        return R.OK(result);
     }
 
     /**
      * 获取工单详情
-     * @param id 工单ID
-     * @return 工单详情
      */
-    @RequestMapping("/{id}")
+    @GetMapping("/{id}")
     public R<Ticket> detail(@PathVariable Long id) {
         return R.OK(ticketService.getById(id));
     }
 
     /**
-     * 获取待办工单
-     * @param userId 用户ID
-     * @param queryDTO 查询条件
-     * @return 待办工单列表
+     * 获取我的待办工单
      */
-    @RequestMapping("/todos")
-    public R getTodos(@RequestParam("userId") Long userId, TicketQueryDTO queryDTO) {
+    @GetMapping("/todos")
+    public R<List<Ticket>> getTodos(TicketQueryDTO queryDTO) {
+        Long userId = SecurityUtils.getCurrentUserId();
         return R.OK(ticketService.getTodoTickets(userId, queryDTO));
     }
 
     /**
-     * 获取我的工单
-     * @param userId 用户ID
-     * @param queryDTO 查询条件
-     * @return 最近工单列表
+     * 获取我创建的工单
      */
-    @RequestMapping("/my")
-    public R getMy(@RequestParam Long userId, TicketQueryDTO queryDTO) {
+    @GetMapping("/my")
+    public R<List<Ticket>> getMyTickets(TicketQueryDTO queryDTO) {
+        Long userId = SecurityUtils.getCurrentUserId();
         return R.OK(ticketService.getMyTickets(userId, queryDTO));
     }
 
     /**
-     * 更新工单信息
-     * @param ticket 工单信息
-     * @return 更新结果
+     * 处理工单
      */
-    @PutMapping("/update")
-    public R update(@RequestBody Ticket ticket){
-        return R.OK(ticketService.update(ticket));
+    @PutMapping("/{id}/process")
+    public R<Void> processTicket(@PathVariable Long id, @RequestBody @Valid ProcessTicketRequest request) {
+        try {
+            int result = ticketService.processTicket(id, request.getNote());
+            return result > 0 ? R.OK() : R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+        } catch (IllegalArgumentException e) {
+            log.error("工单处理失败", e);
+            return R.FAIL(TicketEnum.TICKET_NOT_EXIST);
+        } catch (IllegalStateException e) {
+            log.error("工单处理失败", e);
+            return R.FAIL(TicketEnum.TICKET_STATUS_EXCEPTION);
+        }
     }
 
     /**
-     * 删除工单
-     * @param id 工单ID
-     * @return 删除结果
+     * 完成工单
      */
-    @DeleteMapping("/{id}")
-    public R delete(@PathVariable Long id){
-        return R.OK(ticketService.deleteById(id));
+    @PutMapping("/{id}/resolve")
+    public R<Void> resolveTicket(@PathVariable Long id, @RequestBody @Valid TicketQueryDTO.ResolveTicketRequest request) {
+        try {
+            int result = ticketService.resolveTicket(id, request.getNote());
+            return result > 0 ? R.OK() : R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+        } catch (IllegalArgumentException e) {
+            log.error("工单完成失败", e);
+            return R.FAIL(TicketEnum.TICKET_NOT_EXIST);
+        } catch (IllegalStateException e) {
+            log.error("工单完成失败", e);
+            return R.FAIL(TicketEnum.TICKET_STATUS_EXCEPTION);
+        }
     }
 
     /**
-     * 获取部门工单
-     * @param deptId 部门ID
-     * @param queryDTO 查询条件
-     * @return 工单列表
-     */
-    @GetMapping("/dept")
-    public R getDeptTickets(@RequestParam Long deptId, TicketQueryDTO queryDTO){
-        return R.OK(ticketService.getDeptTickets(deptId, queryDTO));
-    }
-
-    /**
-     * 分配处理人
-     * @param id 工单ID
-     * @param processorId 处理人ID
-     * @return 分配结果
-     */
-    @PutMapping("/{id}/processor")
-    public R assignProcessor(@PathVariable Long id, @RequestParam Long processorId)
-    {
-        return R.OK(ticketService.assignProcessor(id, processorId));
-    }
-    /**
-     * 转交部门
-     * @param id 工单ID
-     * @param deptId 部门ID
-     * @param updateBy 操作人ID
-     * @return 转交结果
+     * 转交工单
      */
     @PostMapping("/{id}/transfer")
-    public R<Integer> transferDept(@PathVariable Long id, @RequestParam Long deptId, @RequestParam Long updateBy)
-    {
-        return R.OK(ticketService.transferDept(id, deptId, updateBy));
-    }
-    /**
-     * 获取部门工单统计
-     * @param deptId 部门ID
-     * @return 统计结果
-     */
-    @GetMapping("/stats/dept")
-    public R<DeptTicketStatsDTO> getDeptStats(@RequestParam Long deptId)
-    {
-
-        return R.OK(ticketService.getDeptStats(deptId));
+    public R<Void> transferTicket(@PathVariable Long id, @RequestBody @Valid TransferTicketRequest request) {
+        request.setUpdateBy(SecurityUtils.getCurrentUserId());
+        return ticketService.transferDept(id, request.getDepartmentId(), request.getUpdateBy()) > 0 ?
+                R.OK() : R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
     }
 
     /**
-     * 获取处理人工作量统计
-     * @param processorId 处理人ID
-     * @return 统计结果
+     * 关闭工单
      */
-    @GetMapping("/stats/processor")
-    public R<ProcessorStatsDTO> getProcessorStats(@RequestParam Long processorId)
-    {
-
-        return R.OK(ticketService.getProcessorStats(processorId));
-    }
-    /**
-     * 获取工单类型分布统计
-     * @param deptId 部门ID
-     * @return 统计列表
-     */
-    @GetMapping("/stats/types")
-    public R<List<TicketTypeStatsDTO>> getTypesStats(@RequestParam Long deptId)
-    {
-        return R.OK(ticketService.getTypesStats(deptId));
-    }
-    /**
-     * 获取工单趋势统计
-     * @param deptId 部门ID
-     * @param days 统计天数
-     * @return 趋势数据
-     */
-    @GetMapping("/stats/trend")
-    public R<List<TicketTrendDTO>> getTrendStats(@RequestParam Long deptId, @RequestParam Integer days)
-    {
-        return R.OK(ticketService.getTrendStats(deptId, days));
-    }
-    /**
-     * 获取工作量统计
-     * @param deptId 部门ID
-     * @return 统计列表
-     */
-    @GetMapping("/stats/workload")
-    public R<List<WorkloadStatsDTO>> getWorkloadStats(@RequestParam Long deptId){
-        return R.OK(ticketService.getWorkloadStats(deptId));
-    }
-
-    /**
-     * 获取处理效率统计
-     * @param deptId 部门ID
-     * @return 统计列表
-     */
-    @GetMapping("/stats/efficiency")
-    public R<List<EfficiencyStatsDTO>> getEfficiencyStats(@RequestParam Long deptId){
-        return R.OK(ticketService.getEfficiencyStats(deptId));
+    @PutMapping("/{id}/close")
+    public R<Void> closeTicket(@PathVariable Long id, @RequestBody @Valid CloseTicketRequest request) {
+        try {
+            int result = ticketService.closeTicket(id, request.getNote());
+            return result > 0 ? R.OK() : R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+        } catch (IllegalArgumentException e) {
+            log.error("工单关闭失败", e);
+            return R.FAIL(TicketEnum.TICKET_NOT_EXIST);
+        } catch (IllegalStateException e) {
+            log.error("工单关闭失败", e);
+            return R.FAIL(TicketEnum.TICKET_STATUS_EXCEPTION);
+        }
     }
 
     /**
      * 导出工单列表
-     * @param queryDTO 查询条件
-     * @return 导出数据
      */
     @GetMapping("/export")
-    public R<List<TicketExportDTO>> export(TicketQueryDTO queryDTO){
+    public R<List<TicketExportDTO>> exportTickets(TicketQueryDTO queryDTO) {
         return R.OK(ticketService.selectForExport(queryDTO));
     }
 
+    /**
+     * 分配处理人
+     */
+    @PutMapping("/{id}/processor")
+    public R<Void> assignProcessor(@PathVariable Long id, @RequestParam Long processorId) {
+        return ticketService.assignProcessor(id, processorId) > 0 ? R.OK() :
+                R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+    }
 
+    /**
+     * 获取工单统计
+     */
+    @GetMapping("/statistics")
+    public R<Map<String, Object>> getStatistics(@RequestParam Long deptId) {
+        Map<String, Object> result = new HashMap<>(4);
+        result.put("deptStats", ticketService.getDeptStats(deptId));
+        result.put("typeStats", ticketService.getTypesStats(deptId));
+        result.put("workloadStats", ticketService.getWorkloadStats(deptId));
+        result.put("efficiencyStats", ticketService.getEfficiencyStats(deptId));
+        return R.OK(result);
+    }
 
-
-
-
+    /**
+     * 获取工单趋势
+     */
+    @GetMapping("/stats/trend")
+    public R<List<TicketTrendDTO>> getTrendStats(
+            @RequestParam Long deptId,
+            @RequestParam(defaultValue = "7") Integer days
+    ) {
+        return R.OK(ticketService.getTrendStats(deptId, days));
+    }
 
 
 }

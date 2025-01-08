@@ -4,6 +4,7 @@ import com.icss.etc.ticket.entity.Department;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 public interface DepartmentService {
 
@@ -59,4 +60,11 @@ public interface DepartmentService {
     //   查询部门详情
     Department selectByDpartmentId(Long department_id);
 
+    List<Department> selectAll();
+
+    List<Department> selectParentAll();
+
+    List<Map<String, Object>> getDepartmentTree();
+
+    int deleteByPrimaryKey(Long departmentId);
 }
