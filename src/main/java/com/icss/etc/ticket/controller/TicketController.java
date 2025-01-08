@@ -2,6 +2,7 @@ package com.icss.etc.ticket.controller;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.icss.etc.ticket.annotation.RedisOperation;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.entity.dto.*;
@@ -69,6 +70,7 @@ public class TicketController {
      * @param queryDTO 查询条件
      * @return 工单列表
      */
+    @RedisOperation(type = RedisOperation.OperationType.QUERY)
     @RequestMapping("list")
     public R list(TicketQueryDTO queryDTO) {
         PageHelper.startPage(queryDTO.pageNum(), queryDTO.pageSize());

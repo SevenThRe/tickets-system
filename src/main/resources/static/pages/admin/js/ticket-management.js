@@ -13,7 +13,7 @@ class TicketManagement extends BaseComponent {
                 'click #createTicketBtn': '_showCreateTicketModal',
                 'click #saveTicketBtn': '_handleSaveTicket',
                 'click .view-ticket': '_handleViewTicket',
-                'click #closeDetailBtn': '_closeTicketDetail',
+                'click #closeDetailBtn': '_handleCloseDetail',
                 'click #processTicketBtn': '_handleProcessTicket',
                 'click #resolveTicketBtn': '_handleResolveTicket',
                 'click #transferTicketBtn': '_showTransferModal',
@@ -21,6 +21,8 @@ class TicketManagement extends BaseComponent {
                 'click #closeTicketBtn': '_handleCloseTicket'
             }
         });
+
+        this.ticketMap = new Map(); // 工单缓存
 
         // 状态管理
         this.state = {
@@ -70,6 +72,8 @@ class TicketManagement extends BaseComponent {
             this.showError('页面初始化失败，请刷新重试');
         }
     }
+
+
 
     /**
      * 初始化子组件
@@ -121,12 +125,11 @@ class TicketManagement extends BaseComponent {
         }
     }
 
+
     /**
      * 加载工单列表
      */
     async _loadTickets() {
-        if (this.state.loading) return;
-
         try {
             this.state.loading = true;
             this._showLoading();
@@ -138,13 +141,29 @@ class TicketManagement extends BaseComponent {
                 ...this.state.filters
             };
 
-            const response = await window.requestUtil.get(window.Const.API.TICKET.GET_LIST, params);
+            // 调用工单列表接口
+            const response = await window.requestUtil.get(Const.API.TICKET.GET_LIST, params);
 
-            this.state.tickets = response.data.list;
-            this.state.pagination.total = response.data.total;
+            // 更新状态
+            if(response.code === 200) {
+                // 清空缓存的工单数据
+                this.ticketMap.clear();
 
-            this._renderTicketList();
-            this._updatePagination();
+                this.state.tickets = response.data.list;
+                this.state.pagination.total = response.data.total;
+
+                // 缓存新的工单数据
+                this.state.tickets.forEach(ticket => {
+                    this.ticketMap.set(ticket.ticketId, ticket);
+                });
+
+                // 清空并重新渲染列表
+                $('#ticketList').empty();
+                this._renderTicketList();
+                this._updatePagination();
+            } else {
+                throw new Error(response.msg);
+            }
 
         } catch (error) {
             console.error('加载工单列表失败:', error);
@@ -156,37 +175,31 @@ class TicketManagement extends BaseComponent {
     }
 
     /**
-     * 渲染工单列表
+     * 处理重置
      */
-    _renderTicketList() {
-        const html = this.state.tickets.map(ticket => `
-            <tr>
-                <td>${ticket.code}</td>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <span class="priority-indicator priority-${ticket.priority.toLowerCase()}"></span>
-                        ${ticket.title}
-                    </div>
-                </td>
-                <td>${ticket.department}</td>
-                <td>${ticket.assignee || '-'}</td>
-                <td>
-                    <span class="ticket-status status-${ticket.status.toLowerCase()}">
-                        ${window.Const.BUSINESS.TICKET.STATUS_MAP.text[ticket.status]}
-                    </span>
-                </td>
-                <td>${window.Const.BUSINESS.TICKET.PRIORITY_MAP.text[ticket.priority]}</td>
-                <td>${window.utils.formatDate(ticket.createTime)}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary view-ticket" data-id="${ticket.id}">
-                        <i class="bi bi-eye"></i> 查看
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+    _handleReset(e) {
+        // 阻止表单默认行为
+        e.preventDefault();
 
-        $('#ticketList').html(html);
-        $('#totalCount').text(this.state.pagination.total);
+        // 重置表单
+        $('#searchForm')[0].reset();
+
+        // 重置过滤条件
+        this.state.filters = {
+            keyword: '',
+            status: '',
+            priority: '',
+            departmentId: '',
+            assigneeId: '',
+            startDate: '',
+            endDate: ''
+        };
+
+        // 重置分页到第一页
+        this.state.pagination.current = 1;
+
+        // 重新加载数据
+        this._loadTickets();
     }
 
     /**
@@ -194,18 +207,82 @@ class TicketManagement extends BaseComponent {
      */
     _handleSearch(e) {
         e.preventDefault();
+        // 获取表单数据
         const formData = new FormData(e.target);
         this.state.filters = {
-            keyword: formData.get('keyword'),
-            status: formData.get('status'),
-            priority: formData.get('priority'),
-            departmentId: formData.get('department'),
-            assigneeId: formData.get('assignee'),
-            startDate: formData.get('startDate'),
-            endDate: formData.get('endDate')
+            keyword: $('#keyword').val(),
+            status: $('#statusFilter').val(),
+            priority: $('#priorityFilter').val(),
+            departmentId: $('#departmentFilter').val(),
+            assigneeId: $('#assigneeFilter').val(),
+            startDate: $('#startDate').val(),
+            endDate: $('#endDate').val()
         };
+        // 重置到第一页
         this.state.pagination.current = 1;
+
+        // 重新加载数据
         this._loadTickets();
+    }
+
+    /**
+     * 更新工单详情面板显示
+     */
+    _updateTicketDetail() {
+        const ticket = this.state.currentTicket;
+        if (!ticket) return;
+
+        // 更新基本信息
+        $('#ticketCode').text(ticket.ticketId);
+        $('#ticketTitle').text(ticket.title);
+        $('#ticketContent').text(ticket.content);
+        $('#createTime').text(window.utils.formatDate(ticket.createTime));
+        $('#ticketStatus').html(`
+            <span class="ticket-status status-${ticket.status.toLowerCase()}">
+                ${window.Const.BUSINESS.TICKET.STATUS_MAP.text[ticket.status]}
+            </span>
+        `);
+
+        // 添加更多详情字段显示
+        $('#ticketPriority').text(window.Const.BUSINESS.TICKET.PRIORITY_MAP.text[ticket.priority]);
+
+        if(ticket.expectFinishTime) {
+            $('#expectFinishTime').text(window.utils.formatDate(ticket.expectFinishTime));
+        } else {
+            $('#expectFinishTime').text('-');
+        }
+
+        if(ticket.actualFinishTime) {
+            $('#actualFinishTime').text(window.utils.formatDate(ticket.actualFinishTime));
+        } else {
+            $('#actualFinishTime').text('-');
+        }
+
+        // 更新处理人信息
+        if(ticket.processorId) {
+            $('#processorInfo').text(this._getProcessorName(ticket.processorId));
+        } else {
+            $('#processorInfo').text('待分配');
+        }
+
+        // 更新所属部门
+        $('#departmentInfo').text(this._getDepartmentName(ticket.departmentId));
+
+        // 更新创建人
+        if(ticket.createBy) {
+            $('#creatorInfo').text(this._getUserName(ticket.createBy));
+        }
+
+        // 更新最后修改信息
+        if(ticket.updateBy) {
+            $('#lastUpdateInfo').html(`
+                最后修改: ${this._getUserName(ticket.updateBy)} 
+                于 ${window.utils.formatDate(ticket.updateTime)}
+            `);
+        }
+
+        // 更新按钮状态
+        this._updateActionButtons(ticket.status);
     }
 
     /**
@@ -229,32 +306,32 @@ class TicketManagement extends BaseComponent {
     }
 
     /**
-     * 更新工单详情面板
+     * 显示工单详情
      */
-    _updateTicketDetail() {
-        const ticket = this.state.currentTicket;
-        if (!ticket) return;
+    async _handleViewTicket(e) {
+        const ticketId = $(e.currentTarget).data('id');
+        // 从缓存Map中获取工单详情
+        const ticket = this.ticketMap.get(ticketId);
 
-        $('#ticketCode').text(ticket.code);
-        $('#ticketTitle').text(ticket.title);
-        $('#ticketContent').text(ticket.content);
-        $('#createTime').text(window.utils.formatDate(ticket.createTime));
-        $('#ticketStatus').html(`
-            <span class="ticket-status status-${ticket.status.toLowerCase()}">
-                ${window.Const.BUSINESS.TICKET.STATUS_MAP.text[ticket.status]}
-            </span>
-        `);
-
-        // 渲染附件列表
-        this._renderAttachments(ticket.attachments);
-
-        // 渲染处理记录
-        this._renderTimeline(ticket.records);
-
-        // 更新按钮状态
-        this._updateActionButtons(ticket.status);
+        if(ticket) {
+            this.state.currentTicket = ticket;
+            this._updateTicketDetail();
+            $('.ticket-detail-panel').addClass('show');
+        } else {
+            // 缓存未命中,请求API
+            try {
+                const response = await window.requestUtil.get(Const.API.TICKET.GET_DETAIL(ticketId));
+                this.state.currentTicket = response.data;
+                // 加入缓存
+                this.ticketMap.set(ticketId, response.data);
+                this._updateTicketDetail();
+                $('.ticket-detail-panel').addClass('show');
+            } catch (error) {
+                console.error('加载工单详情失败:', error);
+                this.showError('加载工单详情失败');
+            }
+        }
     }
-
     /**
      * 渲染时间线
      */
@@ -380,7 +457,9 @@ class TicketManagement extends BaseComponent {
             this.showError('完成工单失败');
         }
     }
-
+    _handleCloseDetail() {
+        $('.ticket-detail-panel').removeClass('show');
+    }
     /**
      * 处理工单转交
      */
@@ -585,6 +664,119 @@ class TicketManagement extends BaseComponent {
         }
     }
 
+    /**
+     * 获取优先级样式类
+     * @param {number} priority - 优先级:0普通,1紧急,2非常紧急
+     * @returns {string} 样式类名
+     */
+    _getPriorityClass(priority) {
+        switch(priority) {
+            case 2:
+                return 'high';
+            case 1:
+                return 'medium';
+            case 0:
+            default:
+                return 'low';
+        }
+    }
+
+    /**
+     * 获取优先级文本
+     * @param {number} priority - 优先级
+     * @returns {string} 优先级文本
+     */
+    _getPriorityText(priority) {
+        return window.Const.BUSINESS.TICKET.PRIORITY_MAP.text[priority] || '普通';
+    }
+
+
+    /**
+     * HTML内容转义,防止XSS攻击
+     * @param {string} str - 需要转义的字符串
+     * @returns {string} 转义后的字符串
+     * @private
+     */
+    _escapeHtml(str) {
+        if(!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    /**
+     * 渲染工单列表
+     * @private
+     */
+    _renderTicketList() {
+        // 处理空数据情况
+        if(!this.state.tickets || !this.state.tickets.length) {
+            $('#ticketList').html('<tr><td colspan="8" class="text-center">暂无数据</td></tr>');
+            $('#totalCount').text('0');
+            return;
+        }
+
+        const html = this.state.tickets.map(ticket => `
+            <tr>
+                <td>${ticket.ticketId}</td> 
+                <td>
+                    <div class="d-flex align-items-center">
+                        <span class="priority-indicator priority-${this._getPriorityClass(ticket.priority)}"></span>
+                        ${this._escapeHtml(ticket.title)}
+                    </div>
+                </td>
+                <td>${this._getDepartmentName(ticket.departmentId) || '-'}</td>
+                <td>${this._getProcessorName(ticket.processorId) || '-'}</td>
+                <td>
+                    <span class="ticket-status status-${ticket.status.toLowerCase()}">
+                        ${window.Const.BUSINESS.TICKET.STATUS_MAP.text[ticket.status] || '-'}  
+                    </span>
+                </td>
+                <td>${this._getPriorityText(ticket.priority)}</td>
+                <td>${window.utils.getRelativeTime(ticket.createTime)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary view-ticket" 
+                            data-id="${ticket.ticketId}">
+                        <i class="bi bi-eye"></i> 查看
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        $('#ticketList').html(html);
+        $('#totalCount').text(this.state.pagination.total || 0);
+    }
+
+    /**
+     * 获取部门名称
+     * @param {number} departmentId - 部门ID
+     * @returns {string} 部门名称
+     * @private
+     */
+    _getDepartmentName(departmentId) {
+        // 这里可以维护一个部门缓存map
+        return departmentId; // 暂时返回ID
+    }
+
+    /**
+     * 获取处理人名称
+     * @param {number} processorId - 处理人ID
+     * @returns {string} 处理人名称
+     * @private
+     */
+    _getProcessorName(processorId) {
+        // 这里可以维护一个处理人缓存map
+        return processorId; // 暂时返回ID
+    }
+
+    destroy() {
+        // 清理缓存数据
+        this.ticketMap.clear();
+        this.ticketMap = null;
+
+        // 调用父类销毁方法
+        super.destroy();
+    }
 }
 
 // 页面加载完成后初始化

@@ -103,7 +103,7 @@
         <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
         <if test="queryDTO.startTime != null">and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}</if>
         <if test="queryDTO.endTime != null">and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}</if>
-      order by create_time desc
+      order by create_time, ticket_id
     </select>
 
   <select id="count" resultType="long">

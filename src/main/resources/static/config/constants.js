@@ -34,10 +34,10 @@ window.Const = {
                     3: 'CLOSED'
                 },
                 text: {
-                    0: '待处理',
-                    1: '处理中',
-                    2: '已完成',
-                    3: '已关闭'
+                    PENDING: '待处理',
+                    PROCESSING: '处理中',
+                    COMPLETED: '已完成',
+                    CLOSED: '已关闭'
                 },
                 class: {
                     0: 'text-normal',

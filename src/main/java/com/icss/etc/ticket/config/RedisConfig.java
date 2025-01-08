@@ -1,12 +1,14 @@
 package com.icss.etc.ticket.config;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
@@ -18,6 +20,7 @@ import java.time.Duration;
 
 @Configuration
 @EnableCaching
+@DependsOn
 public class RedisConfig extends CachingConfigurerSupport{
     private static final StringRedisSerializer STRING_SERIALIZER = new StringRedisSerializer();
     private static final GenericJackson2JsonRedisSerializer JACKSON__SERIALIZER = new GenericJackson2JsonRedisSerializer();
@@ -36,14 +39,14 @@ public class RedisConfig extends CachingConfigurerSupport{
 
     @Bean
     @ConditionalOnMissingBean(name = "redisTemplate")
-    public RedisTemplate<String,Object> redisTemplate(RedisConnectionFactory factory){
+    public RedisTemplate<String,Object> redisTemplate(RedisConnectionFactory factory, ObjectMapper objectMapper){
         // 配置redisTemplate
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(factory);
-        // key序列化
         redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
+        // key序列化
         // value序列化
-        redisTemplate.setValueSerializer(JACKSON__SERIALIZER);
         // Hash key序列化
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         // Hash value序列化
