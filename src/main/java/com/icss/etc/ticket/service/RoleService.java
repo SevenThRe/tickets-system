@@ -1,12 +1,10 @@
-package com.icss.etc.ticket.mapper;
+package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.Role;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
 import com.icss.etc.ticket.entity.Role2;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * {@code RoleMapper}
@@ -17,7 +15,7 @@ import org.apache.ibatis.annotations.Param;
  * @since 1.0
  */
 
-public interface RoleMapper {
+public interface RoleService {
     /**
      * insert record to table
      * 添加角色
@@ -47,6 +45,7 @@ public interface RoleMapper {
 
     //根据roleId删除角色
     int deleteByRoleId(@Param("roleId") Long roleId);
+
     //根据角色名字查询角色
     Role selectRoleByName(@Param("roleName") String roleName);
 

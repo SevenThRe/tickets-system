@@ -1,275 +1,299 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.etc.ticket.mapper.PermissionMapper">
-  <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Permission">
-    <!--@mbg.generated-->
-    <!--@Table t_permission-->
-    <id column="permission_id" jdbcType="BIGINT" property="permissionId" />
-    <result column="permission_name" jdbcType="VARCHAR" property="permissionName" />
-    <result column="permission_code" jdbcType="VARCHAR" property="permissionCode" />
-    <result column="icon" jdbcType="VARCHAR" property="icon" />
-    <result column="sort" jdbcType="INTEGER" property="sort" />
-    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
-    <result column="create_by" jdbcType="BIGINT" property="createBy" />
-    <result column="update_by" jdbcType="BIGINT" property="updateBy" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
-    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  <resultMap id="BaseResultMapPermission" type="permission">
+    <id column="permission_id" property="permissionId"></id>
+    <result column="permission_name" property="permissionName"></result>
+    <result column="permission_code" property="permissionCode"></result>
+    <result column="icon" property="icon"></result>
+    <result column="sort" property="sort"></result>
+    <result column="is_deleted" property="isDeleted"></result>
+    <result column="create_by" property="createBy"></result>
+    <result column="update_by" property="updateBy"></result>
+    <result column="create_time" property="createTime"></result>
+    <result column="update_time" property="updateTime"></result>
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
     permission_id, permission_name, permission_code, icon, sort, is_deleted, create_by, 
     update_by, create_time, update_time
   </sql>
-  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    <!--@mbg.generated-->
-    select 
-    <include refid="Base_Column_List" />
-    from t_permission
-    where permission_id = #{permissionId,jdbcType=BIGINT}
-  </select>
-  <insert id="insert" keyColumn="permission_id" keyProperty="permissionId" parameterType="com.icss.etc.ticket.entity.Permission" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into t_permission (permission_name, permission_code, icon, 
-      sort, is_deleted, create_by, 
-      update_by, create_time, update_time
-      )
-    values (#{permissionName,jdbcType=VARCHAR}, #{permissionCode,jdbcType=VARCHAR}, #{icon,jdbcType=VARCHAR}, 
-      #{sort,jdbcType=INTEGER}, #{isDeleted,jdbcType=TINYINT}, #{createBy,jdbcType=BIGINT}, 
-      #{updateBy,jdbcType=BIGINT}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}
-      )
-  </insert>
-  <insert id="insertSelective" keyColumn="permission_id" keyProperty="permissionId" parameterType="com.icss.etc.ticket.entity.Permission" useGeneratedKeys="true">
+  
+<!--&lt;!&ndash;  查询角色对应的所有权限&ndash;&gt;-->
+<!--<select id="OneRoleMorePermission" resultMap="BaseResultMapPermission">-->
+<!--  select t_role.role_name,t_role.base_role_code,t_role.status,t_role.description-->
+<!--  from t_role-->
+<!--  where is_deleted=0 and role_name=#{roleName}-->
+<!--</select>-->
+  
+  
+  
+  
+
+<!--  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">-->
+<!--    &lt;!&ndash;@mbg.generated&ndash;&gt;-->
+<!--    select -->
+<!--    <include refid="Base_Column_List" />-->
+<!--    from t_permission-->
+<!--    where permission_id = #{permissionId,jdbcType=BIGINT}-->
+<!--  </select>-->
+  
+
+<!--  <insert id="insert" keyColumn="permission_id" keyProperty="permissionId" parameterType="com.icss.etc.ticket.entity.Permission" useGeneratedKeys="true">-->
+<!--    &lt;!&ndash;@mbg.generated&ndash;&gt;-->
+<!--    insert into t_permission (permission_name, permission_code, icon, -->
+<!--      sort, is_deleted, create_by, -->
+<!--      update_by, create_time, update_time-->
+<!--      )-->
+<!--    values (#{permissionName,jdbcType=VARCHAR}, #{permissionCode,jdbcType=VARCHAR}, #{icon,jdbcType=VARCHAR}, -->
+<!--      #{sort,jdbcType=INTEGER}, #{isDeleted,jdbcType=TINYINT}, #{createBy,jdbcType=BIGINT}, -->
+<!--      #{updateBy,jdbcType=BIGINT}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}-->
+<!--      )-->
+<!--  </insert>-->
+  <!--  增加权限-->
+  <insert id="insertPermission"  parameterType="com.icss.etc.ticket.entity.Permission">
     <!--@mbg.generated-->
     insert into t_permission
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="permissionName != null">
+      <if test="permissionName != null and permissionName !=''">
         permission_name,
       </if>
-      <if test="permissionCode != null">
+      <if test="permissionCode != null and permissionCode !=''">
         permission_code,
       </if>
-      <if test="icon != null">
+      <if test="icon != null and icon !=''">
         icon,
       </if>
-      <if test="sort != null">
+      <if test="sort != null and sort !=''">
         sort,
       </if>
-      <if test="isDeleted != null">
+      <if test="isDeleted != null and isDeleted !=''">
         is_deleted,
       </if>
-      <if test="createBy != null">
+      <if test="createBy != null and createBy !=''">
         create_by,
       </if>
-      <if test="updateBy != null">
+      <if test="updateBy != null and updateBy !=''">
         update_by,
       </if>
-      <if test="createTime != null">
+      <if test="createTime != null and createTime !=''">
         create_time,
       </if>
-      <if test="updateTime != null">
+      <if test="updateTime != null and updateTime !=''">
         update_time,
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="permissionName != null">
+      <if test="permissionName != null and permissionName !=''">
         #{permissionName,jdbcType=VARCHAR},
       </if>
-      <if test="permissionCode != null">
+      <if test="permissionCode != null and permissionCode !=''">
         #{permissionCode,jdbcType=VARCHAR},
       </if>
-      <if test="icon != null">
+      <if test="icon != null and icon !=''">
         #{icon,jdbcType=VARCHAR},
       </if>
-      <if test="sort != null">
+      <if test="sort != null and sort !=''">
         #{sort,jdbcType=INTEGER},
       </if>
-      <if test="isDeleted != null">
+      <if test="isDeleted != null and isDeleted !=''">
         #{isDeleted,jdbcType=TINYINT},
       </if>
-      <if test="createBy != null">
+      <if test="createBy != null and createBy !=''">
         #{createBy,jdbcType=BIGINT},
       </if>
-      <if test="updateBy != null">
+      <if test="updateBy != null and updateBy !=''">
         #{updateBy,jdbcType=BIGINT},
       </if>
-      <if test="createTime != null">
+      <if test="createTime != null and createTime !=''">
         #{createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="updateTime != null">
+      <if test="updateTime != null and updateTime !=''">
         #{updateTime,jdbcType=TIMESTAMP},
       </if>
     </trim>
   </insert>
-  <update id="updateByPrimaryKeySelective" parameterType="com.icss.etc.ticket.entity.Permission">
+  
+<!--  修改权限-->
+  <update id="updatePermission" parameterType="com.icss.etc.ticket.entity.Permission">
     <!--@mbg.generated-->
     update t_permission
     <set>
-      <if test="permissionName != null">
+      <if test="permissionName != null and permissionName !=''">
         permission_name = #{permissionName,jdbcType=VARCHAR},
       </if>
-      <if test="permissionCode != null">
+      <if test="permissionCode != null and permissionCode !=''">
         permission_code = #{permissionCode,jdbcType=VARCHAR},
       </if>
-      <if test="icon != null">
+      <if test="icon != null and icon !=''">
         icon = #{icon,jdbcType=VARCHAR},
       </if>
-      <if test="sort != null">
+      <if test="sort != null and sort !=''">
         sort = #{sort,jdbcType=INTEGER},
       </if>
-      <if test="isDeleted != null">
+      <if test="isDeleted != null and isDeleted !=''">
         is_deleted = #{isDeleted,jdbcType=TINYINT},
       </if>
-      <if test="createBy != null">
+      <if test="createBy != null and createBy !=''">
         create_by = #{createBy,jdbcType=BIGINT},
       </if>
-      <if test="updateBy != null">
+      <if test="updateBy != null and updateBy !=''">
         update_by = #{updateBy,jdbcType=BIGINT},
       </if>
-      <if test="createTime != null">
+      <if test="createTime != null and createTime !=''">
         create_time = #{createTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="updateTime != null">
+      <if test="updateTime != null and updateTime !=''">
         update_time = #{updateTime,jdbcType=TIMESTAMP},
       </if>
     </set>
     where permission_id = #{permissionId,jdbcType=BIGINT}
   </update>
-  <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.Permission">
-    <!--@mbg.generated-->
-    update t_permission
-    set permission_name = #{permissionName,jdbcType=VARCHAR},
-      permission_code = #{permissionCode,jdbcType=VARCHAR},
-      icon = #{icon,jdbcType=VARCHAR},
-      sort = #{sort,jdbcType=INTEGER},
-      is_deleted = #{isDeleted,jdbcType=TINYINT},
-      create_by = #{createBy,jdbcType=BIGINT},
-      update_by = #{updateBy,jdbcType=BIGINT},
-      create_time = #{createTime,jdbcType=TIMESTAMP},
-      update_time = #{updateTime,jdbcType=TIMESTAMP}
-    where permission_id = #{permissionId,jdbcType=BIGINT}
-  </update>
-  <select id="selectByAll" resultMap="BaseResultMap">
+<!--  <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.Permission">-->
+<!--    &lt;!&ndash;@mbg.generated&ndash;&gt;-->
+<!--    update t_permission-->
+<!--    set permission_name = #{permissionName,jdbcType=VARCHAR},-->
+<!--      permission_code = #{permissionCode,jdbcType=VARCHAR},-->
+<!--      icon = #{icon,jdbcType=VARCHAR},-->
+<!--      sort = #{sort,jdbcType=INTEGER},-->
+<!--      is_deleted = #{isDeleted,jdbcType=TINYINT},-->
+<!--      create_by = #{createBy,jdbcType=BIGINT},-->
+<!--      update_by = #{updateBy,jdbcType=BIGINT},-->
+<!--      create_time = #{createTime,jdbcType=TIMESTAMP},-->
+<!--      update_time = #{updateTime,jdbcType=TIMESTAMP}-->
+<!--    where permission_id = #{permissionId,jdbcType=BIGINT}-->
+<!--  </update>-->
+
+
+
+  <!--  查询所有权限-->
+  <select id="selectAllPermission" parameterType="com.icss.etc.ticket.entity.Permission">
         <!--@mbg.generated-->
         select
         <include refid="Base_Column_List" />
         from t_permission
         <where>
-            <if test="permissionId != null">
+            <if test="permissionId != null and permissionName !=''">
                 and permission_id=#{permissionId,jdbcType=BIGINT}
             </if>
-            <if test="permissionName != null">
+            <if test="permissionName != null and permissionName !=''">
                 and permission_name=#{permissionName,jdbcType=VARCHAR}
             </if>
-            <if test="permissionCode != null">
+            <if test="permissionCode != null and permissionCode !=''">
                 and permission_code=#{permissionCode,jdbcType=VARCHAR}
             </if>
-            <if test="icon != null">
+            <if test="icon != null and icon !=''">
                 and icon=#{icon,jdbcType=VARCHAR}
             </if>
-            <if test="sort != null">
+            <if test="sort != null and sort !=''">
                 and sort=#{sort,jdbcType=INTEGER}
             </if>
-            <if test="isDeleted != null">
-                and is_deleted=#{isDeleted,jdbcType=TINYINT}
-            </if>
-            <if test="createBy != null">
+                and is_deleted=0
+            <if test="createBy != null and createBy !=''">
                 and create_by=#{createBy,jdbcType=BIGINT}
             </if>
-            <if test="updateBy != null">
+            <if test="updateBy != null and updateBy !=''">
                 and update_by=#{updateBy,jdbcType=BIGINT}
             </if>
-            <if test="createTime != null">
+            <if test="createTime != null and createTime !=''">
                 and create_time=#{createTime,jdbcType=TIMESTAMP}
             </if>
-            <if test="updateTime != null">
+            <if test="updateTime != null and updateTime !=''">
                 and update_time=#{updateTime,jdbcType=TIMESTAMP}
             </if>
         </where>
     </select>
-  <update id="updateBatchSelective" parameterType="java.util.List">
-    <!--@mbg.generated-->
-    update t_permission
-    <trim prefix="set" suffixOverrides=",">
-      <trim prefix="permission_name = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.permissionName != null">
-            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.permissionName,jdbcType=VARCHAR}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="permission_code = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.permissionCode != null">
-            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.permissionCode,jdbcType=VARCHAR}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="icon = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.icon != null">
-            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.icon,jdbcType=VARCHAR}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="sort = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.sort != null">
-            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.sort,jdbcType=INTEGER}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="is_deleted = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.isDeleted != null">
-            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.isDeleted,jdbcType=TINYINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="create_by = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.createBy != null">
-            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.createBy,jdbcType=BIGINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="update_by = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.updateBy != null">
-            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.updateBy,jdbcType=BIGINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="create_time = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.createTime != null">
-            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.createTime,jdbcType=TIMESTAMP}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="update_time = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.updateTime != null">
-            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.updateTime,jdbcType=TIMESTAMP}
-          </if>
-        </foreach>
-      </trim>
-    </trim>
-    where permission_id in
-    <foreach close=")" collection="list" item="item" open="(" separator=", ">
-      #{item.permissionId,jdbcType=BIGINT}
-    </foreach>
+  
+  
+<!--  删除所有权限-->
+  <update id="deletePermission" parameterType="com.icss.etc.ticket.entity.Permission">
+    update t_permission set is_deleted=1
+    where permission_id=#{permissionId}
   </update>
-  <insert id="batchInsert" keyColumn="permission_id" keyProperty="permissionId" parameterType="map" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into t_permission
-    (permission_name, permission_code, icon, sort, is_deleted, create_by, update_by, 
-      create_time, update_time)
-    values
-    <foreach collection="list" item="item" separator=",">
-      (#{item.permissionName,jdbcType=VARCHAR}, #{item.permissionCode,jdbcType=VARCHAR}, 
-        #{item.icon,jdbcType=VARCHAR}, #{item.sort,jdbcType=INTEGER}, #{item.isDeleted,jdbcType=TINYINT}, 
-        #{item.createBy,jdbcType=BIGINT}, #{item.updateBy,jdbcType=BIGINT}, #{item.createTime,jdbcType=TIMESTAMP}, 
-        #{item.updateTime,jdbcType=TIMESTAMP})
-    </foreach>
-  </insert>
+<!--  <update id="updateBatchSelective" parameterType="java.util.List">-->
+<!--    &lt;!&ndash;@mbg.generated&ndash;&gt;-->
+<!--    update t_permission-->
+<!--    <trim prefix="set" suffixOverrides=",">-->
+<!--      <trim prefix="permission_name = case" suffix="end,">-->
+<!--        <foreach collection="list" index="index" item="item">-->
+<!--          <if test="item.permissionName != null">-->
+<!--            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.permissionName,jdbcType=VARCHAR}-->
+<!--          </if>-->
+<!--        </foreach>-->
+<!--      </trim>-->
+<!--      <trim prefix="permission_code = case" suffix="end,">-->
+<!--        <foreach collection="list" index="index" item="item">-->
+<!--          <if test="item.permissionCode != null">-->
+<!--            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.permissionCode,jdbcType=VARCHAR}-->
+<!--          </if>-->
+<!--        </foreach>-->
+<!--      </trim>-->
+<!--      <trim prefix="icon = case" suffix="end,">-->
+<!--        <foreach collection="list" index="index" item="item">-->
+<!--          <if test="item.icon != null">-->
+<!--            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.icon,jdbcType=VARCHAR}-->
+<!--          </if>-->
+<!--        </foreach>-->
+<!--      </trim>-->
+<!--      <trim prefix="sort = case" suffix="end,">-->
+<!--        <foreach collection="list" index="index" item="item">-->
+<!--          <if test="item.sort != null">-->
+<!--            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.sort,jdbcType=INTEGER}-->
+<!--          </if>-->
+<!--        </foreach>-->
+<!--      </trim>-->
+<!--      <trim prefix="is_deleted = case" suffix="end,">-->
+<!--        <foreach collection="list" index="index" item="item">-->
+<!--          <if test="item.isDeleted != null">-->
+<!--            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.isDeleted,jdbcType=TINYINT}-->
+<!--          </if>-->
+<!--        </foreach>-->
+<!--      </trim>-->
+<!--      <trim prefix="create_by = case" suffix="end,">-->
+<!--        <foreach collection="list" index="index" item="item">-->
+<!--          <if test="item.createBy != null">-->
+<!--            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.createBy,jdbcType=BIGINT}-->
+<!--          </if>-->
+<!--        </foreach>-->
+<!--      </trim>-->
+<!--      <trim prefix="update_by = case" suffix="end,">-->
+<!--        <foreach collection="list" index="index" item="item">-->
+<!--          <if test="item.updateBy != null">-->
+<!--            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.updateBy,jdbcType=BIGINT}-->
+<!--          </if>-->
+<!--        </foreach>-->
+<!--      </trim>-->
+<!--      <trim prefix="create_time = case" suffix="end,">-->
+<!--        <foreach collection="list" index="index" item="item">-->
+<!--          <if test="item.createTime != null">-->
+<!--            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.createTime,jdbcType=TIMESTAMP}-->
+<!--          </if>-->
+<!--        </foreach>-->
+<!--      </trim>-->
+<!--      <trim prefix="update_time = case" suffix="end,">-->
+<!--        <foreach collection="list" index="index" item="item">-->
+<!--          <if test="item.updateTime != null">-->
+<!--            when permission_id = #{item.permissionId,jdbcType=BIGINT} then #{item.updateTime,jdbcType=TIMESTAMP}-->
+<!--          </if>-->
+<!--        </foreach>-->
+<!--      </trim>-->
+<!--    </trim>-->
+<!--    where permission_id in-->
+<!--    <foreach close=")" collection="list" item="item" open="(" separator=", ">-->
+<!--      #{item.permissionId,jdbcType=BIGINT}-->
+<!--    </foreach>-->
+<!--  </update>-->
+<!--  <insert id="batchInsert" keyColumn="permission_id" keyProperty="permissionId" parameterType="map" useGeneratedKeys="true">-->
+<!--    &lt;!&ndash;@mbg.generated&ndash;&gt;-->
+<!--    insert into t_permission-->
+<!--    (permission_name, permission_code, icon, sort, is_deleted, create_by, update_by, -->
+<!--      create_time, update_time)-->
+<!--    values-->
+<!--    <foreach collection="list" item="item" separator=",">-->
+<!--      (#{item.permissionName,jdbcType=VARCHAR}, #{item.permissionCode,jdbcType=VARCHAR}, -->
+<!--        #{item.icon,jdbcType=VARCHAR}, #{item.sort,jdbcType=INTEGER}, #{item.isDeleted,jdbcType=TINYINT}, -->
+<!--        #{item.createBy,jdbcType=BIGINT}, #{item.updateBy,jdbcType=BIGINT}, #{item.createTime,jdbcType=TIMESTAMP}, -->
+<!--        #{item.updateTime,jdbcType=TIMESTAMP})-->
+<!--    </foreach>-->
+<!--  </insert>-->
 </mapper>

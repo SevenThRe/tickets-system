@@ -1,275 +1,301 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.etc.ticket.mapper.RoleMapper">
-  <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Role">
-    <!--@mbg.generated-->
-    <!--@Table t_role-->
-    <id column="role_id" jdbcType="BIGINT" property="roleId" />
-    <result column="role_name" jdbcType="VARCHAR" property="roleName" />
-    <result column="role_code" jdbcType="VARCHAR" property="roleCode" />
-    <result column="base_role_code" jdbcType="VARCHAR" property="baseRoleCode" />
-    <result column="description" jdbcType="VARCHAR" property="description" />
-    <result column="status" jdbcType="TINYINT" property="status" />
-    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
-    <result column="create_by" jdbcType="BIGINT" property="createBy" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
-    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
-  </resultMap>
-  <sql id="Base_Column_List">
-    <!--@mbg.generated-->
-    role_id, role_name, role_code, base_role_code, description, `status`, is_deleted, 
-    create_by, create_time, update_time
-  </sql>
-  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    <!--@mbg.generated-->
-    select 
-    <include refid="Base_Column_List" />
-    from t_role
-    where role_id = #{roleId,jdbcType=BIGINT}
-  </select>
-  <insert id="insert" keyColumn="role_id" keyProperty="roleId" parameterType="com.icss.etc.ticket.entity.Role" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into t_role (role_name, role_code, base_role_code, 
-      description, `status`, is_deleted, 
-      create_by, create_time, update_time
-      )
-    values (#{roleName,jdbcType=VARCHAR}, #{roleCode,jdbcType=VARCHAR}, #{baseRoleCode,jdbcType=VARCHAR}, 
-      #{description,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT}, #{isDeleted,jdbcType=TINYINT}, 
-      #{createBy,jdbcType=BIGINT}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}
-      )
-  </insert>
-  <insert id="insertSelective" keyColumn="role_id" keyProperty="roleId" parameterType="com.icss.etc.ticket.entity.Role" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into t_role
-    <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="roleName != null">
-        role_name,
-      </if>
-      <if test="roleCode != null">
-        role_code,
-      </if>
-      <if test="baseRoleCode != null">
-        base_role_code,
-      </if>
-      <if test="description != null">
-        description,
-      </if>
-      <if test="status != null">
-        `status`,
-      </if>
-      <if test="isDeleted != null">
-        is_deleted,
-      </if>
-      <if test="createBy != null">
-        create_by,
-      </if>
-      <if test="createTime != null">
-        create_time,
-      </if>
-      <if test="updateTime != null">
-        update_time,
-      </if>
-    </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="roleName != null">
-        #{roleName,jdbcType=VARCHAR},
-      </if>
-      <if test="roleCode != null">
-        #{roleCode,jdbcType=VARCHAR},
-      </if>
-      <if test="baseRoleCode != null">
-        #{baseRoleCode,jdbcType=VARCHAR},
-      </if>
-      <if test="description != null">
-        #{description,jdbcType=VARCHAR},
-      </if>
-      <if test="status != null">
-        #{status,jdbcType=TINYINT},
-      </if>
-      <if test="isDeleted != null">
-        #{isDeleted,jdbcType=TINYINT},
-      </if>
-      <if test="createBy != null">
-        #{createBy,jdbcType=BIGINT},
-      </if>
-      <if test="createTime != null">
-        #{createTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="updateTime != null">
-        #{updateTime,jdbcType=TIMESTAMP},
-      </if>
-    </trim>
-  </insert>
-  <update id="updateByPrimaryKeySelective" parameterType="com.icss.etc.ticket.entity.Role">
-    <!--@mbg.generated-->
-    update t_role
-    <set>
-      <if test="roleName != null">
-        role_name = #{roleName,jdbcType=VARCHAR},
-      </if>
-      <if test="roleCode != null">
-        role_code = #{roleCode,jdbcType=VARCHAR},
-      </if>
-      <if test="baseRoleCode != null">
-        base_role_code = #{baseRoleCode,jdbcType=VARCHAR},
-      </if>
-      <if test="description != null">
-        description = #{description,jdbcType=VARCHAR},
-      </if>
-      <if test="status != null">
-        `status` = #{status,jdbcType=TINYINT},
-      </if>
-      <if test="isDeleted != null">
-        is_deleted = #{isDeleted,jdbcType=TINYINT},
-      </if>
-      <if test="createBy != null">
-        create_by = #{createBy,jdbcType=BIGINT},
-      </if>
-      <if test="createTime != null">
-        create_time = #{createTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="updateTime != null">
-        update_time = #{updateTime,jdbcType=TIMESTAMP},
-      </if>
-    </set>
-    where role_id = #{roleId,jdbcType=BIGINT}
-  </update>
-  <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.Role">
-    <!--@mbg.generated-->
-    update t_role
-    set role_name = #{roleName,jdbcType=VARCHAR},
-      role_code = #{roleCode,jdbcType=VARCHAR},
-      base_role_code = #{baseRoleCode,jdbcType=VARCHAR},
-      description = #{description,jdbcType=VARCHAR},
-      `status` = #{status,jdbcType=TINYINT},
-      is_deleted = #{isDeleted,jdbcType=TINYINT},
-      create_by = #{createBy,jdbcType=BIGINT},
-      create_time = #{createTime,jdbcType=TIMESTAMP},
-      update_time = #{updateTime,jdbcType=TIMESTAMP}
-    where role_id = #{roleId,jdbcType=BIGINT}
-  </update>
-  <select id="selectByAll" resultMap="BaseResultMap">
+
+      <sql id="Base_Column_List">
         <!--@mbg.generated-->
+        role_id, role_name, role_code, base_role_code, description, `status`, is_deleted,
+        create_by, create_time, update_time
+      </sql>
+    <!--  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">-->
+    <!--    &lt;!&ndash;@mbg.generated&ndash;&gt;-->
+    <!--    select -->
+    <!--    <include refid="Base_Column_List" />-->
+    <!--    from t_role-->
+    <!--    where role_id = #{roleId,jdbcType=BIGINT}-->
+    <!--  </select>-->
+
+    <!--  增加角色-->
+<!--    <insert id="insert">-->
+<!--        insert into t_role (role_name, role_code, base_role_code,-->
+<!--                            description, `status`)-->
+<!--        values (#{roleName}, #{roleCode}, #{baseRoleCode},-->
+<!--                #{description}, #{status})-->
+<!--    </insert>-->
+
+    <!--  修改角色-->
+
+<!--    <update id="updateRole">-->
+<!--        &lt;!&ndash;@mbg.generated&ndash;&gt;-->
+<!--        update t_role-->
+<!--        set role_name = #{role_name},-->
+<!--        role_code = #{role_code},-->
+<!--        base_role_code = #{base_role_code},-->
+<!--        description = #{description},-->
+<!--        `status` = #{status}-->
+<!--        where role_id = #{role_id}-->
+<!--    </update>-->
+
+    <!--  删除角色-->
+    <update id="deleteByRoleId">
+        update t_role
+        set is_deleted= 1
+        where role_id = #{roleId}
+    </update>
+
+    <!--查询所有角色-->
+    <select id="selectAll" resultType="com.icss.etc.ticket.entity.Role">
         select
         <include refid="Base_Column_List" />
         from t_role
-        <where>
-            <if test="roleId != null">
-                and role_id=#{roleId,jdbcType=BIGINT}
-            </if>
-            <if test="roleName != null">
-                and role_name=#{roleName,jdbcType=VARCHAR}
-            </if>
-            <if test="roleCode != null">
-                and role_code=#{roleCode,jdbcType=VARCHAR}
-            </if>
-            <if test="baseRoleCode != null">
-                and base_role_code=#{baseRoleCode,jdbcType=VARCHAR}
-            </if>
-            <if test="description != null">
-                and description=#{description,jdbcType=VARCHAR}
-            </if>
-            <if test="status != null">
-                and `status`=#{status,jdbcType=TINYINT}
-            </if>
-            <if test="isDeleted != null">
-                and is_deleted=#{isDeleted,jdbcType=TINYINT}
-            </if>
-            <if test="createBy != null">
-                and create_by=#{createBy,jdbcType=BIGINT}
-            </if>
-            <if test="createTime != null">
-                and create_time=#{createTime,jdbcType=TIMESTAMP}
-            </if>
-            <if test="updateTime != null">
-                and update_time=#{updateTime,jdbcType=TIMESTAMP}
-            </if>
-        </where>
+        where is_deleted = 0
+        <if test="keyword !=  null and keyword != ''">
+            and role_name like concat('%',#{keyword},'%')
+        or description like concat('%',#{keyword},'%')
+        </if>
     </select>
-  <update id="updateBatchSelective" parameterType="java.util.List">
-    <!--@mbg.generated-->
-    update t_role
-    <trim prefix="set" suffixOverrides=",">
-      <trim prefix="role_name = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.roleName != null">
-            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.roleName,jdbcType=VARCHAR}
+
+    <!--根据id查询角色-->
+<!--    <select id="selectByByRoleId" resultType="com.icss.etc.ticket.entity.Role">-->
+<!--        select role_id, role_code, role_name, base_role_code, status, description-->
+<!--        from t_role-->
+<!--        where role_id = #{roleId}-->
+<!--    </select>-->
+
+    <!--  增加角色-->
+    <insert id="insert"
+            parameterType="com.icss.etc.ticket.entity.Role" >
+        insert into t_role
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="roleName != null and roleName!=''" >
+                role_name,
+            </if>
+            <if test="roleCode != null and roleCode!=''">
+                role_code,
+            </if>
+            <if test="baseRoleCode != null and baseRoleCode!=''">
+                base_role_code,
+            </if>
+            <if test="description != null and description!=''">
+                description,
+            </if>
+            <if test="status != null and status!=''">
+                `status`,
+            </if>
+            <if test="isDeleted != null and isDeleted!=''">
+                is_deleted,
+            </if>
+            <if test="createBy != null and createBy!=''">
+                create_by,
+            </if>
+            <if test="createTime != null and createTime!=''">
+                create_time,
+            </if>
+            <if test="updateTime != null and updateTime!=''">
+                update_time,
+            </if>
+        </trim>
+
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="roleName != null and roleName!=''">
+                #{roleName,jdbcType=VARCHAR},
+            </if>
+            <if test="roleCode != null and roleCode!=''">
+                #{roleCode,jdbcType=VARCHAR},
+            </if>
+            <if test="baseRoleCode != null and baseRoleCode!=''">
+                #{baseRoleCode,jdbcType=VARCHAR},
+            </if>
+            <if test="description != null and description!=''">
+                #{description,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null and status!=''">
+                #{status,jdbcType=TINYINT},
+            </if>
+            <if test="isDeleted != null and isDeleted!=''">
+                #{isDeleted,jdbcType=TINYINT},
+            </if>
+            <if test="createBy != null and createBy!=''">
+                #{createBy,jdbcType=BIGINT},
+            </if>
+            <if test="createTime != null and createTime!=''">
+                #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null and updateTime!=''">
+                #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+        </trim>
+    </insert>
+
+    <!--  修改角色-->
+      <update id="updateRole" parameterType="com.icss.etc.ticket.entity.Role">
+        update t_role
+        <set>
+          <if test="roleName != null and roleName!=''">
+            role_name = #{roleName,jdbcType=VARCHAR},
           </if>
-        </foreach>
-      </trim>
-      <trim prefix="role_code = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.roleCode != null">
-            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.roleCode,jdbcType=VARCHAR}
+          <if test="roleCode != null and roleCode!=''">
+            role_code = #{roleCode,jdbcType=VARCHAR},
           </if>
-        </foreach>
-      </trim>
-      <trim prefix="base_role_code = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.baseRoleCode != null">
-            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.baseRoleCode,jdbcType=VARCHAR}
+          <if test="baseRoleCode != null and baseRoleCode!=''">
+            base_role_code = #{baseRoleCode,jdbcType=VARCHAR},
           </if>
-        </foreach>
-      </trim>
-      <trim prefix="description = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.description != null">
-            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.description,jdbcType=VARCHAR}
+          <if test="description != null and description!=''">
+            description = #{description,jdbcType=VARCHAR},
           </if>
-        </foreach>
-      </trim>
-      <trim prefix="`status` = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.status != null">
-            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.status,jdbcType=TINYINT}
+          <if test="status != null and status!=''">
+            `status` = #{status,jdbcType=TINYINT},
           </if>
-        </foreach>
-      </trim>
-      <trim prefix="is_deleted = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.isDeleted != null">
-            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.isDeleted,jdbcType=TINYINT}
+          <if test="isDeleted != null and isDeleted!=''">
+            is_deleted = #{isDeleted,jdbcType=TINYINT},
           </if>
-        </foreach>
-      </trim>
-      <trim prefix="create_by = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.createBy != null">
-            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.createBy,jdbcType=BIGINT}
+          <if test="createBy != null and createBy!=''">
+            create_by = #{createBy,jdbcType=BIGINT},
           </if>
-        </foreach>
-      </trim>
-      <trim prefix="create_time = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.createTime != null">
-            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.createTime,jdbcType=TIMESTAMP}
+          <if test="createTime != null and createTime!=''">
+            create_time = #{createTime,jdbcType=TIMESTAMP},
           </if>
-        </foreach>
-      </trim>
-      <trim prefix="update_time = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.updateTime != null">
-            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.updateTime,jdbcType=TIMESTAMP}
+          <if test="updateTime != null and updateTime!=''">
+            update_time = #{updateTime,jdbcType=TIMESTAMP},
           </if>
-        </foreach>
-      </trim>
-    </trim>
-    where role_id in
-    <foreach close=")" collection="list" item="item" open="(" separator=", ">
-      #{item.roleId,jdbcType=BIGINT}
-    </foreach>
-  </update>
-  <insert id="batchInsert" keyColumn="role_id" keyProperty="roleId" parameterType="map" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into t_role
-    (role_name, role_code, base_role_code, description, `status`, is_deleted, create_by, 
-      create_time, update_time)
-    values
-    <foreach collection="list" item="item" separator=",">
-      (#{item.roleName,jdbcType=VARCHAR}, #{item.roleCode,jdbcType=VARCHAR}, #{item.baseRoleCode,jdbcType=VARCHAR}, 
-        #{item.description,jdbcType=VARCHAR}, #{item.status,jdbcType=TINYINT}, #{item.isDeleted,jdbcType=TINYINT}, 
-        #{item.createBy,jdbcType=BIGINT}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP}
-        )
-    </foreach>
-  </insert>
+        </set>
+        where role_id = #{roleId,jdbcType=BIGINT}
+      </update>
+<!--        根据角色名字查询-->
+    <select id="selectRoleByName" parameterType="com.icss.etc.ticket.entity.Role">
+        select t_role.role_name,t_role.base_role_code,t_role.status,t_role.description
+        from t_role
+        where is_deleted=0 and role_name=#{roleName}
+    </select>
+    <!--根据id查询角色-->
+      <select id="selectByByRoleId" resultMap="BaseResultMap">
+            <!--@mbg.generated-->
+            select
+            <include refid="Base_Column_List" />
+            from t_role
+            where role_id = #{roleId} and is_deleted = 0
+        </select>
+
+<!--    一个角色查询所有权限-->
+    <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Role2">
+        <id column="role_id" jdbcType="BIGINT" property="roleId"/>
+        <result column="role_name" jdbcType="VARCHAR" property="roleName"/>
+        <result column="role_code" jdbcType="VARCHAR" property="roleCode"/>
+        <result column="base_role_code" jdbcType="VARCHAR" property="baseRoleCode"/>
+        <result column="description" jdbcType="VARCHAR" property="description"/>
+        <result column="status" jdbcType="TINYINT" property="status"/>
+        <result column="is_deleted" jdbcType="TINYINT" property="isDeleted"/>
+        <result column="create_by" jdbcType="BIGINT" property="createBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+        <collection property="morePermission" ofType="Permission">
+            <result column="permission_id" property="permissionId"/>
+            <result column="permission_name" property="permissionName"/>
+            <result column="permission_code" property="permissionCode"/>
+            <result column="icon" property="icon"/>
+            <result column="sort" property="sort"/>
+            <result column="is_deleted" property="isDeleted"/>
+            <result column="create_by" property="createBy"/>
+            <result column="update_by" property="updateBy"/>
+            <result column="create_time" property="createTime"/>
+            <result column="update_time" property="updateTime"/>
+        </collection>
+    </resultMap>
+
+    <select id="OneRoleMorePermission" resultMap="BaseResultMap">
+        select r.role_id,r.role_name,r.role_code,r.base_role_code,r.description,r.status,r.is_deleted,r.create_by,r.create_time,r.update_time,
+               p.permission_id,p.permission_name,p.permission_code,p.icon,p.sort,p.is_deleted,p.create_by,
+               p.update_by,p.create_time,p.update_time
+        from t_role r
+        inner join t_role_permission on r.role_id =t_role_permission.role_id
+        inner join t_permission p on p.permission_id=t_role_permission.permission_id
+        where p.is_deleted=0
+    </select>
+
+    <!--  <update id="updateBatchSelective" parameterType="java.util.List">-->
+    <!--    &lt;!&ndash;@mbg.generated&ndash;&gt;-->
+    <!--    update t_role-->
+    <!--    <trim prefix="set" suffixOverrides=",">-->
+    <!--      <trim prefix="role_name = case" suffix="end,">-->
+    <!--        <foreach collection="list" index="index" item="item">-->
+    <!--          <if test="item.roleName != null">-->
+    <!--            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.roleName,jdbcType=VARCHAR}-->
+    <!--          </if>-->
+    <!--        </foreach>-->
+    <!--      </trim>-->
+    <!--      <trim prefix="role_code = case" suffix="end,">-->
+    <!--        <foreach collection="list" index="index" item="item">-->
+    <!--          <if test="item.roleCode != null">-->
+    <!--            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.roleCode,jdbcType=VARCHAR}-->
+    <!--          </if>-->
+    <!--        </foreach>-->
+    <!--      </trim>-->
+    <!--      <trim prefix="base_role_code = case" suffix="end,">-->
+    <!--        <foreach collection="list" index="index" item="item">-->
+    <!--          <if test="item.baseRoleCode != null">-->
+    <!--            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.baseRoleCode,jdbcType=VARCHAR}-->
+    <!--          </if>-->
+    <!--        </foreach>-->
+    <!--      </trim>-->
+    <!--      <trim prefix="description = case" suffix="end,">-->
+    <!--        <foreach collection="list" index="index" item="item">-->
+    <!--          <if test="item.description != null">-->
+    <!--            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.description,jdbcType=VARCHAR}-->
+    <!--          </if>-->
+    <!--        </foreach>-->
+    <!--      </trim>-->
+    <!--      <trim prefix="`status` = case" suffix="end,">-->
+    <!--        <foreach collection="list" index="index" item="item">-->
+    <!--          <if test="item.status != null">-->
+    <!--            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.status,jdbcType=TINYINT}-->
+    <!--          </if>-->
+    <!--        </foreach>-->
+    <!--      </trim>-->
+    <!--      <trim prefix="is_deleted = case" suffix="end,">-->
+    <!--        <foreach collection="list" index="index" item="item">-->
+    <!--          <if test="item.isDeleted != null">-->
+    <!--            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.isDeleted,jdbcType=TINYINT}-->
+    <!--          </if>-->
+    <!--        </foreach>-->
+    <!--      </trim>-->
+    <!--      <trim prefix="create_by = case" suffix="end,">-->
+    <!--        <foreach collection="list" index="index" item="item">-->
+    <!--          <if test="item.createBy != null">-->
+    <!--            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.createBy,jdbcType=BIGINT}-->
+    <!--          </if>-->
+    <!--        </foreach>-->
+    <!--      </trim>-->
+    <!--      <trim prefix="create_time = case" suffix="end,">-->
+    <!--        <foreach collection="list" index="index" item="item">-->
+    <!--          <if test="item.createTime != null">-->
+    <!--            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.createTime,jdbcType=TIMESTAMP}-->
+    <!--          </if>-->
+    <!--        </foreach>-->
+    <!--      </trim>-->
+    <!--      <trim prefix="update_time = case" suffix="end,">-->
+    <!--        <foreach collection="list" index="index" item="item">-->
+    <!--          <if test="item.updateTime != null">-->
+    <!--            when role_id = #{item.roleId,jdbcType=BIGINT} then #{item.updateTime,jdbcType=TIMESTAMP}-->
+    <!--          </if>-->
+    <!--        </foreach>-->
+    <!--      </trim>-->
+    <!--    </trim>-->
+    <!--    where role_id in-->
+    <!--    <foreach close=")" collection="list" item="item" open="(" separator=", ">-->
+    <!--      #{item.roleId,jdbcType=BIGINT}-->
+    <!--    </foreach>-->
+    <!--  </update>-->
+    <!--  <insert id="batchInsert" keyColumn="role_id" keyProperty="roleId" parameterType="map" useGeneratedKeys="true">-->
+    <!--    &lt;!&ndash;@mbg.generated&ndash;&gt;-->
+    <!--    insert into t_role-->
+    <!--    (role_name, role_code, base_role_code, description, `status`, is_deleted, create_by, -->
+    <!--      create_time, update_time)-->
+    <!--    values-->
+    <!--    <foreach collection="list" item="item" separator=",">-->
+    <!--      (#{item.roleName,jdbcType=VARCHAR}, #{item.roleCode,jdbcType=VARCHAR}, #{item.baseRoleCode,jdbcType=VARCHAR}, -->
+    <!--        #{item.description,jdbcType=VARCHAR}, #{item.status,jdbcType=TINYINT}, #{item.isDeleted,jdbcType=TINYINT}, -->
+    <!--        #{item.createBy,jdbcType=BIGINT}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP}-->
+    <!--        )-->
+    <!--    </foreach>-->
+    <!--  </insert>-->
 </mapper>

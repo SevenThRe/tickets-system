@@ -61,7 +61,7 @@
 
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
-    user_id, username, `password`, real_name, department_id, email, phone, `status`, 
+    user_id, username, `password`, real_name, department_id, email, phone, `status`,
     is_deleted, create_by, update_by, create_time, update_time, position_id
   </sql>
 
