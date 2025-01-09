@@ -1,6 +1,8 @@
 package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.Department;
+import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
+import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -67,4 +69,9 @@ public interface DepartmentService {
     List<Map<String, Object>> getDepartmentTree();
 
     int deleteByPrimaryKey(Long departmentId);
+
+
+    List<DepartmentChargeVO> selectManagerByDepartmentId(Long department_id);
+
+    DepartmentDetailVO getDepartmentDetail(Long departmentId);
 }

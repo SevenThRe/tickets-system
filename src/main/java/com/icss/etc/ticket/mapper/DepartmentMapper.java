@@ -5,6 +5,7 @@ import com.icss.etc.ticket.entity.Department;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -98,5 +99,14 @@ public interface DepartmentMapper {
      * @return 删除结果
      */
     int deleteByPrimaryKey(Long department_id);
+
+    /**
+     * 查询部门负责人列表
+     * @param department_id 部门ID
+     * @return 部门负责人列表
+     */
+    List<DepartmentChargeVO> selectManagerByDepartmentId(Long department_id);
+
+
 
 }

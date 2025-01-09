@@ -2,6 +2,8 @@ package com.icss.etc.ticket.service.impl;
 
 import com.icss.etc.ticket.entity.Department;
 import com.icss.etc.ticket.entity.R;
+import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
+import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
 import com.icss.etc.ticket.mapper.DepartmentMapper;
 import com.icss.etc.ticket.service.DepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,9 +62,23 @@ public class DepartmentServiceImlp implements DepartmentService {
         return 0;
     }
 
+    /**
+     * 根据部门ID查询部门信息
+     * @param department_id 部门ID
+     * @return 部门信息
+     */
     @Override
     public Department selectByDpartmentId(Long department_id) {
         return departmentMapper.selectByDpartmentId(department_id);
+    }
+
+    /**
+     * 部门详情
+     * @return DepartmentDetailVO
+     */
+    public DepartmentDetailVO getDepartmentDetail(Long departmentId) {
+        Department department = departmentMapper.selectByPrimaryKey(departmentId);
+        return new DepartmentDetailVO(departmentMapper.selectManagerByDepartmentId(departmentId), department);
     }
 
     @Override
@@ -102,6 +118,13 @@ public class DepartmentServiceImlp implements DepartmentService {
     public int deleteByPrimaryKey(Long departmentId) {
         return departmentMapper.deleteByPrimaryKey(departmentId);
     }
+
+    @Override
+    public List<DepartmentChargeVO> selectManagerByDepartmentId(Long department_id) {
+        return departmentMapper.selectManagerByDepartmentId(department_id);
+    }
+
+
 
     /**
      * 递归查询子部门

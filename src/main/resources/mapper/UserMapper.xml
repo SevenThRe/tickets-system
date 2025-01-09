@@ -379,7 +379,7 @@
       u.user_id as userId,
       u.real_name as realName,
       u.email as email,
-      u.status as status,
+      u.status ,
       r.role_name as roleName
     from t_user u
     left join t_user_role ur on u.user_id = ur.user_id

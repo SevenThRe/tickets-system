@@ -329,4 +329,13 @@
   <update id="deleteByPrimaryKey">
     update t_department set is_deleted = 1 where department_id = #{departmentId,jdbcType=BIGINT}
   </update>
+
+  <select id="selectManagerByDepartmentId" resultType="com.icss.etc.ticket.entity.vo.DepartmentChargeVO">
+    select
+    u.user_id as userId,
+    u.real_name as realName
+    from t_department d
+    left join t_user u on d.manager_id = u.user_id
+    where d.department_id = #{departmentId} and d.status = 1 and d.is_deleted = 0
+  </select>
 </mapper>

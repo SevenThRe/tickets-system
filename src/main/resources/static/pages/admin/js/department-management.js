@@ -547,8 +547,8 @@ class DepartmentManagement {
         const html = this.state.members.map(member => `
             <tr>
                 <td>${member.realName}</td>
-                <td>${member.username}</td>
-                <td>${member.position || '-'}</td>
+                <td>${member.userId}</td>
+                <td>${member.roleName || '-'}</td>
                 <td>${member.email || '-'}</td>
                 <td>
                     <span class="status-badge ${member.status ? 'enabled' : 'disabled'}">
@@ -995,7 +995,6 @@ class DepartmentManagement {
 
 
 
-    // 修改后的成员搜索方法
     async _handleMemberSearch(e) {
         const keyword = e.target.value.trim();
         if (!keyword) {
@@ -1005,7 +1004,6 @@ class DepartmentManagement {
         }
 
         try {
-            // 直接使用 jQuery ajax
             const response = await $.ajax({
                 url: '/api/users/search',
                 method: 'GET',

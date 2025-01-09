@@ -6,595 +6,838 @@
  * @author SevenThRe
  * @created 2024-01-06
  */
-class DepartmentMembers extends BaseComponent {
-    /**
-     * 构造函数
-     * @constructor
-     */
+/**
+ * DepartmentWorkspace
+ * 部门工作台控制器
+ * 用于部门工单管理和统计展示
+ */
+class DepartmentWorkspace {
     constructor() {
-        super({
-            container: '#main',
-            events: {
-                // 列表相关事件
-                'click #searchBtn': '_handleSearch',
-                'click #refreshBtn': '_handleRefresh',
-                'click #exportBtn': '_handleExport',
-                'click .view-member': '_handleViewMember',
+        this.container = $('#main');
 
-                // 筛选事件
-                'change #workloadFilter': '_handleFilterChange',
-                'change #performanceFilter': '_handleFilterChange',
-                'input #searchKeyword': '_handleKeywordSearch',
-
-                // 抽屉事件
-                'click #closeDrawerBtn': '_handleCloseDrawer',
-
-                // 图表切换事件
-                'click [data-bs-toggle="tab"]': '_handleTabChange'
-            }
-        });
-
-        // 状态管理
+        // 初始化状态
         this.state = {
-            loading: false,               // 加载状态
-            currentMember: null,          // 当前查看的成员
-            members: [],                  // 成员列表数据
-            stats: {                      // 统计数据
-                overview: {},             // 概览统计
-                performance: [],          // 绩效分布
-                workload: [],             // 工作量分布
-                efficiency: []            // 效率趋势
+            loading: false,
+            currentView: 'stats',    // 当前视图:stats/tickets
+            ticketView: 'list',      // 工单视图:list/board
+            departmentInfo: null,    // 部门信息
+            stats: {                 // 统计数据
+                overview: {},        // 概览统计
+                trends: [],          // 趋势数据
+                types: [],           // 类型分布
+                workloads: [],       // 工作量数据
+                efficiency: []       // 效率数据
             },
-            pagination: {                 // 分页信息
+            tickets: [],            // 工单列表
+            currentTicket: null,    // 当前选中工单
+            processors: [],         // 可选处理人
+            selectedProcessorId: null,  // 选中处理人ID
+            pagination: {
                 current: 1,
                 pageSize: 10,
                 total: 0
             },
-            filters: {                    // 筛选条件
-                keyword: '',              // 搜索关键字
-                workload: '',             // 工作量筛选
-                performance: '',          // 绩效等级筛选
-                startDate: '',            // 开始日期
-                endDate: ''               // 结束日期
+            filters: {             // 筛选条件
+                keyword: '',
+                status: '',
+                priority: '',
+                processorId: '',
+                startDate: '',
+                endDate: ''
             }
         };
 
+        // 初始化Modal
+        this.assignModal = new bootstrap.Modal('#assignModal');
+
         // 缓存DOM引用
-        this.$memberList = $('#memberTableBody');
-        this.$pagination = $('#pagination');
-        this.$memberDrawer = $('#memberDrawer');
-        this.$totalCount = $('#totalCount');
+        this._initDomRefs();
 
-        // 图表实例
-        this.charts = {};
+        // 绑定事件
+        this._bindEvents();
 
-        // 初始化组件
+        // 初始化
         this.init();
     }
 
-    /**
-     * 组件初始化
-     * @returns {Promise<void>}
-     */
+    // 缓存DOM引用
+    _initDomRefs() {
+        this.$statsView = $('#statsView');
+        this.$ticketsView = $('#ticketsView');
+        this.$listView = $('#listView');
+        this.$boardView = $('#boardView');
+        this.$ticketList = $('#ticketList');
+        this.$ticketDrawer = $('#ticketDrawer');
+        this.$pendingList = $('#pendingList');
+        this.$processingList = $('#processingList');
+        this.$completedList = $('#completedList');
+        this.$searchForm = $('#searchForm');
+        this.$processorFilter = $('#processorFilter');
+        this.$trendChart = $('#ticketTrendChart');
+        this.$typeChart = $('#ticketTypeChart');
+    }
+
+    // 事件绑定
+    _bindEvents() {
+        // 视图切换
+        this.container.on('click', '[data-view]', (e) => this._handleViewChange(e));
+        this.container.on('click', '[data-bs-toggle="view"]', (e) => this._handleTicketViewChange(e));
+
+        // 统计视图事件
+        this.container.on('click', '#refreshWorkloadBtn', () => this._handleRefreshWorkload());
+
+        // 工单管理事件
+        this.$searchForm.on('submit', (e) => this._handleSearch(e));
+        this.container.on('click', '#resetBtn', () => this._handleReset());
+        this.container.on('click', '#exportBtn', () => this._handleExport());
+        this.container.on('click', '#refreshBtn', () => this._handleRefresh());
+        this.container.on('click', '#assignTicketBtn', () => this._showAssignModal());
+        this.container.on('click', '#confirmAssignBtn', () => this._handleAssignSubmit());
+        this.container.on('click', '.view-ticket', (e) => this._handleViewTicket(e));
+        this.container.on('click', '#closeDrawerBtn', () => this._handleCloseDrawer());
+
+        // 工单操作事件
+        this.container.on('click', '#processBtn', () => this._handleProcess());
+        this.container.on('click', '#completeBtn', () => this._handleComplete());
+        this.container.on('click', '#transferBtn', () => this._handleTransfer());
+        this.container.on('click', '#closeBtn', () => this._handleClose());
+    }
+
+    // 初始化
     async init() {
         try {
+            await this._loadDepartmentInfo();
+
             // 并行加载数据
             await Promise.all([
-                this._loadMembers(),
-                this._loadStats()
+                this._loadStats(),
+                this._loadProcessors(),
+                this._loadTickets()
             ]);
 
-            // 初始化图表
             this._initCharts();
-
-            // 检查URL参数
             this._checkUrlParams();
-
-            // 启动自动刷新
             this._startAutoRefresh();
 
         } catch (error) {
             console.error('初始化失败:', error);
-            this.showError('页面初始化失败，请刷新重试');
+            this._showError('页面加载失败，请刷新重试');
+        }
+    }
+    // 加载部门信息
+    async _loadDepartmentInfo() {
+        try {
+            const response = await $.ajax({
+                url: '/api/departments/current',
+                method: 'GET'
+            });
+            if(response.code === 200) {
+                this.state.departmentInfo = response.data;
+                this._updateDepartmentInfo();
+            }
+        } catch(error) {
+            console.error('加载部门信息失败:', error);
+            throw error;
         }
     }
 
-    /**
-     * 加载成员列表数据
-     * @private
-     * @returns {Promise<void>}
-     */
-    async _loadMembers() {
-        if (this.state.loading) return;
+    // 加载统计数据
+    async _loadStats() {
+        try {
+            // 并行请求各项统计数据
+            const [overview, trends, types, workloads, efficiency] = await Promise.all([
+                $.ajax({url: '/api/departments/stats/overview'}),
+                $.ajax({url: '/api/departments/stats/trends'}),
+                $.ajax({url: '/api/departments/stats/types'}),
+                $.ajax({url: '/api/departments/stats/workloads'}),
+                $.ajax({url: '/api/departments/stats/efficiency'})
+            ]);
+
+            // 更新状态
+            this.state.stats = {
+                overview: overview.data,
+                trends: trends.data,
+                types: types.data,
+                workloads: workloads.data,
+                efficiency: efficiency.data
+            };
+
+            this._updateStats();
+        } catch(error) {
+            console.error('加载统计数据失败:', error);
+            throw error;
+        }
+    }
+
+    // 加载处理人列表
+    async _loadProcessors() {
+        try {
+            const response = await $.ajax({
+                url: '/api/departments/processors',
+                method: 'GET'
+            });
+            if(response.code === 200) {
+                this.state.processors = response.data;
+                this._renderProcessorOptions();
+            }
+        } catch(error) {
+            console.error('加载处理人失败:', error);
+            throw error;
+        }
+    }
+
+    // 加载工单列表
+    async _loadTickets() {
+        if(this.state.loading) return;
 
         try {
             this.state.loading = true;
             this._showLoading();
 
-            const {current, pageSize} = this.state.pagination;
             const params = {
-                pageNum: current,
-                pageSize,
+                pageNum: this.state.pagination.current,
+                pageSize: this.state.pagination.pageSize,
                 ...this.state.filters
             };
 
-            const response = await window.requestUtil.get(Const.API.DEPT_MEMBER.GET_LIST, params);
+            const response = await $.ajax({
+                url: '/api/departments/tickets',
+                method: 'GET',
+                data: params
+            });
 
-            this.state.members = response.data.list;
-            this.state.pagination.total = response.data.total;
+            if(response.code === 200) {
+                this.state.tickets = response.data.list;
+                this.state.pagination.total = response.data.total;
+                this._updateTicketsView();
+                this._updatePagination();
+            }
 
-            this._renderMemberList();
-            this._updatePagination();
-
-        } catch (error) {
-            console.error('加载成员列表失败:', error);
-            this.showError(error.message || '加载成员列表失败');
+        } catch(error) {
+            console.error('加载工单列表失败:', error);
+            this._showError('加载工单列表失败');
         } finally {
             this.state.loading = false;
             this._hideLoading();
         }
     }
 
-    /**
-     * 加载统计数据
-     * @private
-     * @returns {Promise<void>}
-     */
-    async _loadStats() {
-        try {
-            const [overview, performance, workload, efficiency] = await Promise.all([
-                window.requestUtil.get(Const.API.DEPT_MEMBER.GET_STATS),
-                window.requestUtil.get(Const.API.DEPT_MEMBER.GET_PERFORMANCE),
-                window.requestUtil.get(`${Const.API.DEPT_MEMBER.GET_STATS}/workload`),
-                window.requestUtil.get(`${Const.API.DEPT_MEMBER.GET_STATS}/efficiency`)
-            ]);
-
-            this.state.stats = {
-                overview: overview.data,
-                performance: performance.data,
-                workload: workload.data,
-                efficiency: efficiency.data
-            };
-
-            this._updateStats();
-        } catch (error) {
-            console.error('加载统计数据失败:', error);
-            this.showError('加载统计数据失败');
+    // 更新工单视图
+    _updateTicketsView() {
+        if(this.state.ticketView === 'list') {
+            this._renderListView();
+        } else {
+            this._renderBoardView();
         }
     }
 
-    /**
-     * 渲染成员列表
-     * @private
-     * @description 根据当前状态渲染成员列表，包含工作量、效率等指标的可视化
-     */
-    _renderMemberList() {
-        const html = this.state.members.map(member => {
-            // 计算工作量等级和样式
-            const workloadClass = this._getWorkloadClass(member.workload);
-            const workloadText = this._getWorkloadText(member.workload);
+    // 渲染列表视图
+    _renderListView() {
+        const html = this.state.tickets.map(ticket => `
+            <tr>
+                <td>${ticket.code}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <span class="priority-indicator priority-${ticket.priority.toLowerCase()}"></span>
+                        ${ticket.title}
+                    </div>
+                </td>
+                <td>${ticket.department}</td>
+                <td>${ticket.assignee || '-'}</td>
+                <td>
+                    <span class="ticket-status status-${ticket.status.toLowerCase()}">
+                        ${this._getStatusText(ticket.status)}
+                    </span>
+                </td>
+                <td>${this._getPriorityText(ticket.priority)}</td>
+                <td>${this._formatDate(ticket.createTime)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary view-ticket" data-id="${ticket.id}">
+                        <i class="bi bi-eye"></i> 查看
+                    </button>
+                </td>
+            </tr>
+        `).join('');
 
-            // 计算效率等级
-            const efficiencyPercent = this._calculateEfficiency(member);
-            const efficiencyClass = this._getEfficiencyClass(efficiencyPercent);
+        this.$ticketList.html(html);
+    }
 
-            // 生成绩效等级标签
-            const performanceBadge = this._renderPerformanceBadge(member.performance);
+    // 渲染看板视图
+    _renderBoardView() {
+        // 按状态分组工单
+        const groups = {
+            PENDING: [],
+            PROCESSING: [],
+            COMPLETED: []
+        };
 
-            return `
-                <tr>
-                    <td>${member.employeeId}</td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <img src="${member.avatar || '/images/default-avatar.png'}" 
-                                 class="avatar-sm me-2" alt="头像">
-                            <div>
-                                <div class="fw-medium">${member.realName}</div>
-                                <small class="text-muted">${member.position}</small>
-                            </div>
+        this.state.tickets.forEach(ticket => {
+            if(groups[ticket.status]) {
+                groups[ticket.status].push(ticket);
+            }
+        });
+
+        // 渲染各状态列
+        this._renderStatusColumn(this.$pendingList, groups.PENDING, 'PENDING');
+        this._renderStatusColumn(this.$processingList, groups.PROCESSING, 'PROCESSING');
+        this._renderStatusColumn(this.$completedList, groups.COMPLETED, 'COMPLETED');
+
+        // 更新数量标记
+        $('#pendingBadge').text(groups.PENDING.length);
+        $('#processingBadge').text(groups.PROCESSING.length);
+        $('#completedBadge').text(groups.COMPLETED.length);
+    }
+
+    // 处理视图切换
+    _handleViewChange(e) {
+        const view = $(e.currentTarget).data('view');
+        if(view === this.state.currentView) return;
+
+        this.state.currentView = view;
+        $('[data-view]').removeClass('active');
+        $(`[data-view="${view}"]`).addClass('active');
+
+        this.$statsView.toggle(view === 'stats');
+        this.$ticketsView.toggle(view === 'tickets');
+
+        if(view === 'tickets') {
+            this._loadTickets();
+        } else {
+            this._loadStats();
+        }
+    }
+
+    // 处理工单视图切换
+    _handleTicketViewChange(e) {
+        const view = $(e.currentTarget).data('view');
+        if(view === this.state.ticketView) return;
+
+        this.state.ticketView = view;
+        $('[data-bs-toggle="view"]').removeClass('active');
+        $(e.currentTarget).addClass('active');
+
+        this.$listView.toggle(view === 'list');
+        this.$boardView.toggle(view === 'board');
+
+        this._updateTicketsView();
+    }
+
+    // 处理搜索
+    _handleSearch(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+
+        this.state.filters = {
+            keyword: formData.get('keyword'),
+            status: formData.get('statusFilter'),
+            priority: formData.get('priorityFilter'),
+            processorId: formData.get('processorFilter'),
+            startDate: formData.get('startDate'),
+            endDate: formData.get('endDate')
+        };
+
+        this.state.pagination.current = 1;
+        this._loadTickets();
+    }
+
+    // 处理重置
+    _handleReset() {
+        this.$searchForm[0].reset();
+        this.state.filters = {
+            keyword: '',
+            status: '',
+            priority: '',
+            processorId: '',
+            startDate: '',
+            endDate: ''
+        };
+        this.state.pagination.current = 1;
+        this._loadTickets();
+    }
+
+    // 处理导出
+    async _handleExport() {
+        try {
+            this._showLoading('正在导出数据...');
+
+            const response = await $.ajax({
+                url: '/api/departments/tickets/export',
+                method: 'GET',
+                data: this.state.filters,
+                xhrFields: {
+                    responseType: 'blob'
+                }
+            });
+
+            // 创建下载链接
+            const blob = new Blob([response], {type: 'application/vnd.ms-excel'});
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `工单列表_${this._formatDate(new Date(), 'YYYYMMDD')}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            this._showSuccess('导出成功');
+        } catch(error) {
+            console.error('导出失败:', error);
+            this._showError('导出失败，请重试');
+        } finally {
+            this._hideLoading();
+        }
+    }
+
+    // 显示工单详情
+    async _handleViewTicket(e) {
+        const ticketId = $(e.currentTarget).data('id');
+
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${ticketId}`,
+                method: 'GET'
+            });
+
+            if(response.code === 200) {
+                this.state.currentTicket = response.data;
+                this._updateTicketDetail();
+                this.$ticketDrawer.addClass('show');
+            }
+        } catch(error) {
+            console.error('加载工单详情失败:', error);
+            this._showError('加载工单详情失败');
+        }
+    }
+
+    // 处理工单处理
+    async _handleProcess() {
+        const note = $('#processingNote').val().trim();
+        if(!note) {
+            this._showError('请输入处理说明');
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${this.state.currentTicket.id}/process`,
+                method: 'PUT',
+                data: JSON.stringify({note}),
+                contentType: 'application/json'
+            });
+
+            if(response.code === 200) {
+                this._showSuccess('工单已开始处理');
+                await this._loadTickets();
+                this._updateTicketDetail();
+            }
+        } catch(error) {
+            console.error('处理工单失败:', error);
+            this._showError('处理工单失败');
+        }
+    }
+
+    // 处理工单完成
+    async _handleComplete() {
+        const note = $('#processingNote').val().trim();
+        if(!note) {
+            this._showError('请输入完成说明');
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${this.state.currentTicket.id}/complete`,
+                method: 'PUT',
+                data: JSON.stringify({note}),
+                contentType: 'application/json'
+            });
+
+            if(response.code === 200) {
+                this._showSuccess('工单已完成处理');
+                await this._loadTickets();
+                this._updateTicketDetail();
+            }
+        } catch(error) {
+            console.error('完成工单失败:', error);
+            this._showError('完成工单失败');
+        }
+    }
+
+    // 处理工单转交
+    _handleTransfer() {
+        if(!this.state.currentTicket) {
+            this._showError('请先选择工单');
+            return;
+        }
+        this._showTransferModal();
+    }
+
+    // 显示转交模态框
+    _showTransferModal() {
+        const html = `
+            <div class="modal fade" id="transferModal">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">转交工单</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                    </td>
-                    <td>
-                        <div class="workload-indicator">
-                            <span class="workload-badge ${workloadClass}">
-                                ${member.workload}/${Const.BUSINESS.DEPT_TICKET.MAX_MEMBER_WORKLOAD}
-                            </span>
-                            <small>${workloadText}</small>
+                        <div class="modal-body">
+                            <form id="transferForm">
+                                <div class="mb-3">
+                                    <label class="form-label required">转交说明</label>
+                                    <textarea class="form-control" id="transferNote" rows="3" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label required">转交给</label>
+                                    <select class="form-select" id="transferTo" required>
+                                        ${this._renderProcessorOptions()}
+                                    </select>
+                                </div>
+                            </form>
                         </div>
-                    </td>
-                    <td>
-                        <div class="efficiency-indicator">
-                            <div class="efficiency-bar">
-                                <div class="efficiency-progress ${efficiencyClass}"
-                                     style="width: ${efficiencyPercent}%"></div>
-                            </div>
-                            <small>${efficiencyPercent}%</small>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="button" class="btn btn-primary" id="confirmTransferBtn">确认转交</button>
                         </div>
-                    </td>
-                    <td>${member.avgProcessTime}小时</td>
-                    <td>${member.satisfaction.toFixed(1)}</td>
-                    <td>${performanceBadge}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary view-member" 
-                                data-id="${member.userId}">
-                            <i class="bi bi-eye"></i> 详情
-                        </button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-
-        this.$memberList.html(html || '<tr><td colspan="8" class="text-center">暂无成员数据</td></tr>');
-        this.$totalCount.text(this.state.pagination.total);
-    }
-
-    /**
-     * 获取工作量等级样式
-     * @private
-     * @param {number} workload - 当前工作量
-     * @returns {string} 样式类名
-     */
-    _getWorkloadClass(workload) {
-        const maxWorkload = Const.BUSINESS.DEPT_TICKET.MAX_MEMBER_WORKLOAD;
-        const percent = (workload / maxWorkload) * 100;
-
-        if (percent >= 90) return 'workload-high';
-        if (percent >= 70) return 'workload-normal';
-        return 'workload-low';
-    }
-
-    /**
-     * 获取工作量描述文本
-     * @private
-     * @param {number} workload - 当前工作量
-     * @returns {string} 描述文本
-     */
-    _getWorkloadText(workload) {
-        const maxWorkload = Const.BUSINESS.DEPT_TICKET.MAX_MEMBER_WORKLOAD;
-        const percent = (workload / maxWorkload) * 100;
-
-        if (percent >= 90) return '工作量较重';
-        if (percent >= 70) return '工作量适中';
-        return '可接收任务';
-    }
-
-    /**
-     * 计算处理效率
-     * @private
-     * @param {Object} member - 成员数据
-     * @returns {number} 效率百分比
-     */
-    _calculateEfficiency(member) {
-        // 基于平均处理时间、及时率等计算效率分数
-        const timeScore = Math.max(0, 100 - (member.avgProcessTime / 24) * 100);
-        const rateScore = member.completionRate * 100;
-
-        // 综合评分，时间占比40%，完成率占比60%
-        return Math.round((timeScore * 0.4 + rateScore * 0.6) * 100) / 100;
-    }
-
-    /**
-     * 获取效率等级样式
-     * @private
-     * @param {number} percent - 效率百分比
-     * @returns {string} 样式类名
-     */
-    _getEfficiencyClass(percent) {
-        if (percent >= 90) return 'bg-success';
-        if (percent >= 70) return 'bg-primary';
-        if (percent >= 50) return 'bg-warning';
-        return 'bg-danger';
-    }
-
-    /**
-     * 渲染绩效等级标签
-     * @private
-     * @param {string} performance - 绩效等级
-     * @returns {string} HTML字符串
-     */
-    _renderPerformanceBadge(performance) {
-        const gradeMap = Const.BUSINESS.DEPT_PERFORMANCE.RATING_MAP;
-        return `
-            <span class="performance-badge performance-${performance.toLowerCase()}">
-                ${performance}
-            </span>
-            <small class="ms-1 text-muted">${gradeMap.text[performance]}</small>
+                    </div>
+                </div>
+            </div>
         `;
+
+        // 添加到body并显示
+        $('body').append(html);
+        const modal = new bootstrap.Modal('#transferModal');
+        modal.show();
+
+        // 绑定确认事件
+        $('#confirmTransferBtn').on('click', () => this._handleConfirmTransfer(modal));
+
+        // 模态框关闭时移除
+        $('#transferModal').on('hidden.bs.modal', function() {
+            $(this).remove();
+        });
     }
 
-    /**
-     * 更新统计数据显示
-     * @private
-     */
-    _updateStats() {
-        const {overview} = this.state.stats;
+    // 处理转交确认
+    async _handleConfirmTransfer(modal) {
+        const note = $('#transferNote').val().trim();
+        const transferToId = $('#transferTo').val();
 
-        // 更新统计卡片
-        $('#totalMembers').text(overview.totalMembers);
-        $('#avgWorkload').text(overview.avgWorkload.toFixed(1));
-        $('#avgEfficiency').text(overview.avgEfficiency.toFixed(1) + '%');
-        $('#avgSatisfaction').text(overview.avgSatisfaction.toFixed(1));
+        if(!note || !transferToId) {
+            this._showError('请填写完整信息');
+            return;
+        }
 
-        // 重新渲染图表
-        this._updateCharts();
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${this.state.currentTicket.id}/transfer`,
+                method: 'POST',
+                data: JSON.stringify({
+                    processorId: transferToId,
+                    note: note
+                }),
+                contentType: 'application/json'
+            });
+
+            if(response.code === 200) {
+                modal.hide();
+                this._showSuccess('工单转交成功');
+                await this._loadTickets();
+                this._updateTicketDetail();
+            }
+        } catch(error) {
+            console.error('转交工单失败:', error);
+            this._showError('转交工单失败');
+        }
     }
 
-    /**
-     * 更新分页器
-     * @private
-     */
+    // 处理工单关闭
+    async _handleClose() {
+        const note = $('#processingNote').val().trim();
+        if(!note) {
+            this._showError('请输入关闭原因');
+            return;
+        }
+
+        if(!confirm('确定要关闭此工单吗？')) {
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${this.state.currentTicket.id}/close`,
+                method: 'PUT',
+                data: JSON.stringify({note}),
+                contentType: 'application/json'
+            });
+
+            if(response.code === 200) {
+                this._showSuccess('工单已关闭');
+                await this._loadTickets();
+                this._updateTicketDetail();
+            }
+        } catch(error) {
+            console.error('关闭工单失败:', error);
+            this._showError('关闭工单失败');
+        }
+    }
+
+    // 更新工单详情
+    _updateTicketDetail() {
+        const ticket = this.state.currentTicket;
+        if(!ticket) return;
+
+        $('#ticketCode').text(ticket.code);
+        $('#ticketTitle').text(ticket.title);
+        $('#ticketContent').text(ticket.content);
+        $('#createTime').text(this._formatDate(ticket.createTime));
+        $('#ticketStatus').html(`
+            <span class="ticket-status status-${ticket.status.toLowerCase()}">
+                ${this._getStatusText(ticket.status)}
+            </span>
+        `);
+
+        // 渲染处理记录
+        this._renderTimeline(ticket.records);
+
+        // 更新操作按钮状态
+        this._updateActionButtons(ticket.status);
+    }
+
+    // 渲染时间线
+    _renderTimeline(records) {
+        const html = records.map(record => `
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-time">
+                        ${this._formatDate(record.createTime)}
+                    </div>
+                    <div class="timeline-title">
+                        <strong>${record.operator}</strong>
+                        ${this._getOperationText(record.operation)}
+                    </div>
+                    <div class="timeline-body">
+                        ${record.content || ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        $('#ticketTimeline').html(html);
+    }
+
+    // 更新按钮状态
+    _updateActionButtons(status) {
+        const buttons = {
+            processBtn: $('#processBtn'),
+            resolveBtn: $('#resolveBtn'),
+            transferBtn: $('#transferBtn'),
+            closeBtn: $('#closeBtn')
+        };
+
+        // 根据状态启用/禁用按钮
+        switch(status) {
+            case 'PENDING':
+                buttons.processBtn.prop('disabled', false);
+                buttons.resolveBtn.prop('disabled', true);
+                buttons.transferBtn.prop('disabled', false);
+                buttons.closeBtn.prop('disabled', false);
+                break;
+            case 'PROCESSING':
+                buttons.processBtn.prop('disabled', true);
+                buttons.resolveBtn.prop('disabled', false);
+                buttons.transferBtn.prop('disabled', false);
+                buttons.closeBtn.prop('disabled', false);
+                break;
+            case 'COMPLETED':
+                buttons.processBtn.prop('disabled', true);
+                buttons.resolveBtn.prop('disabled', true);
+                buttons.transferBtn.prop('disabled', true);
+                buttons.closeBtn.prop('disabled', false);
+                break;
+            case 'CLOSED':
+                Object.values(buttons).forEach(btn => btn.prop('disabled', true));
+                break;
+        }
+    }
+
+    // 格式化日期
+    _formatDate(date, format = 'YYYY-MM-DD HH:mm:ss') {
+        const d = new Date(date);
+        const map = {
+            YYYY: d.getFullYear(),
+            MM: String(d.getMonth() + 1).padStart(2, '0'),
+            DD: String(d.getDate()).padStart(2, '0'),
+            HH: String(d.getHours()).padStart(2, '0'),
+            mm: String(d.getMinutes()).padStart(2, '0'),
+            ss: String(d.getSeconds()).padStart(2, '0')
+        };
+
+        return format.replace(/YYYY|MM|DD|HH|mm|ss/g, matched => map[matched]);
+    }
+
+    // 获取状态文本
+    _getStatusText(status) {
+        const statusMap = {
+            'PENDING': '待处理',
+            'PROCESSING': '处理中',
+            'COMPLETED': '已完成',
+            'CLOSED': '已关闭'
+        };
+        return statusMap[status] || status;
+    }
+
+    // 获取优先级文本
+    _getPriorityText(priority) {
+        const priorityMap = {
+            'HIGH': '高优先级',
+            'MEDIUM': '中等优先级',
+            'LOW': '低优先级'
+        };
+        return priorityMap[priority] || priority;
+    }
+
+    // 获取操作文本
+    _getOperationText(operation) {
+        const operationMap = {
+            'CREATE': '创建了工单',
+            'PROCESS': '开始处理',
+            'NOTE': '添加了备注',
+            'TRANSFER': '转交工单',
+            'COMPLETE': '完成处理',
+            'CLOSE': '关闭工单'
+        };
+        return operationMap[operation] || operation;
+    }
+
+    // 启动自动刷新
+    _startAutoRefresh() {
+        // 每5分钟刷新一次数据
+        setInterval(() => {
+            if(this.state.currentView === 'stats') {
+                this._loadStats();
+            } else {
+                this._loadTickets();
+            }
+        }, 5 * 60 * 1000);
+    }
+
+    // 显示加载状态
+    _showLoading(text = '加载中...') {
+        if(!this.$loading) {
+            this.$loading = $(`
+                <div class="loading-overlay">
+                    <div class="spinner-border text-primary"></div>
+                    <div class="loading-text mt-2">${text}</div>
+                </div>
+            `).appendTo('body');
+        }
+        this.$loading.find('.loading-text').text(text);
+        this.$loading.show();
+    }
+
+    // 隐藏加载状态
+    _hideLoading() {
+        if(this.$loading) {
+            this.$loading.hide();
+        }
+    }
+
+    // 显示成功提示
+    _showSuccess(message) {
+        $.notify({
+            message: message,
+            type: 'success',
+            placement: {
+                from: 'top',
+                align: 'center'
+            },
+            delay: 2000
+        });
+    }
+
+    // 显示错误提示
+    _showError(message) {
+        $.notify({
+            message: message,
+            type: 'danger',
+            placement: {
+                from: 'top',
+                align: 'center'
+            },
+            delay: 3000
+        });
+    }
+
+    // 更新分页
     _updatePagination() {
-        const {current, pageSize, total} = this.state.pagination;
-        // 使用PaginationUtil工具类生成分页HTML
-        const html = PaginationUtil.generateHTML({
-            current,
-            pageSize,
-            total,
-            maxButtons: 5,
-            firstText: '首页',
-            lastText: '末页',
-            prevText: '上一页',
-            nextText: '下一页'
+        const { current, pageSize, total } = this.state.pagination;
+        const totalPages = Math.ceil(total / pageSize);
+
+        let html = `
+            <li class="page-item ${current === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${current - 1}">上一页</a>
+            </li>
+        `;
+
+        for(let i = 1; i <= totalPages; i++) {
+            if(i === 1 || i === totalPages || (i >= current - 2 && i <= current + 2)) {
+                html += `
+                    <li class="page-item ${i === current ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            } else if(i === current - 3 || i === current + 3) {
+                html += `
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                `;
+            }
+        }
+
+        html += `
+            <li class="page-item ${current === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${current + 1}">下一页</a>
+            </li>
+        `;
+
+        $('#pagination').html(html).on('click', '.page-link', (e) => {
+            e.preventDefault();
+            const page = $(e.currentTarget).data('page');
+            if(page && page !== current) {
+                this.state.pagination.current = page;
+                this._loadTickets();
+            }
         });
-
-        this.$pagination.html(html);
-
-        // 绑定分页点击事件
-        PaginationUtil.bindEvents(this.$pagination, (page) => {
-            this.state.pagination.current = page;
-            this._loadMembers();
-        });
     }
 
-    /**
-     * 初始化图表
-     * @private
-     * @description 初始化所有统计图表,包括绩效分布、工作量分布和效率趋势图
-     */
-    _initCharts() {
-        // 绩效分布饼图
-        this.charts.performance = new Chart(
-            document.getElementById('performanceDistChart').getContext('2d'),
-            {
-                type: 'doughnut',
-                data: this._getPerformanceChartData(),
-                options: this._getPerformanceChartOptions()
-            }
-        );
+    // 销毁组件
+    destroy() {
+        // 清理事件监听
+        this.container.off();
+        $('#pagination').off();
 
-        // 工作量分布柱状图
-        this.charts.workload = new Chart(
-            document.getElementById('workloadDistChart').getContext('2d'),
-            {
-                type: 'bar',
-                data: this._getWorkloadChartData(),
-                options: this._getWorkloadChartOptions()
-            }
-        );
+        // 清理定时器
+        if(this.refreshTimer) {
+            clearInterval(this.refreshTimer);
+        }
 
-        // 效率趋势线图
-        this.charts.efficiency = new Chart(
-            document.getElementById('efficiencyTrendChart').getContext('2d'),
-            {
-                type: 'line',
-                data: this._getEfficiencyChartData(),
-                options: this._getEfficiencyChartOptions()
-            }
-        );
+        // 销毁模态框
+        if(this.assignModal) {
+            this.assignModal.dispose();
+        }
+
+        // 清理DOM引用
+        if(this.$loading) {
+            this.$loading.remove();
+        }
     }
-
-    /**
-     * 获取绩效分布图数据
-     * @private
-     * @returns {Object} Chart.js数据配置对象
-     */
-    _getPerformanceChartData() {
-        const {performance} = this.state.stats;
-        return {
-            labels: Object.keys(Const.BUSINESS.DEPT_PERFORMANCE.RATING_MAP.text),
-            datasets: [{
-                data: performance,
-                backgroundColor: [
-                    '#10b981', // A级-绿色
-                    '#3b82f6', // B级-蓝色
-                    '#f59e0b', // C级-橙色
-                    '#ef4444'  // D级-红色
-                ],
-                borderWidth: 0
-            }]
-        };
-    }
-
-    /**
-     * 获取绩效分布图配置
-     * @private
-     * @returns {Object} Chart.js配置对象
-     */
-    _getPerformanceChartOptions() {
-        return {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        // 自定义图例标签显示
-                        generateLabels: (chart) => {
-                            const data = chart.data;
-                            const total = data.datasets[0].data.reduce((sum, val) => sum + val, 0);
-
-                            return data.labels.map((label, index) => ({
-                                text: `${label} - ${data.datasets[0].data[index]}人 (${
-                                    ((data.datasets[0].data[index] / total) * 100).toFixed(1)
-                                }%)`,
-                                fillStyle: data.datasets[0].backgroundColor[index],
-                                hidden: false,
-                                index: index
-                            }));
-                        }
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => {
-                            const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-                            const value = context.raw;
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${value}人 (${percentage}%)`;
-                        }
-                    }
-                }
-            }
-        };
-    }
-
-    /**
-     * 获取工作量分布图数据
-     * @private
-     * @returns {Object} Chart.js数据配置对象
-     */
-    _getWorkloadChartData() {
-        const {workload} = this.state.stats;
-        return {
-            labels: ['1-2', '3-4', '>=5'],
-            datasets: [{
-                label: '人数',
-                data: workload,
-                backgroundColor: [
-                    'rgba(16, 185, 129, 0.6)',  // 低工作量-浅绿
-                    'rgba(59, 130, 246, 0.6)',  // 中等工作量-浅蓝
-                    'rgba(239, 68, 68, 0.6)'    // 高工作量-浅红
-                ],
-                borderColor: [
-                    '#10b981',  // 低工作量-深绿
-                    '#3b82f6',  // 中等工作量-深蓝
-                    '#ef4444'   // 高工作量-深红
-                ],
-                borderWidth: 1
-            }]
-        };
-    }
-
-    /**
-     * 获取工作量分布图配置
-     * @private
-     * @returns {Object} Chart.js配置对象
-     */
-    _getWorkloadChartOptions() {
-        return {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => `${context.raw}人`
-                    }
-                }
-            }
-        };
-    }
-
-    /**
-     * 获取效率趋势图数据
-     * @private
-     * @returns {Object} Chart.js数据配置对象
-     */
-    _getEfficiencyChartData() {
-        const {efficiency} = this.state.stats;
-        return {
-            labels: efficiency.map(item => item.date),
-            datasets: [
-                {
-                    label: '平均处理时长(小时)',
-                    data: efficiency.map(item => item.avgProcessTime),
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    yAxisID: 'y1'
-                },
-                {
-                    label: '及时完成率(%)',
-                    data: efficiency.map(item => item.completionRate * 100),
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    yAxisID: 'y2'
-                }
-            ]
-        };
-    }
-
-    /**
-     * 获取效率趋势图配置
-     * @private
-     * @returns {Object} Chart.js配置对象
-     */
-    _getEfficiencyChartOptions() {
-        return {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: {
-                        display: true,
-                        text: '平均处理时长(小时)'
-                    }
-                },
-                y2: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: {
-                        display: true,
-                        text: '及时完成率(%)'
-                    },
-                    grid: {
-                        drawOnChartArea: false
-                    }
-                }
-            }
-        };
-    }
-
-    /**
-     * 更新统计图表
-     * @private
-     * @description 根据最新的统计数据更新所有图表的显示
-     */
-    _updateCharts() {
-        // 更新绩效分布图
-        this.charts.performance.data = this._getPerformanceChartData();
-        this.charts.performance.update();
-
-        // 更新工作量分布图
-        this.charts.workload.data = this._getWorkloadChartData();
-        this.charts.workload.update();
-
-        // 更新效率趋势图
-        this.charts.efficiency.data = this._getEfficiencyChartData();
-        this.charts.efficiency.update();
-    }
-
-    //TODO: 事件处理和组件清理相关的实现。
 }
+
+// 页面加载完成后初始化
+$(document).ready(() => {
+    window.deptWorkspace = new DepartmentWorkspace();
+});

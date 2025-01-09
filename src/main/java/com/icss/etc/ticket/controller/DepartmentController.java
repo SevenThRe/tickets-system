@@ -26,7 +26,7 @@ public class DepartmentController {
 
     @GetMapping("/detail/{id}")
     public R getDepartmentById(@PathVariable("id") Long department_id){
-        return R.OK(departmentService.selectByDpartmentId(department_id));
+        return R.OK(departmentService.getDepartmentDetail(department_id));
     }
 
     //TODO:修改API接口
@@ -87,6 +87,7 @@ public class DepartmentController {
     public R deleteDepartment(@PathVariable("id") Long department_id) {
         return R.OK(departmentService.deleteByPrimaryKey(department_id));
     }
+
 
 
 
