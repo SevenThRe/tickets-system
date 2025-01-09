@@ -1,168 +1,189 @@
 /**
- * pagination-util.js
+ * Pagination-util.js
  * 分页工具类
  */
-class PaginationUtil {
+class Pagination {
     /**
-     * 创建分页配置
-     * @param {Object} options 配置选项
-     * @returns {Object} 分页配置对象
+     * 构造函数
+     * @param {Object} options - 配置选项
+     * @param {string} options.container - 分页容器选择器
+     * @param {number} options.pageSize - 每页显示数量
+     * @param {Function} options.onChange - 页码变更回调函数
      */
-    static createConfig(options = {}) {
-        return {
-            current: options.current || window.Const.UI.PAGINATION.DEFAULT_CURRENT,
-            pageSize: options.pageSize || window.Const.UI.PAGINATION.DEFAULT_PAGE_SIZE,
-            total: options.total || 0
+    constructor(options) {
+        // 配置参数
+        this.container = $(options.container);  // 分页容器元素
+        this.pageSize = options.pageSize || 10; // 每页数量，默认10
+        this.onChange = options.onChange;       // 页码变更回调
+
+        // 当前状态
+        this.currentPage = 1;  // 当前页码
+        this.totalItems = 0;   // 总记录数
+
+        // 初始化分页配置
+        this.config = {
+            showFirstLast: true,   // 显示首尾页按钮
+            showPrevNext: true,    // 显示上下页按钮
+            maxPageButtons: 5,     // 最大显示的页码按钮数
+            firstText: '首页',      // 首页按钮文本
+            lastText: '末页',       // 末页按钮文本
+            prevText: '上一页',     // 上一页按钮文本
+            nextText: '下一页'      // 下一页按钮文本
         };
-    }
 
-    /**
-     * 生成分页HTML
-     * @param {Object} pagination 分页配置
-     * @param {Object} options 额外选项
-     * @returns {String} 分页HTML
-     */
-    static generateHTML(pagination, options = {}) {
-        const { current, pageSize, total } = pagination;
-        const totalPages = Math.ceil(total / pageSize);
-        const { containerClass = 'pagination', prevText = '上一页', nextText = '下一页' } = options;
-
-        let html = `<ul class="${containerClass}">`;
-
-        // 上一页
-        html += this._generatePageItem(prevText, current - 1, current === 1, 'prev');
-
-        // 页码
-        html += this._generatePageNumbers(current, totalPages);
-
-        // 下一页
-        html += this._generatePageItem(nextText, current + 1, current === totalPages, 'next');
-
-        html += '</ul>';
-        return html;
-    }
-
-    /**
-     * 生成单个页码项
-     * @private
-     */
-    static _generatePageItem(text, page, disabled, type = '') {
-        const className = `page-item${disabled ? ' disabled' : ''}${type ? ` ${type}` : ''}`;
-        return `
-            <li class="${className}">
-                <a class="page-link" href="#" data-page="${page}">${text}</a>
-            </li>
-        `;
-    }
-
-    /**
-     * 生成页码列表
-     * @private
-     */
-    static _generatePageNumbers(current, total) {
-        const pages = [];
-        const showItem = 5; // 显示的页码数量
-
-        if (total <= showItem) {
-            // 总页数小于等于显示数量时，显示所有页码
-            for (let i = 1; i <= total; i++) {
-                pages.push(i);
-            }
-        } else {
-            // 计算显示范围
-            let start = Math.max(1, current - 2);
-            let end = Math.min(total, start + showItem - 1);
-            
-            // 调整起始位置
-            if (end === total) {
-                start = Math.max(1, end - showItem + 1);
-            }
-
-            // 添加首页
-            if (start > 1) {
-                pages.push(1);
-                if (start > 2) pages.push('...');
-            }
-
-            // 添加中间页码
-            for (let i = start; i <= end; i++) {
-                pages.push(i);
-            }
-
-            // 添加末页
-            if (end < total) {
-                if (end < total - 1) pages.push('...');
-                pages.push(total);
-            }
-        }
-
-        // 生成HTML
-        return pages.map(page => {
-            if (page === '...') {
-                return `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-            }
-            return this._generatePageItem(page, page, false, page === current ? 'active' : '');
-        }).join('');
+        // 绑定点击事件委托
+        this.bindEvents();
     }
 
     /**
      * 绑定分页事件
-     * @param {String|Element} container 容器选择器或元素
-     * @param {Function} callback 页码变更回调
+     * @private
      */
-    static bindEvents(container, callback) {
-        $(container).on('click', '.page-link', function(e) {
+    bindEvents() {
+        this.container.on('click', '.page-link', (e) => {
             e.preventDefault();
-            const $link = $(this);
-            if ($link.parent().hasClass('disabled')) return;
-
-            const page = $link.data('page');
-            if (page && typeof callback === 'function') {
-                callback(page);
+            const page = $(e.currentTarget).data('page');
+            if (page && page !== this.currentPage) {
+                this.goToPage(page);
             }
         });
     }
 
     /**
-     * 更新分页状态
-     * @param {Object} pagination 分页配置
-     * @param {Object} newState 新状态
-     * @returns {Object} 更新后的分页配置
+     * 更新分页数据
+     * @param {number} total - 总记录数
+     * @param {number} current - 当前页码
      */
-    static updateState(pagination, newState) {
-        return {
-            ...pagination,
-            ...newState,
-            current: newState.current || pagination.current,
-            pageSize: newState.pageSize || pagination.pageSize,
-            total: newState.total ?? pagination.total
-        };
+    update(total, current) {
+        this.totalItems = total;
+        this.currentPage = current;
+        this.render();
     }
 
     /**
-     * 计算分页数据
-     * @param {Array} data 完整数据数组
-     * @param {Object} pagination 分页配置
-     * @returns {Array} 当前页数据
+     * 跳转到指定页
+     * @param {number} page - 目标页码
      */
-    static sliceData(data, pagination) {
-        const { current, pageSize } = pagination;
-        const start = (current - 1) * pageSize;
-        return data.slice(start, start + pageSize);
+    goToPage(page) {
+        if (page < 1 || page > this.getTotalPages() || page === this.currentPage) {
+            return;
+        }
+        this.currentPage = page;
+        this.onChange && this.onChange(page);
     }
 
     /**
-     * 获取分页信息文本
-     * @param {Object} pagination 分页配置
-     * @returns {String} 分页信息文本
+     * 获取总页数
+     * @returns {number} 总页数
+     * @private
      */
-    static getInfoText(pagination) {
-        const { current, pageSize, total } = pagination;
-        const start = (current - 1) * pageSize + 1;
-        const end = Math.min(current * pageSize, total);
-        return `显示第 ${start} 到 ${end} 条记录，共 ${total} 条`;
+    getTotalPages() {
+        return Math.ceil(this.totalItems / this.pageSize);
+    }
+
+    /**
+     * 渲染分页控件
+     * @private
+     */
+    render() {
+        const totalPages = this.getTotalPages();
+        if (totalPages <= 1) {
+            this.container.empty();
+            return;
+        }
+
+        let html = '<ul class="pagination mb-0">';
+
+        // 首页和上一页按钮
+        if (this.config.showFirstLast || this.config.showPrevNext) {
+            html += this.renderNavigationButtons('prev');
+        }
+
+        // 页码按钮
+        html += this.renderPageButtons();
+
+        // 下一页和末页按钮
+        if (this.config.showFirstLast || this.config.showPrevNext) {
+            html += this.renderNavigationButtons('next');
+        }
+
+        html += '</ul>';
+        this.container.html(html);
+    }
+
+    /**
+     * 渲染导航按钮(首页、上一页、下一页、末页)
+     * @param {string} type - 按钮类型(prev/next)
+     * @returns {string} 按钮HTML
+     * @private
+     */
+    renderNavigationButtons(type) {
+        const totalPages = this.getTotalPages();
+        const isNext = type === 'next';
+        let html = '';
+
+        // 首页/上一页
+        if (!isNext && this.config.showFirstLast) {
+            html += `
+                <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="1">${this.config.firstText}</a>
+                </li>
+            `;
+        }
+
+        // 上一页/下一页
+        if (this.config.showPrevNext) {
+            const page = isNext ? this.currentPage + 1 : this.currentPage - 1;
+            const disabled = isNext ?
+                this.currentPage === totalPages :
+                this.currentPage === 1;
+
+            html += `
+                <li class="page-item ${disabled ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${page}">
+                        ${isNext ? this.config.nextText : this.config.prevText}
+                    </a>
+                </li>
+            `;
+        }
+
+        // 末页/下一页
+        if (isNext && this.config.showFirstLast) {
+            html += `
+                <li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${totalPages}">${this.config.lastText}</a>
+                </li>
+            `;
+        }
+
+        return html;
+    }
+
+    /**
+     * 渲染页码按钮
+     * @returns {string} 页码按钮HTML
+     * @private
+     */
+    renderPageButtons() {
+        const totalPages = this.getTotalPages();
+        let startPage = Math.max(1, this.currentPage - Math.floor(this.config.maxPageButtons / 2));
+        let endPage = startPage + this.config.maxPageButtons - 1;
+
+        if (endPage > totalPages) {
+            endPage = totalPages;
+            startPage = Math.max(1, endPage - this.config.maxPageButtons + 1);
+        }
+
+        let html = '';
+        for (let i = startPage; i <= endPage; i++) {
+            html += `
+                <li class="page-item ${i === this.currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+        }
+        return html;
     }
 }
-
 // 添加到全局命名空间
-window.PaginationUtil = PaginationUtil;
+window.Pagination = Pagination;

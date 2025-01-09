@@ -100,4 +100,6 @@ public interface UserMapper {
      * @return 用户名列表
      */
     List<String> getUsernames();
+
+    User getUserInfo(Long userId);
 }

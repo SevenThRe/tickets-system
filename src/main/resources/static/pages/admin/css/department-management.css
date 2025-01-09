@@ -34,6 +34,82 @@
     align-items: center;
     gap: 0.5rem;
 }
+/* 成员卡片样式 */
+.member-card {
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.member-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.member-avatar {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: #f0f2f5;
+}
+
+.member-info {
+    font-size: 0.875rem;
+}
+
+.member-info p {
+    display: flex;
+    align-items: center;
+}
+
+.member-info i {
+    width: 20px;
+    opacity: 0.7;
+}
+
+/* 表单布局优化 */
+.department-form-section {
+    margin-bottom: 2rem;
+}
+
+.member-section {
+    margin-top: 2rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .member-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* 暗色主题适配 */
+@media (prefers-color-scheme: dark) {
+    .member-card {
+        background-color: var(--card-background);
+        border-color: var(--border-color);
+    }
+
+    .member-avatar {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* 动画效果 */
+.member-card .remove-member {
+    opacity: 0;
+    transform: translateY(5px);
+    transition: all 0.2s ease;
+}
+
+.member-card:hover .remove-member {
+    opacity: 1;
+    transform: translateY(0);
+}
 
 .toggle-icon {
     display: flex;

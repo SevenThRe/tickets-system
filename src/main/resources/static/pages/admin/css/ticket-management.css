@@ -179,6 +179,213 @@
     vertical-align: middle;
 }
 
+/**
+ * ticket-detail.css
+ * 工单详情抽屉组件样式
+ */
+
+/* 抽屉基础样式 */
+.ticket-detail-panel {
+    position: fixed;
+    top: 0;
+    right: -480px; /* 默认隐藏 */
+    width: 480px;
+    height: 100vh;
+    background: #fff;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+    transition: right 0.3s ease-in-out;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 显示状态 */
+.ticket-detail-panel.show {
+    right: 0;
+}
+
+/* 抽屉头部 */
+.ticket-detail-panel .drawer-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* 抽屉内容区 */
+.ticket-detail-panel .drawer-body {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+/* 工单信息样式 */
+.ticket-info {
+    margin-bottom: 2rem;
+}
+
+.ticket-info .form-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+/* 时间线样式 */
+.timeline {
+    position: relative;
+    padding: 1rem 0;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 2rem;
+    padding-bottom: 1.5rem;
+}
+
+.timeline-item:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.25rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #0d6efd;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #0d6efd;
+}
+
+.timeline-item:after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 0.75rem;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item:last-child:after {
+    display: none;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    border-radius: 0.375rem;
+    padding: 1rem;
+}
+
+.timeline-time {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-title {
+    margin-bottom: 0.5rem;
+}
+
+.timeline-body {
+    color: #495057;
+}
+
+/* 工单状态标签 */
+.ticket-status {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-pending {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.status-processing {
+    background-color: #0dcaf0;
+    color: #fff;
+}
+
+.status-completed {
+    background-color: #198754;
+    color: #fff;
+}
+
+.status-closed {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+/* 操作区域样式 */
+.operation-panel {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    background: #fff;
+}
+
+/* 表单控件样式 */
+.form-control:disabled {
+    background-color: #f8f9fa;
+    opacity: 1;
+}
+
+/* 附件列表样式 */
+.attachments-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.attachment-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: #f8f9fa;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.attachment-item i {
+    margin-right: 0.5rem;
+}
+
+/* 优先级指示器 */
+.priority-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.priority-high {
+    background-color: #dc3545;
+}
+
+.priority-medium {
+    background-color: #ffc107;
+}
+
+.priority-low {
+    background-color: #6c757d;
+}
+
+/* 关闭按钮样式 */
+.drawer-header .btn-close {
+    padding: 0.5rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 576px) {
+    .ticket-detail-panel {
+        width: 100%;
+        right: -100%;
+    }
+}
+
 /* 响应式调整 */
 @media (max-width: 768px) {
     .main-content {

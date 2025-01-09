@@ -63,7 +63,9 @@ class LoginPage {
         let token = localStorage.getItem('token');
         if (!token) {
             token = localStorage.getItem('Authorization');
-            alert("使用旧版登录");
+        }
+        if (!token) {
+            console.log('未登录');
         }
         return !!token;
     }

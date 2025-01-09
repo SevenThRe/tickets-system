@@ -23,12 +23,7 @@ public class TicketQueryDTO {
     private TicketStatus status;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private Integer pageNum = 1;
-    private Integer pageSize = 10;
+    private Integer pageNum;
+    private Integer pageSize;
 
-    @Data
-    public static class ResolveTicketRequest {
-        @NotBlank(message = "完成说明不能为空")
-        private String note;
-    }
 }

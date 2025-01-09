@@ -48,6 +48,11 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    public User getUserInfo(Long userId) {
+        return userMapper.getUserInfo(userId);
+    }
+
+    @Override
     public List<DeptMemberVO> selectByDepartmentId(Long departmentId) {
         return userMapper.selectByDepartmentId(departmentId);
     }

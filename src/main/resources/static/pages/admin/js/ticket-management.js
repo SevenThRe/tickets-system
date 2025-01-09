@@ -1,94 +1,314 @@
 /**
- * TicketManagement.js
- * 工单管理类 - 负责工单的查询、展示和状态管理
+ * 工单管理类
+ * 负责处理工单的CRUD操作、状态管理、数据加载等核心功能
  */
 class TicketManagement {
     /**
-     * 构造函数 - 初始化组件属性和状态
+     * 构造函数
+     * 初始化组件的状态和配置
      */
     constructor() {
-        // 缓存DOM引用
-        this.$container = $('#main');
-        this.$ticketList = $('#ticketList');
-        this.$searchForm = $('#searchForm');
-        this.$pagination = $('#pagination');
+        // DOM元素缓存
+        this.elements = {
+            container: $('#main'),
+            ticketList: $('#ticketList'),
+            searchForm: $('#searchForm'),
+            pagination: $('#pagination'),
+            totalCount: $('#totalCount'),
+            ticketDetail: $('#ticketDetail'),
+            modal: new bootstrap.Modal($('#ticketModal')[0])
+        };
 
         // 状态管理
         this.state = {
-            loading: false,              // 加载状态标记
-            tickets: [],                 // 工单列表数据
-            currentTicket: null,         // 当前选中工单
-            pagination: {                // 分页信息
+            loading: false,          // 加载状态标记
+            tickets: [],            // 工单列表数据
+            currentTicket: null,    // 当前选中的工单
+            pagination: {           // 分页信息
                 current: 1,
-                pageSize: 10,
+                pageSize: 3,
                 total: 0
             },
-            filters: {                   // 筛选条件
-                keyword: '',             // 关键词搜索
-                status: '',              // 工单状态
-                priority: '',            // 优先级
-                departmentId: '',        // 部门ID
-                assigneeId: '',          // 处理人ID
-                startDate: '',           // 开始日期
-                endDate: ''              // 结束日期
-            }
+            filters: {              // 过滤条件
+                keyword: '',
+                status: '',
+                priority: '',
+                departmentId: '',
+                assigneeId: '',
+                startDate: '',
+                endDate: ''
+            },
+            departments: [],
+            assignees: [],
         };
 
-        // 绑定事件处理器
-        this._bindEvents();
-
-        // 初始化组件
+        // 工单状态映射
+        this.STATUS_MAP = {
+            PENDING: '待处理',
+            PROCESSING: '处理中',
+            COMPLETED: '已完成',
+            CLOSED: '已关闭'
+        };
+        // 初始化
         this.init();
+        this.initPagination();
     }
 
     /**
-     * 事件绑定
-     * @private
+     * 组件初始化
      */
-    _bindEvents() {
+    async init() {
+        try {
+            // 绑定事件处理器
+            this.bindEvents();
+
+            // 加载初始数据
+            await this.loadTickets();
+
+            // 加载下拉列表
+            this._initSearchFrom();
+
+
+            // 检查URL参数是否需要打开特定工单
+            this.checkUrlParams();
+        } catch(error) {
+            console.error('初始化失败:', error);
+            this.showError('页面加载失败，请刷新重试');
+        }
+    }
+
+
+    /**
+     * 绑定事件处理器
+     */
+    bindEvents() {
         // 搜索表单提交
-        this.$searchForm.on('submit', (e) => this._handleSearch(e));
+        this.elements.searchForm.on('submit', (e) => this.handleSearch(e));
 
         // 重置按钮点击
-        $('#resetBtn').on('click', () => this._handleReset());
+        $('#resetBtn').on('click', () => this.handleReset());
 
-        // 工单点击查看
-        this.$ticketList.on('click', '.view-ticket', (e) => this._handleViewTicket(e));
+        // 创建工单按钮点击
+        $('#createTicketBtn').on('click', () => this.showCreateModal());
 
-        // 分页点击
-        this.$pagination.on('click', '.page-link', (e) => {
+        // 工单列表点击事件
+        this.elements.ticketList.on('click', '.view-ticket', (e) => {
+            const ticketId = $(e.currentTarget).data('id');
+            this.showTicketDetail(ticketId);
+        });
+
+        // 分页点击事件
+        this.elements.pagination.on('click', '.page-link', (e) => {
             e.preventDefault();
             const page = $(e.currentTarget).data('page');
             if(page && page !== this.state.pagination.current) {
                 this.state.pagination.current = page;
-                this._loadTickets();
+                this.loadTickets();
             }
+        });
+
+        // 详情面板关闭按钮
+        $('#closeDetailBtn').on('click', () => {
+            this.elements.ticketDetail.removeClass('show');
+            this.state.currentTicket = null;
+        });
+
+        // 工单操作按钮事件
+        $('#processBtn').on('click', () => this.handleProcess());
+        $('#resolveBtn').on('click', () => this.handleResolve());
+        $('#transferBtn').on('click', () => this.handleTransfer());
+        $('#closeBtn').on('click', () => this.handleClose());
+
+        // 保存工单按钮点击
+        $('#saveTicketBtn').on('click', () => this.handleSaveTicket());
+    }
+
+    /**
+     * 初始化搜索表单
+     * @private
+     * @description 初始化搜索表单的部门和处理人下拉框,并处理它们之间的联动关系
+     */
+    async _initSearchFrom() {
+        // 加载部门数据
+        await this._loadDepartments();
+
+        // 绑定部门切换事件
+        $('#departmentFilter').on('change', async (e) => {
+            const departmentId = e.target.value;
+            // 将部门ID保存到过滤条件
+            this.state.filters.departmentId = departmentId;
+
+            // 清空并重新加载处理人列表
+            $('#assigneeFilter').html('<option value="">所有处理人</option>');
+            if(departmentId) {
+                await this._loadAssignees(departmentId);
+            }
+        });
+
+        // 绑定处理人切换事件
+        $('#assigneeFilter').on('change', (e) => {
+            // 将处理人ID保存到过滤条件
+            this.state.filters.processorId = e.target.value;
+        });
+
+        // 绑定状态切换事件
+        $('#statusFilter').on('change', (e) => {
+            this.state.filters.status = e.target.value;
+        });
+
+        // 绑定优先级切换事件
+        $('#priorityFilter').on('change', (e) => {
+            this.state.filters.priority = e.target.value;
+        });
+
+        // 绑定日期选择事件
+        $('#startDate, #endDate').on('change', (e) => {
+            const field = e.target.id === 'startDate' ? 'startTime' : 'endTime';
+            this.state.filters[field] = e.target.value;
         });
     }
 
     /**
-     * 初始化方法
+     * 加载部门列表
+     * @private
+     * @description 从服务器获取部门列表并渲染到下拉框
      */
-    async init() {
+    async _loadDepartments() {
         try {
-            await this._loadTickets();
-            this._checkUrlParams();
+            const response = await $.ajax({
+                url: '/api/departments/list',
+                method: 'GET'
+            });
+
+            if(response.code === 200) {
+                this.state.departments = response.data;
+                const options = response.data.map(dept =>
+                    `<option value="${dept.departmentId}">${dept.departmentName}</option>`
+                ).join('');
+
+                // 保存初始选项以供重置使用
+                this.defaultDepartmentOptions = '<option value="">所有部门</option>' + options;
+
+                // 渲染下拉框
+                $('#departmentFilter').html(this.defaultDepartmentOptions);
+
+                // 如果存在过滤条件中的部门ID，则设置选中状态
+                if(this.state.filters.departmentId) {
+                    $('#departmentFilter').val(this.state.filters.departmentId);
+                    // 加载该部门的处理人列表
+                    await this._loadAssignees(this.state.filters.departmentId);
+                }
+            }
         } catch(error) {
-            console.error('初始化失败:', error);
-            this._showError('页面加载失败，请刷新重试');
+            console.error('加载部门列表失败:', error);
+            this.showError('加载部门列表失败');
         }
     }
 
     /**
-     * 加载工单列表数据
+     * 加载处理人列表
      * @private
+     * @param {string} departmentId - 部门ID
+     * @description 根据部门ID加载处理人列表并渲染到下拉框
      */
-    async _loadTickets() {
+    async _loadAssignees(departmentId) {
+        try {
+            const response = await $.ajax({
+                url: `/api/users/selectByDepartmentId/${departmentId}`,
+                method: 'GET'
+            });
+
+            if(response.code === 200) {
+                this.state.assignees = response.data;
+                const options = response.data.map(user =>
+                    `<option value="${user.userId}">${user.username}</option>`
+                ).join('');
+
+                // 保存初始选项以供重置使用
+                this.defaultAssigneeOptions = '<option value="">所有处理人</option>' + options;
+
+                // 渲染下拉框
+                $('#assigneeFilter').html(this.defaultAssigneeOptions);
+
+                // 如果存在过滤条件中的处理人ID，则设置选中状态
+                if(this.state.filters.processorId) {
+                    $('#assigneeFilter').val(this.state.filters.processorId);
+                }
+            }
+        } catch(error) {
+            console.error('加载处理人列表失败:', error);
+            this.showError('加载处理人列表失败');
+        }
+    }
+
+    /**
+     * 处理搜索
+     * @param {Event} e - 提交事件对象
+     * @description 处理搜索表单提交，收集所有过滤条件并触发搜索
+     */
+    handleSearch(e) {
+        e.preventDefault();
+
+        // 获取文本搜索关键词
+        this.state.filters.keyword = $('#keyword').val();
+
+        // 重置分页到第一页
+        this.state.pagination.current = 1;
+
+        // 加载过滤后的数据
+        this.loadTickets();
+    }
+
+    /**
+     * 处理重置
+     * @description 重置所有过滤条件，恢复表单初始状态
+     */
+    handleReset() {
+        // 重置表单元素
+        this.elements.searchForm[0].reset();
+
+        // 重置下拉框到初始状态
+        $('#departmentFilter').html(this.defaultDepartmentOptions);
+        $('#assigneeFilter').html('<option value="">所有处理人</option>');
+
+        // 重置过滤条件
+        this.state.filters = {
+            keyword: '',
+            status: '',
+            priority: '',
+            departmentId: '',
+            processorId: '',
+            startTime: '',
+            endTime: ''
+        };
+
+        // 重置分页
+        this.state.pagination.current = 1;
+
+        // 重新加载数据
+        this.loadTickets();
+    }
+
+
+    /**
+     * 检查URL参数
+     */
+    checkUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ticketId = urlParams.get('ticketId');
+        if(ticketId) {
+            this.showTicketDetail(ticketId);
+        }
+    }
+    /**
+     * 加载工单列表
+     */
+    async loadTickets() {
         if(this.state.loading) return;
 
         try {
             this.state.loading = true;
-            this._showLoading();
+            this.showLoading();
 
             const params = {
                 pageNum: this.state.pagination.current,
@@ -105,774 +325,296 @@ class TicketManagement {
             if(response.code === 200) {
                 this.state.tickets = response.data.list;
                 this.state.pagination.total = response.data.total;
-
-                this._renderTicketList();
-                this._updatePagination();
+                this.renderTicketList();
+                this.updatePagination();
             }
 
         } catch(error) {
             console.error('加载工单列表失败:', error);
-            this._showError('加载工单列表失败');
+            this.showError('加载工单列表失败');
         } finally {
             this.state.loading = false;
-            this._hideLoading();
+            this.hideLoading();
         }
     }
 
     /**
      * 渲染工单列表
-     * @private
+     * @description 将工单数据渲染到表格中，包括工单编号、标题、处理部门、处理人、状态、优先级等信息
      */
-    _renderTicketList() {
+    renderTicketList() {
         const html = this.state.tickets.map(ticket => `
-            <tr>
-                <td>${ticket.code}</td>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <span class="priority-indicator priority-${this._getPriorityClass(ticket.priority)}"></span>
-                        ${ticket.title}
-                    </div>
-                </td>
-                <td>${ticket.department || '-'}</td>
-                <td>${ticket.processor || '-'}</td>
-                <td>
-                    <span class="ticket-status status-${ticket.status.toLowerCase()}">
-                        ${this._getStatusText(ticket.status)}  
-                    </span>
-                </td>
-                <td>${this._getPriorityText(ticket.priority)}</td>
-                <td>${this._formatDate(ticket.createTime)}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary view-ticket" 
-                            data-id="${ticket.id}">
-                        <i class="bi bi-eye"></i> 查看
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-
-        this.$ticketList.html(html);
-    }
-
-    /**
-     * 处理搜索请求
-     * @param {Event} e - 表单提交事件
-     * @private
-     */
-    _handleSearch(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-
-        this.state.filters = {
-            keyword: formData.get('keyword'),
-            status: formData.get('statusFilter'),
-            priority: formData.get('priorityFilter'),
-            departmentId: formData.get('departmentFilter'),
-            assigneeId: formData.get('assigneeFilter'),
-            startDate: formData.get('startDate'),
-            endDate: formData.get('endDate')
-        };
-
-        this.state.pagination.current = 1;
-        this._loadTickets();
-    }
-
-    /**
-     * 处理重置
-     * @private
-     */
-    _handleReset() {
-        this.$searchForm[0].reset();
-        this.state.filters = {
-            keyword: '',
-            status: '',
-            priority: '',
-            departmentId: '',
-            assigneeId: '',
-            startDate: '',
-            endDate: ''
-        };
-        this.state.pagination.current = 1;
-        this._loadTickets();
-    }
-
-    /**
-     * 获取状态文本
-     * @private
-     */
-    _getStatusText(status) {
-        return {
-            'PENDING': '待处理',
-            'PROCESSING': '处理中',
-            'COMPLETED': '已完成',
-            'CLOSED': '已关闭'
-        }[status] || status;
-    }
-
-    /**
-     * 获取优先级样式类
-     * @private
-     */
-    _getPriorityClass(priority) {
-        return {
-            'HIGH': 'high',
-            'MEDIUM': 'medium',
-            'LOW': 'low'
-        }[priority] || 'low';
-    }
-
-    /**
-     * 格式化日期
-     * @private
-     */
-    _formatDate(date) {
-        return new Date(date).toLocaleString();
-    }
-
-    /**
-     * 显示加载状态
-     * @private
-     */
-    _showLoading() {
-        if(!this.$loading) {
-            this.$loading = $(`
-                <div class="loading-overlay">
-                    <div class="spinner-border text-primary"></div>
-                    <div class="loading-text">加载中...</div>
+        <tr>
+            <td>${ticket.ticketId}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <span class="priority-indicator priority-${this.getPriorityClass(ticket.priority)}"></span>
+                    ${ticket.title}
                 </div>
-            `).appendTo('body');
-        }
-        this.$loading.show();
+            </td>
+            <td>${ticket.departmentName || '-'}</td>
+            <td>${ticket.processorName || '-'}</td>
+            <td>
+                <span class="ticket-status status-${ticket.status.toLowerCase()}">
+                    ${this.STATUS_MAP[ticket.status]}
+                </span>
+            </td>
+            <td>${this.getPriorityText(ticket.priority)}</td>
+            <td>${this.formatDate(ticket.createTime)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary view-ticket" data-id="${ticket.ticketId}">
+                    <i class="bi bi-eye"></i> 查看
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+        this.elements.ticketList.html(html);
+        this.elements.totalCount.text(this.state.pagination.total);
     }
 
     /**
-     * 隐藏加载状态
-     * @private
+     * 获取优先级样式类名
+     * @param {number} priority - 优先级数值(0:低, 1:中, 2:高)
+     * @returns {string} 对应的样式类名
      */
-    _hideLoading() {
-        if(this.$loading) {
-            this.$loading.hide();
-        }
-    }
-
-    /**
-     * 显示错误提示
-     * @private
-     */
-    _showError(message) {
-        $.notify({
-            message: message,
-            type: 'danger'
-        });
-    }
-
-    /**
-     * 组件销毁
-     */
-    destroy() {
-        // 解绑事件
-        this.$container.off();
-        this.$searchForm.off();
-        this.$ticketList.off();
-        this.$pagination.off();
-
-        // 清理DOM引用
-        if(this.$loading) {
-            this.$loading.remove();
-        }
-
-        // 清理状态
-        this.state = null;
-    }
-}
-
-// 页面加载完成后初始化
-$(document).ready(() => {
-    window.ticketManagement = new TicketManagement();
-});
-
-/**
- * TicketEditor.js
- * 工单创建和编辑功能
- * 负责工单表单的验证、提交和文件上传
- */
-function TicketEditor() {
-    // 缓存DOM引用
-    var $modal = $('#ticketModal');
-    var $form = $('#ticketForm');
-    var $attachments = $('#attachments');
-    var $submitBtn = $('#saveTicketBtn');
-
-    // 模态框实例
-    var modal = new bootstrap.Modal($modal[0]);
-
-    // 表单验证规则
-    var validationRules = {
-        title: {
-            required: true,
-            minLength: 5,
-            maxLength: 50,
-            message: '标题长度必须在5-50个字符之间'
-        },
-        content: {
-            required: true,
-            minLength: 10,
-            maxLength: 500,
-            message: '内容长度必须在10-500个字符之间'
-        },
-        departmentId: {
-            required: true,
-            message: '请选择处理部门'
-        },
-        priority: {
-            required: true,
-            message: '请选择优先级'
-        }
-    };
-
-    /**
-     * 初始化函数
-     * 绑定事件处理器
-     */
-    function init() {
-        // 表单提交事件
-        $form.on('submit', handleSubmit);
-
-        // 字段验证事件
-        $form.find('input,select,textarea').on('blur', function(e) {
-            var field = $(e.target).attr('name');
-            validateField(field);
-        });
-
-        // 文件上传变更事件
-        $attachments.on('change', handleFileChange);
-    }
-
-    /**
-     * 显示创建工单模态框
-     */
-    function showCreateModal() {
-        resetForm();
-        $('#ticketModalTitle').text('新建工单');
-        modal.show();
-    }
-
-    /**
-     * 显示编辑工单模态框
-     * @param {Object} ticket - 工单数据对象
-     */
-    function showEditModal(ticket) {
-        fillForm(ticket);
-        $('#ticketModalTitle').text('编辑工单');
-        modal.show();
-    }
-
-    /**
-     * 处理表单提交
-     * @param {Event} e - 提交事件对象
-     */
-    function handleSubmit(e) {
-        e.preventDefault();
-
-        if (!validateForm()) {
-            return;
-        }
-
-        var formData = getFormData();
-        var isEdit = !!formData.ticketId;
-
-        disableForm(true);
-
-        $.ajax({
-            url: isEdit ? '/api/tickets/' + formData.ticketId : '/api/tickets',
-            method: isEdit ? 'PUT' : 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(formData),
-            success: function(response) {
-                if(response.code === 200) {
-                    uploadAttachments(response.data.ticketId)
-                        .then(function() {
-                            modal.hide();
-                            showSuccess(isEdit ? '工单更新成功' : '工单创建成功');
-                            $(document).trigger('ticketSaved');
-                        })
-                        .catch(function(error) {
-                            console.error('上传附件失败:', error);
-                            showError('附件上传失败');
-                        })
-                        .finally(function() {
-                            disableForm(false);
-                        });
-                }
-            },
-            error: function(error) {
-                console.error('保存工单失败:', error);
-                showError('保存失败，请重试');
-                disableForm(false);
-            }
-        });
-    }
-
-    /**
-     * 验证整个表单
-     * @returns {boolean} 验证结果
-     */
-    function validateForm() {
-        var isValid = true;
-
-        // 遍历所有字段进行验证
-        Object.keys(validationRules).forEach(function(field) {
-            if (!validateField(field)) {
-                isValid = false;
-            }
-        });
-
-        return isValid;
-    }
-
-    /**
-     * 验证单个字段
-     * @param {string} field - 字段名称
-     * @returns {boolean} 验证结果
-     */
-    function validateField(field) {
-        var rules = validationRules[field];
-        var $field = $form.find('[name="' + field + '"]');
-        var value = $field.val()?.trim();
-
-        // 必填验证
-        if (rules.required && !value) {
-            setFieldError($field, rules.message);
-            return false;
-        }
-
-        // 长度验证
-        if (rules.minLength && value.length < rules.minLength) {
-            setFieldError($field, rules.message);
-            return false;
-        }
-
-        if (rules.maxLength && value.length > rules.maxLength) {
-            setFieldError($field, rules.message);
-            return false;
-        }
-
-        setFieldValid($field);
-        return true;
-    }
-
-    /**
-     * 设置字段错误状态
-     * @param {jQuery} $field - 字段jQuery对象
-     * @param {string} message - 错误信息
-     */
-    function setFieldError($field, message) {
-        var $formGroup = $field.closest('.form-group');
-        $field.addClass('is-invalid').removeClass('is-valid');
-
-        var $feedback = $formGroup.find('.invalid-feedback');
-        if (!$feedback.length) {
-            $feedback = $('<div class="invalid-feedback"></div>').appendTo($formGroup);
-        }
-        $feedback.text(message);
-    }
-
-    /**
-     * 设置字段有效状态
-     * @param {jQuery} $field - 字段jQuery对象
-     */
-    function setFieldValid($field) {
-        $field.addClass('is-valid').removeClass('is-invalid')
-            .closest('.form-group')
-            .find('.invalid-feedback')
-            .remove();
-    }
-
-    /**
-     * 获取表单数据
-     * @returns {Object} 表单数据对象
-     */
-    function getFormData() {
-        return {
-            ticketId: $form.find('[name="ticketId"]').val(),
-            title: $form.find('[name="title"]').val().trim(),
-            content: $form.find('[name="content"]').val().trim(),
-            departmentId: $form.find('[name="departmentId"]').val(),
-            priority: $form.find('[name="priority"]').val(),
-            expectFinishTime: $form.find('[name="expectFinishTime"]').val()
+    getPriorityClass(priority) {
+        const map = {
+            0: 'low',
+            1: 'medium',
+            2: 'high'
         };
+        return map[priority] || 'low';
     }
 
     /**
-     * 填充表单数据
-     * @param {Object} ticket - 工单数据
+     * 获取优先级显示文本
+     * @param {number} priority - 优先级数值
+     * @returns {string} 优先级描述文本
      */
-    function fillForm(ticket) {
-        $form.find('[name="ticketId"]').val(ticket.ticketId);
-        $form.find('[name="title"]').val(ticket.title);
-        $form.find('[name="content"]').val(ticket.content);
-        $form.find('[name="departmentId"]').val(ticket.departmentId);
-        $form.find('[name="priority"]').val(ticket.priority);
-
-        if (ticket.expectFinishTime) {
-            $form.find('[name="expectFinishTime"]').val(
-                formatDateTime(ticket.expectFinishTime)
-            );
-        }
-    }
-
-    /**
-     * 重置表单
-     */
-    function resetForm() {
-        $form[0].reset();
-        $form.find('.is-invalid,.is-valid')
-            .removeClass('is-invalid is-valid');
-        $form.find('.invalid-feedback').remove();
-        $attachments.val('');
-    }
-
-    /**
-     * 禁用/启用表单
-     * @param {boolean} disabled - 是否禁用
-     */
-    function disableForm(disabled) {
-        $form.find('input,select,textarea,button')
-            .prop('disabled', disabled);
-
-        if (disabled) {
-            $submitBtn.html('<span class="spinner-border spinner-border-sm me-1"></span>保存中...');
-        } else {
-            $submitBtn.text('保存');
-        }
+    getPriorityText(priority) {
+        const map = {
+            0: '低',
+            1: '中',
+            2: '高'
+        };
+        return map[priority] || '低';
     }
 
     /**
      * 格式化日期时间
-     * @param {string|Date} date - 日期对象或字符串
-     * @returns {string} 格式化后的日期时间
+     * @param {string} dateString - ISO格式的日期字符串
+     * @returns {string} 格式化后的日期时间字符串
      */
-    function formatDateTime(date) {
-        return new Date(date).toISOString().slice(0, 16);
-    }
-
-    /**
-     * 显示成功提示
-     * @param {string} message - 提示信息
-     */
-    function showSuccess(message) {
-        $.notify({
-            message: message,
-            type: 'success'
+    formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
         });
     }
 
-    /**
-     * 显示错误提示
-     * @param {string} message - 错误信息
-     */
-    function showError(message) {
-        $.notify({
-            message: message,
-            type: 'danger'
-        });
-    }
-
-    /**
-     * 销毁组件
-     */
-    function destroy() {
-        $form.off();
-        $attachments.off();
-        modal.dispose();
-    }
-
-    // 暴露公共接口
-    return {
-        init: init,
-        showCreateModal: showCreateModal,
-        showEditModal: showEditModal,
-        destroy: destroy
-    };
-}
-
-// 创建实例
-$(document).ready(function() {
-    window.ticketEditor = TicketEditor();
-    window.ticketEditor.init();
-});
-
-/**
- * TicketManagement.js
- * 工单管理模块 - 负责工单的增删改查和状态流转
- */
-var TicketManagement = (function() {
-    // 私有变量
-    var $container, $ticketList, $searchForm, $pagination;
-    var $ticketModal, $ticketForm, $ticketDetail;
-    var modal;
-    var state = {
-        loading: false,
-        tickets: [],
-        currentTicket: null,
-        pagination: {
-            current: 1,
-            pageSize: 10,
-            total: 0
-        },
-        filters: {
-            keyword: '',
-            status: '',
-            priority: '',
-            departmentId: '',
-            assigneeId: '',
-            startDate: '',
-            endDate: ''
-        }
-    };
-
-    // 验证规则配置
-    var validationRules = {
-        title: {
-            required: true,
-            minLength: 5,
-            maxLength: 50,
-            message: '标题长度必须在5-50个字符之间'
-        },
-        content: {
-            required: true,
-            minLength: 10,
-            maxLength: 500,
-            message: '内容长度必须在10-500个字符之间'
-        },
-        departmentId: {
-            required: true,
-            message: '请选择处理部门'
-        },
-        priority: {
-            required: true,
-            message: '请选择优先级'
-        }
-    };
-
-    /**
-     * 初始化函数
-     * 缓存DOM引用并绑定事件
-     */
-    function init() {
-        // 缓存DOM引用
-        $container = $('#main');
-        $ticketList = $('#ticketList');
-        $searchForm = $('#searchForm');
-        $pagination = $('#pagination');
-        $ticketModal = $('#ticketModal');
-        $ticketForm = $('#ticketForm');
-        $ticketDetail = $('#ticketDetail');
-
-        // 初始化Bootstrap模态框
-        modal = new bootstrap.Modal($ticketModal[0]);
-
-        // 绑定事件处理
-        bindEvents();
-
-        // 加载初始数据
-        loadTickets();
-    }
-
-    /**
-     * 绑定事件处理器
-     * @private
-     */
-    function bindEvents() {
-        // 搜索相关
-        $searchForm.on('submit', handleSearch);
-        $('#resetBtn').on('click', handleReset);
-
-        // 工单操作
-        $('#createTicketBtn').on('click', showCreateModal);
-        $('#saveTicketBtn').on('click', handleSaveTicket);
-        $ticketList.on('click', '.view-ticket', handleViewTicket);
-
-        // 状态流转
-        $('#processBtn').on('click', handleProcess);
-        $('#resolveBtn').on('click', handleResolve);
-        $('#transferBtn').on('click', handleTransfer);
-        $('#closeBtn').on('click', handleClose);
-
-        // 分页事件
-        $pagination.on('click', '.page-link', handlePageChange);
-
-        // 表单验证
-        $ticketForm.find('input,select,textarea').on('blur', function(e) {
-            validateField($(e.target).attr('name'));
-        });
-    }
 
     /**
      * 显示工单详情
-     * @param {string} ticketId - 工单ID
      */
-    function showTicketDetail(ticketId) {
-        $.ajax({
-            url: '/api/tickets/' + ticketId,
-            method: 'GET',
-            success: function(response) {
-                if(response.code === 200) {
-                    state.currentTicket = response.data;
-                    updateTicketDetail();
-                    $ticketDetail.addClass('show');
-                }
-            },
-            error: function(error) {
-                console.error('加载工单详情失败:', error);
-                showError('加载详情失败');
+    async showTicketDetail(ticketId) {
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${ticketId}`,
+                method: 'GET'
+            });
+
+            if(response.code === 200) {
+                this.state.currentTicket = response.data;
+                this.renderTicketDetail();
+                this.elements.ticketDetail.addClass('show');
             }
-        });
+        } catch(error) {
+            console.error('加载工单详情失败:', error);
+            this.showError('加载详情失败');
+        }
     }
 
     /**
-     * 更新工单详情显示
+     * 渲染工单详情
      */
-    function updateTicketDetail() {
-        var ticket = state.currentTicket;
+    renderTicketDetail() {
+        const ticket = this.state.currentTicket;
         if(!ticket) return;
 
-        // 更新基本信息
         $('#ticketCode').text(ticket.code);
         $('#ticketTitle').text(ticket.title);
         $('#ticketContent').text(ticket.content);
-        $('#createTime').text(formatDate(ticket.createTime));
-        $('#ticketStatus').html(
-            '<span class="ticket-status status-' + ticket.status.toLowerCase() + '">' +
-            getStatusText(ticket.status) +
-            '</span>'
-        );
+        $('#createTime').text(this.formatDate(ticket.createTime));
+        $('#ticketStatus').html(`
+       <span class="ticket-status status-${ticket.status.toLowerCase()}">
+           ${this.STATUS_MAP[ticket.status]}
+       </span>
+   `);
 
-        // 更新处理记录
-        renderTimeline(ticket.records);
+        this.renderTimeline(ticket.records);
+        this.updateActionButtons(ticket.status);
+    }
+
+    /**
+     * 渲染处理记录时间线
+     */
+    renderTimeline(records) {
+        if(!records?.length) {
+            $('#ticketTimeline').html('<div class="text-muted">暂无处理记录</div>');
+            return;
+        }
+
+        const html = records.map(record => `
+       <div class="timeline-item">
+           <div class="timeline-content">
+               <div class="timeline-time">${this.formatDate(record.createTime)}</div>
+               <div class="timeline-title">
+                   <strong>${record.operator}</strong> ${this.getOperationText(record.operation)}
+               </div>
+               ${record.content ? `
+                   <div class="timeline-body">${record.content}</div>
+               ` : ''}
+           </div>
+       </div>
+   `).join('');
+
+        $('#ticketTimeline').html(html);
+    }
+
+
+
+
+    /**
+     * 显示工单详情
+     * @param {number} ticketId - 工单ID
+     * @returns {Promise<void>}
+     */
+    async showTicketDetail(ticketId) {
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${ticketId}`,
+                method: 'GET'
+            });
+
+            if (response.code === 200) {
+                this.state.currentTicket = response.data;
+                this.renderTicketDetail(response.data);
+                this.elements.ticketDetail.addClass('show');
+            }
+        } catch (error) {
+            console.error('加载工单详情失败:', error);
+            this.showError('加载详情失败');
+        }
+    }
+
+    /**
+     * 渲染工单详情
+     * @param {Object} ticket - 工单详情数据
+     */
+    renderTicketDetail(ticket) {
+        if (!ticket) return;
+
+        // 基本信息渲染
+        $('#ticketCode').text(ticket.ticketCode || '-');
+        $('#ticketTitle').text(ticket.title);
+        $('#ticketContent').text(ticket.content);
+        $('#createTime').text(this.formatDate(ticket.createTime));
+        $('#expectFinishTime').text(this.formatDate(ticket.expectFinishTime));
+        $('#departmentName').text(ticket.departmentName || '-');
+        $('#processorName').text(ticket.processorName || '-');
+
+        // 状态渲染
+        $('#ticketStatus').html(`
+            <span class="ticket-status status-${ticket.status.toLowerCase()}">
+                ${this.STATUS_MAP[ticket.status]}
+            </span>
+        `);
+
+        // 优先级渲染
+        $('#ticketPriority').html(`
+            <span class="priority-badge priority-${this.getPriorityClass(ticket.priority)}">
+                ${this.getPriorityText(ticket.priority)}
+            </span>
+        `);
+
+        // 处理记录渲染
+        this.renderProcessRecords(ticket.records || []);
 
         // 更新操作按钮状态
-        updateActionButtons(ticket.status);
+        this.updateActionButtons(ticket.status);
     }
 
     /**
-     * 处理工单状态流转
-     * @param {string} operation - 操作类型
-     * @param {Object} data - 请求数据
+     * 渲染处理记录时间线
+     * @param {Array} records - 处理记录列表
      */
-    function handleStatusTransition(operation, data) {
-        if(!state.currentTicket) return;
+    renderProcessRecords(records) {
+        const html = records.length ? records.map(record => `
+            <div class="timeline-item">
+                <div class="timeline-marker ${this.getTimelineMarkerClass(record.operation)}"></div>
+                <div class="timeline-content">
+                    <div class="timeline-time">${this.formatDate(record.createTime)}</div>
+                    <div class="timeline-title">
+                        <strong>${record.operatorName}</strong> 
+                        <span class="operation-text">${this.getOperationText(record.operation)}</span>
+                    </div>
+                    ${record.content ? `
+                        <div class="timeline-body">${record.content}</div>
+                    ` : ''}
+                    ${record.transferInfo ? `
+                        <div class="transfer-info">
+                            <span class="text-muted">转交至：</span>
+                            ${record.transferInfo.departmentName} - ${record.transferInfo.processorName}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('') : '<div class="text-muted">暂无处理记录</div>';
 
-        var operations = {
-            'process': {
-                url: '/api/tickets/' + state.currentTicket.id + '/process',
-                successMsg: '工单已开始处理'
-            },
-            'resolve': {
-                url: '/api/tickets/' + state.currentTicket.id + '/resolve',
-                successMsg: '工单已完成处理'
-            },
-            'transfer': {
-                url: '/api/tickets/' + state.currentTicket.id + '/transfer',
-                successMsg: '工单已转交'
-            },
-            'close': {
-                url: '/api/tickets/' + state.currentTicket.id + '/close',
-                successMsg: '工单已关闭'
-            }
-        };
-
-        var config = operations[operation];
-        if(!config) return;
-
-        $.ajax({
-            url: config.url,
-            method: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-            success: function(response) {
-                if(response.code === 200) {
-                    showSuccess(config.successMsg);
-                    showTicketDetail(state.currentTicket.id);
-                    loadTickets();
-                }
-            },
-            error: function(error) {
-                console.error('操作失败:', error);
-                showError('操作失败，请重试');
-            }
-        });
-    }
-
-    /**
-     * 处理工单处理
-     */
-    function handleProcess() {
-        var note = $('#processNote').val().trim();
-        if(!note) {
-            showError('请输入处理说明');
-            return;
-        }
-
-        handleStatusTransition('process', { note: note });
-    }
-
-    /**
-     * 处理工单完成
-     */
-    function handleResolve() {
-        var note = $('#processNote').val().trim();
-        if(!note) {
-            showError('请输入完成说明');
-            return;
-        }
-
-        handleStatusTransition('resolve', { note: note });
+        $('#ticketTimeline').html(html);
     }
 
     /**
      * 处理工单转交
-     * 弹出转交模态框,选择转交目标部门/人员
+     * @returns {Promise<void>}
      */
-    function handleTransfer() {
-        if(!state.currentTicket) {
-            showError('请先选择工单');
+    async handleTransfer() {
+        if (!this.state.currentTicket) {
+            this.showError('请先选择工单');
             return;
         }
 
         // 显示转交模态框
-        var transferModal = new bootstrap.Modal(createTransferModal());
-        transferModal.show();
+        const modalHtml = await this.createTransferModal();
+        const $modal = $(modalHtml).appendTo('body');
+        const modal = new bootstrap.Modal($modal[0]);
 
-        // 绑定转交确认事件
-        $('#confirmTransferBtn').one('click', function() {
-            var data = {
-                targetDeptId: $('#transferDept').val(),
-                targetUserId: $('#transferUser').val(),
-                note: $('#transferNote').val().trim()
-            };
+        // 初始化模态框事件
+        this.initTransferModalEvents($modal, modal);
 
-            if(!data.note) {
-                showError('请输入转交说明');
-                return;
-            }
+        modal.show();
 
-            if(!data.targetDeptId) {
-                showError('请选择转交部门');
-                return;
-            }
-
-            handleStatusTransition('transfer', data);
-            transferModal.hide();
+        // 监听模态框关闭事件，清理DOM
+        $modal.on('hidden.bs.modal', () => {
+            $modal.remove();
         });
     }
 
     /**
      * 创建转交模态框
-     * @returns {HTMLElement} 模态框DOM元素
+     * @returns {Promise<string>} 模态框HTML
      */
-    function createTransferModal() {
-        var modalHtml = `
+    async createTransferModal() {
+        // 获取部门列表
+        const departments = await this.loadDepartments();
+
+        return `
             <div class="modal fade" id="transferModal">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -882,178 +624,179 @@ var TicketManagement = (function() {
                         </div>
                         <div class="modal-body">
                             <form id="transferForm">
-                                <div class="form-group mb-3">
+                                <div class="mb-3">
                                     <label class="form-label required">转交部门</label>
-                                    <select class="form-select" id="transferDept" required>
+                                    <select class="form-select" id="transferDepartment" required>
                                         <option value="">请选择部门</option>
-                                        ${renderDepartmentOptions()}
+                                        ${departments.map(dept => `
+                                            <option value="${dept.departmentId}">${dept.departmentName}</option>
+                                        `).join('')}
                                     </select>
                                 </div>
-                                <div class="form-group mb-3">
-                                    <label class="form-label">转交给</label>
-                                    <select class="form-select" id="transferUser">
-                                        <option value="">请选择处理人</option>
+                                <div class="mb-3">
+                                    <label class="form-label required">处理人</label>
+                                    <select class="form-select" id="transferProcessor" required disabled>
+                                        <option value="">请先选择部门</option>
                                     </select>
                                 </div>
-                                <div class="form-group mb-3">
-                                    <label class="form-label required">转交说明</label>
+                                <div class="mb-3">
+                                    <label class="form-label">转交说明</label>
                                     <textarea class="form-control" id="transferNote" 
-                                        rows="3" required></textarea>
+                                        rows="3" placeholder="请输入转交说明..."></textarea>
                                 </div>
                             </form>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" 
-                                data-bs-dismiss="modal">取消</button>
-                            <button type="button" class="btn btn-primary" 
-                                id="confirmTransferBtn">确认转交</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="button" class="btn btn-primary" id="confirmTransferBtn">确认转交</button>
                         </div>
                     </div>
                 </div>
             </div>
         `;
-
-        var $modal = $(modalHtml);
-        $('body').append($modal);
-
-        // 部门变更联动
-        $modal.find('#transferDept').on('change', function() {
-            var deptId = $(this).val();
-            if(deptId) {
-                loadDepartmentUsers(deptId);
-            }
-        });
-
-        // 模态框关闭时移除DOM
-        $modal.on('hidden.bs.modal', function() {
-            $(this).remove();
-        });
-
-        return $modal[0];
     }
 
     /**
-     * 加载部门用户列表
-     * @param {string} deptId - 部门ID
+     * 初始化转交模态框事件
+     * @param {JQuery} $modal - 模态框jQuery对象
+     * @param {bootstrap.Modal} modal - Bootstrap模态框实例
      */
-    function loadDepartmentUsers(deptId) {
-        $.ajax({
-            url: '/api/departments/' + deptId + '/users',
-            method: 'GET',
-            success: function(response) {
-                if(response.code === 200) {
-                    var options = response.data.map(function(user) {
-                        return '<option value="' + user.id + '">' +
-                            user.realName + '</option>';
-                    });
-                    $('#transferUser').html('<option value="">请选择处理人</option>' +
-                        options.join(''));
+    initTransferModalEvents($modal, modal) {
+        // 部门切换事件
+        $modal.find('#transferDepartment').on('change', async (e) => {
+            const departmentId = e.target.value;
+            const $processorSelect = $modal.find('#transferProcessor');
+
+            if (departmentId) {
+                await this.loadTransferProcessors(departmentId, $processorSelect);
+                $processorSelect.prop('disabled', false);
+            } else {
+                $processorSelect.html('<option value="">请先选择部门</option>').prop('disabled', true);
+            }
+        });
+
+        // 确认转交事件
+        $modal.find('#confirmTransferBtn').on('click', async () => {
+            const departmentId = $modal.find('#transferDepartment').val();
+            const processorId = $modal.find('#transferProcessor').val();
+            const note = $modal.find('#transferNote').val().trim();
+
+            if (!departmentId || !processorId) {
+                this.showError('请选择转交部门和处理人');
+                return;
+            }
+
+            try {
+                const response = await $.ajax({
+                    url: `/api/tickets/${this.state.currentTicket.ticketId}/transfer`,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        departmentId,
+                        processorId,
+                        note: note || '工单转交'  // 默认转交说明
+                    })
+                });
+
+                if (response.code === 200) {
+                    this.showSuccess('工单转交成功');
+                    modal.hide();
+                    // 刷新工单详情和列表
+                    await this.showTicketDetail(this.state.currentTicket.ticketId);
+                    await this.loadTickets();
                 }
-            },
-            error: function(error) {
-                console.error('加载部门用户失败:', error);
-                showError('加载部门用户失败');
+            } catch (error) {
+                console.error('工单转交失败:', error);
+                this.showError('工单转交失败，请重试');
             }
         });
     }
 
     /**
-     * 处理工单关闭
+     * 加载转交处理人列表
+     * @param {string} departmentId - 部门ID
+     * @param {JQuery} $select - 处理人下拉框jQuery对象
      */
-    function handleClose() {
-        var note = $('#processNote').val().trim();
-        if(!note) {
-            showError('请输入关闭原因');
-            return;
-        }
+    async loadTransferProcessors(departmentId, $select) {
+        try {
+            const response = await $.ajax({
+                url: `/api/users/selectByDepartmentId/${departmentId}`,
+                method: 'GET'
+            });
 
-        if(!confirm('确定要关闭此工单吗？')) {
-            return;
-        }
+            if (response.code === 200) {
+                const options = response.data.map(user =>
+                    `<option value="${user.userId}">${user.username}</option>`
+                ).join('');
 
-        handleStatusTransition('close', { note: note });
+                $select.html('<option value="">请选择处理人</option>' + options);
+            } else {
+                this.showError('加载处理人列表失败');
+            }
+        } catch (error) {
+            console.error('加载处理人列表失败:', error);
+            this.showError('加载处理人列表失败');
+            $select.html('<option value="">加载失败</option>');
+        }
     }
 
+
     /**
-     * 渲染处理记录时间线
-     * @param {Array} records - 处理记录列表
+     * 处理工单状态变更
      */
-    function renderTimeline(records) {
-        if(!records || !records.length) {
-            $('#ticketTimeline').html('<div class="text-muted">暂无处理记录</div>');
-            return;
+    async handleStatusTransition(operation, data) {
+        if(!this.state.currentTicket) return;
+
+        const operations = {
+            process: {
+                url: `/api/tickets/${this.state.currentTicket.id}/process`,
+                successMsg: '工单已开始处理'
+            },
+            resolve: {
+                url: `/api/tickets/${this.state.currentTicket.id}/resolve`,
+                successMsg: '工单已完成处理'
+            },
+            transfer: {
+                url: `/api/tickets/${this.state.currentTicket.id}/transfer`,
+                successMsg: '工单已转交'
+            },
+            close: {
+                url: `/api/tickets/${this.state.currentTicket.id}/close`,
+                successMsg: '工单已关闭'
+            }
+        };
+
+        const config = operations[operation];
+        if(!config) return;
+
+        try {
+            const response = await $.ajax({
+                url: config.url,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(data)
+            });
+
+            if(response.code === 200) {
+                this.showSuccess(config.successMsg);
+                await this.showTicketDetail(this.state.currentTicket.id);
+                await this.loadTickets();
+            }
+        } catch(error) {
+            console.error('操作失败:', error);
+            this.showError('操作失败，请重试');
         }
-
-        var html = records.map(function(record) {
-            return `
-                <div class="timeline-item">
-                    <div class="timeline-content">
-                        <div class="timeline-time">
-                            ${formatDate(record.createTime)}
-                        </div>
-                        <div class="timeline-title">
-                            <strong>${record.operator}</strong>
-                            ${getOperationText(record.operation)}
-                        </div>
-                        ${record.content ? `
-                            <div class="timeline-body">
-                                ${record.content}
-                            </div>
-                        ` : ''}
-                        ${record.evaluation ? renderEvaluation(record.evaluation) : ''}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        $('#ticketTimeline').html(html);
-    }
-
-    /**
-     * 渲染工单评价
-     * @param {Object} evaluation - 评价信息
-     * @returns {string} 评价HTML
-     */
-    function renderEvaluation(evaluation) {
-        return `
-            <div class="evaluation-info mt-2">
-                <div class="rating">
-                    ${renderStars(evaluation.score)}
-                </div>
-                <div class="evaluation-content text-muted">
-                    ${evaluation.content}
-                </div>
-            </div>
-        `;
-    }
-
-    /**
-     * 渲染评分星级
-     * @param {number} score - 评分
-     * @returns {string} 星级HTML
-     */
-    function renderStars(score) {
-        var stars = [];
-        for(var i = 1; i <= 5; i++) {
-            stars.push('<i class="bi bi-star' +
-                (i <= score ? '-fill' : '') +
-                ' text-warning"></i>');
-        }
-        return stars.join('');
     }
 
     /**
      * 更新操作按钮状态
-     * @param {string} status - 工单状态
      */
-    function updateActionButtons(status) {
-        // 获取所有操作按钮
-        var $processBtn = $('#processBtn');
-        var $resolveBtn = $('#resolveBtn');
-        var $transferBtn = $('#transferBtn');
-        var $closeBtn = $('#closeBtn');
+    updateActionButtons(status) {
+        const $processBtn = $('#processBtn');
+        const $resolveBtn = $('#resolveBtn');
+        const $transferBtn = $('#transferBtn');
+        const $closeBtn = $('#closeBtn');
 
-        // 根据状态启用/禁用按钮
         switch(status) {
             case 'PENDING':
                 $processBtn.prop('disabled', false);
@@ -1068,11 +811,6 @@ var TicketManagement = (function() {
                 $closeBtn.prop('disabled', false);
                 break;
             case 'COMPLETED':
-                $processBtn.prop('disabled', true);
-                $resolveBtn.prop('disabled', true);
-                $transferBtn.prop('disabled', true);
-                $closeBtn.prop('disabled', false);
-                break;
             case 'CLOSED':
                 $processBtn.prop('disabled', true);
                 $resolveBtn.prop('disabled', true);
@@ -1082,48 +820,137 @@ var TicketManagement = (function() {
         }
     }
 
-    /**
-     * 获取操作文本
-     * @param {string} operation - 操作类型
-     * @returns {string} 操作描述文本
-     */
-    function getOperationText(operation) {
-        var operationMap = {
-            'CREATE': '创建了工单',
-            'PROCESS': '开始处理',
-            'NOTE': '添加了备注',
-            'TRANSFER': '转交工单',
-            'COMPLETE': '完成处理',
-            'CLOSE': '关闭工单',
-            'EVALUATE': '评价工单'
+
+    getOperationText(operation) {
+        const map = {
+            CREATE: '创建了工单',
+            PROCESS: '开始处理',
+            NOTE: '添加了备注',
+            TRANSFER: '转交工单',
+            COMPLETE: '完成处理',
+            CLOSE: '关闭工单'
         };
-        return operationMap[operation] || operation;
+        return map[operation] || operation;
     }
 
-    // 暴露公共接口
-    return {
-        init: init,
-        showTicketDetail: showTicketDetail,
-        destroy: function() {
-            // 解绑事件
-            $container.off();
-            $searchForm.off();
-            $ticketList.off();
-            $pagination.off();
-            $ticketForm.off();
-
-            // 销毁模态框
-            if(modal) modal.dispose();
-
-            // 清理状态
-            state = null;
+    showLoading() {
+        if(!this.$loading) {
+            this.$loading = $(`
+           <div class="loading-overlay">
+               <div class="spinner-border text-primary"></div>
+               <div class="loading-text">加载中...</div>
+           </div>
+       `).appendTo('body');
         }
-    };
+        this.$loading.show();
+    }
 
-})();
+    hideLoading() {
+        if(this.$loading) {
+            this.$loading.hide();
+        }
+    }
 
-// 页面加载完成后初始化
-$(document).ready(function() {
-    TicketManagement.init();
+    /**
+     * 工具方法 - 显示Toast提示
+     * @param {string} message - 提示信息
+     * @param {string} type - 提示类型(success/danger/warning)
+     */
+    showToast(message, type = 'success') {
+        const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+
+        // 创建toast容器
+        if(!$('#toastContainer').length) {
+            $('body').append(`
+            <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3">
+            </div>
+        `);
+        }
+
+        // 显示toast
+        const $toast = $(toastHtml).appendTo('#toastContainer');
+        const toast = new bootstrap.Toast($toast[0], {
+            delay: 3000
+        });
+        toast.show();
+
+        // 监听隐藏事件移除DOM
+        $toast.on('hidden.bs.toast', () => {
+            $toast.remove();
+        });
+    }
+
+    /**
+     * 显示成功提示
+     * @param {string} message - 提示信息
+     */
+    showSuccess(message) {
+        this.showToast(message, 'success');
+    }
+
+    /**
+     * 显示错误提示
+     * @param {string} message - 提示信息
+     */
+    showError(message) {
+        this.showToast(message, 'danger');
+    }
+    /**
+     * 初始化分页组件
+     * @private
+     */
+    initPagination() {
+        this.pagination = new Pagination({
+            container: '#pagination',
+            pageSize: this.state.pagination.pageSize,
+            onChange: (page) => {
+                this.state.pagination.current = page;
+                this.loadTickets();
+            }
+        });
+    }
+
+    /**
+     * 更新分页数据
+     * @private
+     */
+    updatePagination() {
+        this.pagination.update(
+            this.state.pagination.total,
+            this.state.pagination.current
+        );
+    }
+
+
+    /**
+     * 销毁组件
+     */
+    destroy() {
+        // 解绑事件
+        this.elements.container.off();
+        this.elements.searchForm.off();
+        this.elements.ticketList.off();
+        this.elements.pagination.off();
+
+        // 清理DOM引用
+        if(this.$loading) {
+            this.$loading.remove();
+        }
+
+        // 清理状态
+        this.state = null;
+    }
+
+}
+
+// 初始化
+$(document).ready(() => {
+    window.ticketManagement = new TicketManagement();
 });
-

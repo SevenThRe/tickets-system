@@ -30,12 +30,13 @@ public interface UserService {
 
     // TODO:修改个人信息
 
+
     // TODO:修改头像
 
     // TODO:修改密码
 
     // TODO:获取用户信息
-
+    User getUserInfo(Long userId);
     // TODO:获取用户列表
 
     // TODO:获取部门成员列表

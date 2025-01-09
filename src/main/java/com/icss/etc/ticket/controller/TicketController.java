@@ -104,19 +104,19 @@ public class TicketController {
     /**
      * 完成工单
      */
-    @PutMapping("/{id}/resolve")
-    public R<Void> resolveTicket(@PathVariable Long id, @RequestBody @Valid TicketQueryDTO.ResolveTicketRequest request) {
-        try {
-            int result = ticketService.resolveTicket(id, request.getNote());
-            return result > 0 ? R.OK() : R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
-        } catch (IllegalArgumentException e) {
-            log.error("工单完成失败", e);
-            return R.FAIL(TicketEnum.TICKET_NOT_EXIST);
-        } catch (IllegalStateException e) {
-            log.error("工单完成失败", e);
-            return R.FAIL(TicketEnum.TICKET_STATUS_EXCEPTION);
-        }
-    }
+//    @PutMapping("/{id}/resolve")
+//    public R<Void> resolveTicket(@PathVariable Long id, @RequestBody @Valid TicketQueryDTO.ResolveTicketRequest request) {
+//        try {
+//            int result = ticketService.resolveTicket(id, request.getNote());
+//            return result > 0 ? R.OK() : R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+//        } catch (IllegalArgumentException e) {
+//            log.error("工单完成失败", e);
+//            return R.FAIL(TicketEnum.TICKET_NOT_EXIST);
+//        } catch (IllegalStateException e) {
+//            log.error("工单完成失败", e);
+//            return R.FAIL(TicketEnum.TICKET_STATUS_EXCEPTION);
+//        }
+//    }
 
     /**
      * 转交工单

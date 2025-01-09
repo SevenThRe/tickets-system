@@ -13,7 +13,8 @@ class DepartmentManagement {
         this.$departmentTree = $('#departmentTree');
         this.$membersList = $('#membersList');
         this.$departmentForm = $('#departmentForm');
-        this.$searchResults = $('#memberSearchResults');
+        this.$searchResults = $('#memberSearchResults')
+        this.$memberBody = $('#memberBody');
 
 
         this.validationRules = {
@@ -175,7 +176,9 @@ class DepartmentManagement {
         $('#departmentId').val(department.departmentId);  // 隐藏字段，仅用于回显
         $('#departmentName').val(department.departmentName);
         $('#managerId').val(department.managerId);
-        $('#parentDepartment').val(department.parentId);
+
+        department.parentId ? $('#parentDepartment').val(department.parentId) :$('#parentDepartment').val('');
+
         $('#deptLevel').val(department.deptLevel);
         $('#description').val(department.description);
         $('#status').prop('checked', department.status === 1);
@@ -450,59 +453,6 @@ class DepartmentManagement {
 
 
     /**
-     * 更新部门表单
-     * @private
-     */
-    _updateDepartmentForm() {
-        const dept = this.state.currentDepartment;
-        if (!dept) return;
-
-        $('#departmentName').val(dept.departmentName);
-        $('#departmentCode').val(dept.departmentCode);
-        $('#departmentManager').val(dept.managerId);
-        $('#departmentOrder').val(dept.orderNum);
-        $('#departmentDesc').val(dept.description);
-
-        // 设置父部门选项
-        this._updateParentOptions();
-        $('#parentDepartment').val(dept.parentId || '');
-    }
-
-    /**
-     * 更新父部门选项
-     * @private
-     */
-    _updateParentOptions() {
-        const buildOptions = (departments, level = 0) => {
-            return departments.reduce((options, dept) => {
-                // 排除当前部门及其子部门
-                if (this.state.currentDepartment &&
-                    (dept.departmentId === this.state.currentDepartment.departmentId ||
-                        this._isChildDepartment(dept, this.state.currentDepartment.departmentId))) {
-                    return options;
-                }
-
-                options.push(`
-                    <option value="${dept.departmentId}">
-                        ${'　'.repeat(level)}${dept.departmentName}
-                    </option>
-                `);
-
-                if (dept.children?.length) {
-                    options.push(buildOptions(dept.children, level + 1));
-                }
-
-                return options;
-            }, []).join('');
-        };
-
-        const options = ['<option value="">无上级部门</option>'];
-        options.push(buildOptions(this.state.departments));
-
-        $('#parentDepartment').html(options.join(''));
-    }
-
-    /**
      * 判断是否是子部门
      * @private
      */
@@ -540,31 +490,95 @@ class DepartmentManagement {
     }
 
     /**
-     * 渲染成员列表
+     * 更新上级部门选项
+     * @param {Object} currentDepartment - 当前部门信息
      * @private
      */
+    async _updateParentOptions(currentDepartment) {
+        const buildOptions = (departments, level = 0) => {
+            return departments.reduce((options, dept) => {
+                // 排除当前部门及其子部门
+                if (currentDepartment &&
+                    (dept.departmentId === currentDepartment.departmentId ||
+                        this._isChildDepartment(dept, currentDepartment.departmentId))) {
+                    return options;
+                }
+
+                options.push(`
+                    <option value="${dept.departmentId}">
+                        ${'　'.repeat(level)}${dept.departmentName}
+                    </option>
+                `);
+
+                if (dept.children?.length) {
+                    options.push(buildOptions(dept.children, level + 1));
+                }
+
+                return options;
+            }, []).join('');
+        };
+
+        const options = ['<option value="">无上级部门</option>'];
+        options.push(buildOptions(this.state.departmentsTrees));
+        $('#parentDepartment').html(options.join(''));
+    }
+
     _renderMembersList() {
-        const html = this.state.members.map(member => `
-            <tr>
-                <td>${member.realName}</td>
-                <td>${member.userId}</td>
-                <td>${member.roleName || '-'}</td>
-                <td>${member.email || '-'}</td>
-                <td>
-                    <span class="status-badge ${member.status ? 'enabled' : 'disabled'}">
-                        ${member.status ? '在职' : '离职'}
-                    </span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-danger remove-member" 
-                            data-id="${member.userId}">
-                        <i class="bi bi-person-dash"></i> 移除
-                    </button>
-                </td>
-            </tr>
+        const cardHtml = this.state.members.map(member => `
+            <div class="col-md-4 mb-3">
+                <div class="card member-card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="member-avatar me-2">
+                                <i class="bi bi-person-circle fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="card-title mb-0">${member.realName}</h6>
+                                <small class="text-muted">${member.userId}</small>
+                            </div>
+                        </div>
+                        <div class="member-info">
+                            <p class="mb-1"><i class="bi bi-briefcase me-2"></i>${member.roleName || '-'}</p>
+                            <p class="mb-1"><i class="bi bi-envelope me-2"></i>${member.email || '-'}</p>
+                            <p class="mb-2">
+                                <span class="badge ${member.status ? 'bg-success' : 'bg-secondary'}">
+                                    ${member.status ? '在职' : '离职'}
+                                </span>
+                            </p>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger remove-member w-100" 
+                                data-id="${member.userId}">
+                            <i class="bi bi-person-dash"></i> 移除
+                        </button>
+                    </div>
+                </div>
+            </div>
         `).join('');
 
-        this.$membersList.html(html || '<tr><td colspan="6" class="text-center">暂无成员</td></tr>');
+        const containerHtml = `
+            <div class="member-section mt-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">部门成员</h6>
+                        <button class="btn btn-sm btn-primary" id="addMemberBtn">
+                            <i class="bi bi-person-plus"></i> 添加成员
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            ${cardHtml || '<div class="col-12 text-center py-3">暂无成员</div>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // 清空并重新插入成员列表区域
+        $('.member-section').remove();
+        this.$memberBody.append(containerHtml);
+
+        // 重新绑定添加成员按钮事件
+        $('#addMemberBtn').on('click', () => this._handleAddMember());
     }
 
     /**
@@ -713,7 +727,7 @@ class DepartmentManagement {
 
         try {
             const response = await $.ajax({
-                url: `/api/departments/${this.state.currentDepartment.departmentId}/members/${userId}`,
+                url: `/api/departments/selectByPrimaryKey/${this.state.currentDepartment.departmentId}/members/${userId}`,
                 method: 'DELETE'
             });
 
@@ -903,9 +917,10 @@ class DepartmentManagement {
             if(response.code === 200) {
                 this.state.currentDepartment = response.data;
                 // 回填表单数据
-                this._fillDepartmentForm(response.data);
+                this._fillDepartmentForm(response.data.department);
                 // 加载部门成员
-                await this._loadDepartmentMembers(departmentId);
+                this.state.currentDepartment.departmentId = departmentId;
+                await this._loadDepartmentMembers();
             } else {
                 throw new Error(response.message);
             }
