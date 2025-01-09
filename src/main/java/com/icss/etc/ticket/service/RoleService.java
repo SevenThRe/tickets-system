@@ -47,8 +47,7 @@ public interface RoleService {
     //根据roleId删除角色
     int deleteByRoleId(@Param("roleId") Long roleId);
 
-    //根据角色名字查询角色
-    Role selectRoleByName(@Param("roleName") String roleName);
+
 
     //一个角色查询所有权限
     List<Role2> OneRoleMorePermission();

@@ -104,10 +104,7 @@ public class RoleController {
      * @param roleName  角色名称
      * @return  角色信息
      */
-    @RequestMapping("/selectRoleByName/{roleName}")
-    public R selectRoleByName(@PathVariable("roleName")String roleName){
-        return R.OK(roleService.selectRoleByName(roleName));
-    }
+
 
     /**
      * 查询所有角色

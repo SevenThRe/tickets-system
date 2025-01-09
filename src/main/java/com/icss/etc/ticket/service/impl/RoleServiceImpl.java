@@ -47,10 +47,6 @@ public class RoleServiceImpl implements RoleService {
         return roleMapper.deleteByRoleId(roleId);
     }
 
-    @Override
-    public Role selectRoleByName(String roleName) {
-        return roleMapper.selectRoleByName(roleName);
-    }
 
     @Override
     public List<Role2> OneRoleMorePermission() {
