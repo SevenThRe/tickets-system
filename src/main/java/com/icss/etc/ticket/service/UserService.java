@@ -1,9 +1,12 @@
 package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
+import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -14,7 +17,14 @@ public interface UserService {
     //登陆
     User login(String username);
 
+    User selectByPrimaryKey(@Param("user_id") Long user_id);
+
+
+    UserViewBackDTO selectUserInfo (@Param("user_id") Long user_id);
+
     // TODO:修改密码
+    int updateByPrimaryKey(UserPasswordDTO record);
+
 
     // TODO:忘记密码
 

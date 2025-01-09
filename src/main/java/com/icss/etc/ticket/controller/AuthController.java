@@ -37,7 +37,7 @@ public class AuthController {
     @RequestMapping("/login")
     public R login(@RequestBody AuthDTO user) {
         User u = userService.login(user.username());
-        String newpass = MD5Util.getMD5(user.password());
+        String newpass = user.password();
         if (u != null && u.getPassword().equals(newpass)) {
             String token = JWTUtils.generToken(u.getUserId().toString(), "AccessToken", u.getPassword());
             Map<String, Object> map = new HashMap<>();

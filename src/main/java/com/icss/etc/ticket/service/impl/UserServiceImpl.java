@@ -1,9 +1,11 @@
 package com.icss.etc.ticket.service.impl;
 
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
+import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.mapper.UserMapper;
 import com.icss.etc.ticket.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,22 @@ public class UserServiceImpl implements UserService{
         User login = userMapper.login(username);
         log.info(this.getClass().getSimpleName()+ "user login :" + username);
         return login;
+    }
+
+    @Override
+    public User selectByPrimaryKey(Long user_id) {
+        return userMapper.selectByPrimaryKey(user_id);
+    }
+
+    @Override
+    public UserViewBackDTO selectUserInfo(Long user_id) {
+        return userMapper.selectUserInfo(user_id);
+    }
+
+    //修改密码
+    @Override
+    public int updateByPrimaryKey(UserPasswordDTO record) {
+        return userMapper.updateByPrimaryKey(record);
     }
 
     @Override

@@ -1,11 +1,14 @@
 package com.icss.etc.ticket.mapper;
 
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
+import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
 
 import java.util.List;
+
+import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -26,6 +29,10 @@ public interface UserMapper {
     //登陆
     User login(@Param("username") String username);
 
+    User selectByPrimaryKey(@Param("user_id") Long user_id);
+
+    UserViewBackDTO selectUserInfo(@Param("user_id") Long user_id);
+
     /**
      * insert record to table
      * @param record the record
@@ -45,7 +52,6 @@ public interface UserMapper {
      * @param user_id primary key
      * @return object by primary key
      */
-    User selectByPrimaryKey(Long user_id);
 
     /**
      * update record selective
@@ -59,7 +65,7 @@ public interface UserMapper {
      * @param record the updated record
      * @return update count
      */
-    int updateByPrimaryKey(User record);
+    int updateByPrimaryKey(UserPasswordDTO record);
 
     List<User> selectByAll(User user);
 

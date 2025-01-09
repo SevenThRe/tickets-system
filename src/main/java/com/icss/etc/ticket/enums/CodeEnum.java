@@ -30,8 +30,11 @@ public enum CodeEnum {
     USERNAME_EXIST(1400, "用户名已存在"),
     DEPARTMENT_IS_EXIST(1400, "部门已存在"),
     DEPARTMENT_IS_NOT_EXIST(1400, "部门不存在"),
-    DEPARTMENT_IS_NOT_EMPTY(1400, "部门不为空");
-
+    DEPARTMENT_IS_NOT_EMPTY(1400, "部门不为空"),
+    PASSWORD_ERROR(1400, "旧密码错误"),
+    PASSWORD_SAME(1400, "旧密码不能与新密码相同"),
+    UPDATE_FAILED(1423,"更新失败,请重试"),
+    UNKNOW_USER(1411,"未知用户");
 
     @Getter
     @Setter

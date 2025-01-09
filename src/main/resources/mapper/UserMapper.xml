@@ -60,13 +60,19 @@
     is_deleted, create_by, update_by, create_time, update_time
   </sql>
 
-  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+  <select id="selectUserInfo" parameterType="com.icss.etc.ticket.entity.vo.UserViewBackDTO">
     <!--@mbg.generated-->
-    select 
-    <include refid="Base_Column_List" />
-    from t_user
-    where user_id = #{userId,jdbcType=BIGINT}
+    select
+        u.user_id,
+    u.username,u.real_name,u.phone,d.department_name,r.role_name
+    from t_user u,t_role r,t_department d,t_user_role ur
+    where u.department_id = d.department_id
+      and u.user_id = #{user_id}
+      and u.user_id = ur.user_id
+      and ur.role_id = r.role_id
+      and u.status = 1 and u.is_deleted = 0
   </select>
+
   <insert id="insert" keyColumn="user_id" keyProperty="userId" parameterType="com.icss.etc.ticket.entity.User" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_user (username, `password`, real_name, 
@@ -197,23 +203,17 @@
     </set>
     where user_id = #{userId,jdbcType=BIGINT}
   </update>
-  <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.User">
+
+<!--  修改密码-->
+  <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.dto.UserPasswordDTO">
     <!--@mbg.generated-->
     update t_user
-    set username = #{username,jdbcType=VARCHAR},
-      `password` = #{password,jdbcType=VARCHAR},
-      real_name = #{realName,jdbcType=VARCHAR},
-      department_id = #{departmentId,jdbcType=BIGINT},
-      email = #{email,jdbcType=VARCHAR},
-      phone = #{phone,jdbcType=VARCHAR},
-      `status` = #{status,jdbcType=TINYINT},
-      is_deleted = #{isDeleted,jdbcType=TINYINT},
-      create_by = #{createBy,jdbcType=BIGINT},
-      update_by = #{updateBy,jdbcType=BIGINT},
-      create_time = #{createTime,jdbcType=TIMESTAMP},
-      update_time = #{updateTime,jdbcType=TIMESTAMP}
-    where user_id = #{userId,jdbcType=BIGINT}
+    <set>
+      <if test="newPassword != null and newPassword != '' ">password = #{newPassword},</if>
+    </set>
+    where user_id = #{userId}
   </update>
+
   <select id="selectByAll" resultMap="BaseResultMap">
         <!--@mbg.generated-->
         select
@@ -406,5 +406,13 @@
   <select id="getUsernames" resultType="java.lang.String">
     select username from t_user
     where is_deleted = 0 and status = 1
+  </select>
+  <select id="selectByPrimaryKey" resultType="com.icss.etc.ticket.entity.User">
+    select
+        <include refid="Base_Column_List"/>
+        from t_user
+    where user_id = #{userId,jdbcType=BIGINT}
+    and is_deleted = 0 and status = 1
+
   </select>
 </mapper>
