@@ -363,7 +363,7 @@
     <!--@mbg.generated-->
     insert into t_user
     (username, `password`, real_name, department_id, email, phone, `status`, is_deleted, 
-      create_by, update_by, create_time, update_time, position_id)
+      create_by, update_by, create_time, update_time)
     values
     <foreach collection="list" item="item" separator=",">
       (#{item.username,jdbcType=VARCHAR}, #{item.password,jdbcType=VARCHAR}, #{item.realName,jdbcType=VARCHAR}, 
@@ -397,6 +397,18 @@
     where user_id = #{userId,jdbcType=BIGINT}
       and is_deleted = 0
       and status = 1
+  </update>
+
+  <update id="batchaddUserToDept">
+    update t_user
+    set department_id = #{list[0].departmentId,jdbcType=BIGINT}
+    where user_id in (
+      <foreach collection="list" item="userId" separator=",">
+        #{userId,jdbcType=BIGINT}
+      </foreach>
+    )
+    and is_deleted = 0
+    and status = 1
   </update>
 
   <delete id="deleteUser">

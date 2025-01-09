@@ -36,7 +36,7 @@ public interface UserService {
      * @param deptMemberDTO 部门成员DTO
      * @return 返回结果
      */
-    Integer addUser(DeptMemberDTO deptMemberDTO);
+    Integer addUser(List<DeptMemberDTO> deptMemberDTO);
 
     /**
      * 删除部门成员

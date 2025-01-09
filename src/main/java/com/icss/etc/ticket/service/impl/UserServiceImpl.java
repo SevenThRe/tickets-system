@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -35,8 +36,11 @@ public class UserServiceImpl implements UserService{
     }
 
 
-    public Integer addUser(DeptMemberDTO deptMemberDTO){
-        return userMapper.addUser(deptMemberDTO);
+    public Integer addUser(List<DeptMemberDTO> deptMemberDTO){
+        for(DeptMemberDTO dto : deptMemberDTO){
+
+        }
+        return userMapper.batchaddUserToDept(deptMemberDTO);
     }
 
     public Integer deleteUser(DeptMemberDTO deptMemberDTO){

@@ -9,6 +9,8 @@ import com.icss.etc.ticket.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/departments")
@@ -19,7 +21,7 @@ public class DepartmentController {
     private UserService userService;
 
 
-    @GetMapping("list")
+    @GetMapping("/list")
     public R list() {
         return R.OK(departmentService.selectAll());
     }
@@ -53,7 +55,7 @@ public class DepartmentController {
     }
 
     @PostMapping("/addUser")
-    public R addUser(DeptMemberDTO deptMemberDTO) {
+    public R addUser(List<DeptMemberDTO> deptMemberDTO) {
         return R.OK(userService.addUser(deptMemberDTO));
     }
 

@@ -354,7 +354,8 @@ window.Const = {
             PUT_CHANGE_PASSWORD: '/users/password',
             PUT_SETTING_UPDATE: '/users/settings',
             GET_SETTING: '/users/settings',
-            POST_AVATAR_UPLOAD:'/users/avatar'
+            POST_AVATAR_UPLOAD:'/users/avatar',
+            GET_NAMES: '/users/names',
         },
         TICKET: {
             GET_LIST: '/tickets/list',

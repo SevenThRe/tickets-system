@@ -5,63 +5,31 @@
  * @author SevenThRe
  * @created 2024-01-06
  */
-class DepartmentWorkspace extends BaseComponent {
-    /**
-     * 构造函数 - 初始化组件状态和事件绑定
-     * @constructor
-     */
+class DepartmentWorkspace {
     constructor() {
-        super({
-            container: '#main',
-            events: {
-                // 视图切换事件
-                'click [data-view]': '_handleViewChange',
-                'click [data-bs-toggle="view"]': '_handleTicketViewChange',
-
-                // 统计视图事件
-                'click #refreshWorkloadBtn': '_handleRefreshWorkload',
-
-                // 工单管理事件
-                'submit #searchForm': '_handleSearch',
-                'click #resetBtn': '_handleReset',
-                'click #exportBtn': '_handleExport',
-                'click #refreshBtn': '_handleRefresh',
-                'click #assignTicketBtn': '_showAssignModal',
-                'click #confirmAssignBtn': '_handleAssignSubmit',
-                'click .view-ticket': '_handleViewTicket',
-                'click #closeDrawerBtn': '_handleCloseDrawer',
-
-                // 工单操作事件
-                'click #processBtn': '_handleProcess',
-                'click #completeBtn': '_handleComplete',
-                'click #transferBtn': '_handleTransfer',
-                'click #closeBtn': '_handleClose'
-            }
-        });
-
-        // 状态管理
+        // 初始化状态
         this.state = {
-            loading: false,               // 加载状态
-            currentView: 'stats',         // 当前主视图模式: stats/tickets
-            ticketView: 'list',           // 工单视图模式: list/board
-            departmentInfo: null,         // 部门信息
-            stats: {                      // 统计数据
-                overview: {},             // 概览统计
-                trends: [],               // 趋势数据
-                types: [],                // 类型分布
-                workloads: [],            // 工作量数据
-                efficiency: []            // 效率数据
+            loading: false,
+            currentView: 'stats',    // 当前视图:stats/tickets
+            ticketView: 'list',      // 工单视图:list/board
+            departmentInfo: null,    // 部门信息
+            stats: {                 // 统计数据
+                overview: {},        // 概览统计
+                trends: [],          // 趋势数据
+                types: [],           // 类型分布
+                workloads: [],       // 工作量数据
+                efficiency: []       // 效率数据
             },
-            tickets: [],                  // 工单列表数据
-            currentTicket: null,          // 当前选中工单
-            processors: [],               // 可选处理人列表
-            selectedProcessorId: null,    // 选中的处理人ID
-            pagination: {                 // 分页信息
+            tickets: [],            // 工单列表
+            currentTicket: null,    // 当前选中工单
+            processors: [],         // 可选处理人
+            selectedProcessorId: null,  // 选中处理人ID
+            pagination: {
                 current: 1,
                 pageSize: 10,
                 total: 0
             },
-            filters: {                    // 筛选条件
+            filters: {             // 筛选条件
                 keyword: '',
                 status: '',
                 priority: '',
@@ -72,19 +40,177 @@ class DepartmentWorkspace extends BaseComponent {
         };
 
         // 缓存DOM引用
-        this._cacheDOMReferences();
+        this.$container = $('#main');
+        this.$statsView = $('#statsView');
+        this.$ticketsView = $('#ticketsView');
+        this.$listView = $('#listView');
+        this.$boardView = $('#boardView');
+        this.$ticketList = $('#ticketList');
+        this.$ticketDrawer = $('#ticketDrawer');
+        this.$pendingList = $('#pendingList');
+        this.$processingList = $('#processingList');
+        this.$completedList = $('#completedList');
+        this.$searchForm = $('#searchForm');
+        this.$processorFilter = $('#processorFilter');
+        this.$trendChart = $('#ticketTrendChart');
+        this.$typeChart = $('#ticketTypeChart');
 
-        // 初始化图表实例
-        this.charts = {};
-
-        // 初始化模态框
+        // 初始化Modal
         this.assignModal = new bootstrap.Modal('#assignModal');
 
-        // this._loadTicketsOptimized = _.throttle(this._loadTicketsRaw.bind(this), 300)
+        // 绑定事件
+        this._bindEvents();
 
-        // 初始化组件
+        // 初始化
         this.init();
     }
+
+    // 绑定事件处理
+    _bindEvents() {
+        const self = this;
+
+        // 视图切换
+        this.$container.on('click', '[data-view]', function() {
+            self._handleViewChange($(this));
+        });
+
+        this.$container.on('click', '[data-bs-toggle="view"]', function() {
+            self._handleTicketViewChange($(this));
+        });
+
+        // 工单管理事件
+        this.$searchForm.on('submit', function(e) {
+            e.preventDefault();
+            self._handleSearch($(this));
+        });
+
+        $('#resetBtn').on('click', function() {
+            self._handleReset();
+        });
+
+        $('#exportBtn').on('click', function() {
+            self._handleExport();
+        });
+
+        $('#refreshBtn').on('click', function() {
+            self._handleRefresh();
+        });
+
+        // 工单分配
+        $('#assignTicketBtn').on('click', function() {
+            self._showAssignModal();
+        });
+
+        $('#confirmAssignBtn').on('click', function() {
+            self._handleAssignSubmit();
+        });
+
+        // 工单查看
+        this.$container.on('click', '.view-ticket', function() {
+            self._handleViewTicket($(this));
+        });
+
+        $('#closeDrawerBtn').on('click', function() {
+            self._handleCloseDrawer();
+        });
+
+        // 工单操作
+        $('#processBtn').on('click', function() {
+            self._handleProcess();
+        });
+
+        $('#completeBtn').on('click', function() {
+            self._handleComplete();
+        });
+
+        $('#transferBtn').on('click', function() {
+            self._handleTransfer();
+        });
+
+        $('#closeBtn').on('click', function() {
+            self._handleClose();
+        });
+    }
+
+    // 初始化
+    async init() {
+        try {
+            await this._loadDepartmentInfo();
+
+            // 并行加载数据
+            await Promise.all([
+                this._loadStats(),
+                this._loadProcessors(),
+                this._loadTickets()
+            ]);
+
+            this._initCharts();
+            this._checkUrlParams();
+            this._startAutoRefresh();
+
+        } catch (error) {
+            console.error('初始化失败:', error);
+            this._showError('页面加载失败，请刷新重试');
+        }
+    }
+
+    // 处理视图切换
+    _handleViewChange($target) {
+        const view = $target.data('view');
+        if (view === this.state.currentView) return;
+
+        this.state.currentView = view;
+        $('[data-view]').removeClass('active');
+        $target.addClass('active');
+
+        this.$statsView.toggle(view === 'stats');
+        this.$ticketsView.toggle(view === 'tickets');
+
+        if (view === 'tickets') {
+            this._loadTickets();
+        } else {
+            this._loadStats();
+        }
+    }
+
+    // 处理工单视图切换
+    _handleTicketViewChange($target) {
+        const view = $target.data('view');
+        if (view === this.state.ticketView) return;
+
+        this.state.ticketView = view;
+        $('[data-bs-toggle="view"]').removeClass('active');
+        $target.addClass('active');
+
+        this.$listView.toggle(view === 'list');
+        this.$boardView.toggle(view === 'board');
+
+        this._updateTicketsView();
+    }
+
+    // 加载部门信息
+    async _loadDepartmentInfo() {
+        try {
+            const response = await $.ajax({
+                url: '/api/departments/current',
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                }
+            });
+
+            if (response.code === 200) {
+                this.state.departmentInfo = response.data;
+                this._updateDepartmentInfo();
+            } else {
+                throw new Error(response.message || '加载部门信息失败');
+            }
+        } catch (error) {
+            console.error('加载部门信息失败:', error);
+            throw error;
+        }
+    }
+
 
     /**
      * 缓存重要的DOM元素引用
@@ -221,42 +347,6 @@ class DepartmentWorkspace extends BaseComponent {
     }
 
 
-    /**
-     * 组件初始化
-     * @returns {Promise<void>}
-     */
-    async init() {
-        try {
-            await this._loadDepartmentInfo();
-
-            // 并行加载数据
-            await Promise.all([
-                this._loadStats(),
-                this._loadProcessors(),
-                this._loadTickets()
-            ]);
-
-            this._initCharts();
-            this._renderProcessorOptions();
-            this._checkUrlParams();
-            this._initHistoryListener();
-            this._startAutoRefresh();
-
-        } catch (error) {
-            console.error('初始化失败:', error);
-            this.showError('页面加载失败，请刷新重试');
-        }
-    }
-
-    /**
-     * 加载部门信息
-     * @private
-     */
-    async _loadDepartmentInfo() {
-        const response = await window.requestUtil.get(Const.API.DEPT.GET_CURRENT);
-        this.state.departmentInfo = response.data;
-        this._updateDepartmentInfo();
-    }
 
     /**
      * 加载统计数据
@@ -393,49 +483,6 @@ class DepartmentWorkspace extends BaseComponent {
         $('#totalCount').text(this.state.pagination.total);
     }
 
-    /**
-     * 处理视图切换
-     * @private
-     */
-    _handleViewChange(e) {
-        const view = $(e.currentTarget).data('view');
-        if (view === this.state.currentView) return;
-
-        this.state.currentView = view;
-        $('[data-view]').removeClass('active');
-        $(`[data-view="${view}"]`).addClass('active');
-
-        this.$statsView.toggle(view === 'stats');
-        this.$ticketsView.toggle(view === 'tickets');
-
-        this._updateUrlParam('view', view);
-
-        if (view === 'tickets') {
-            this._loadTickets();
-        } else {
-            this._loadStats();
-        }
-    }
-
-    /**
-     * 处理工单视图切换
-     * @private
-     */
-    _handleTicketViewChange(e) {
-        const view = $(e.currentTarget).data('view');
-        if (view === this.state.ticketView) return;
-
-        this.state.ticketView = view;
-
-        $('[data-bs-toggle="view"]').removeClass('active');
-        $(e.currentTarget).addClass('active');
-
-        this.$listView.toggle(view === 'list');
-        this.$boardView.toggle(view === 'board');
-
-        this._updateUrlParam('ticketView', view);
-        this._updateTicketsView();
-    }
 
     /**
      * 处理搜索
@@ -690,6 +737,7 @@ class DepartmentWorkspace extends BaseComponent {
     }
 
     /**
+     * 未使用
      * 性能优化 - 使用虚拟滚动处理大量数据
      * @private
      */
@@ -709,56 +757,6 @@ class DepartmentWorkspace extends BaseComponent {
         }
     }
 
-    /**
-     * 资源清理
-     * @override
-     * @public
-     */
-    destroy() {
-        // 清理图表实例
-        Object.values(this.charts).forEach(chart => {
-            chart.destroy();
-        });
-
-        // 清理缓存
-        this.ticketCache?.clear();
-
-        // 清理虚拟滚动
-        this.virtualScroll?.destroy();
-
-        // 移除事件监听
-        window.removeEventListener('resize', this._handleResize);
-
-        // 清理定时器
-        if (this.refreshInterval) {
-            clearInterval(this.refreshInterval);
-        }
-
-        // 移除历史监听
-        window.removeEventListener('popstate', this._historyListener);
-
-        // 销毁图表实例
-        Object.values(this.charts).forEach(chart => {
-            chart.destroy();
-        });
-
-        // 销毁模态框
-        if (this.assignModal) {
-            this.assignModal.dispose();
-        }
-
-        // 清理DOM绑定
-        $('#pagination').off('click');
-        this.container.find('button').off('click');
-        this.container.find('input').off('input change');
-
-        // 清理定时器
-        if (this.refreshInterval) {
-            clearInterval(this.refreshInterval);
-        }
-
-        super.destroy();
-    }
 
     /**
      * 工单处理方法
@@ -976,9 +974,37 @@ class DepartmentWorkspace extends BaseComponent {
     }
 
 
+
+
+    // 销毁组件
+    destroy() {
+        // 解绑所有事件
+        this.$container.off();
+        $('#pagination').off();
+
+        // 清理图表实例
+        if (this.charts) {
+            Object.values(this.charts).forEach(chart => chart.destroy());
+        }
+
+        // 清理定时器
+        if (this.refreshTimer) {
+            clearInterval(this.refreshTimer);
+        }
+
+        // 清理模态框实例
+        if (this.assignModal) {
+            this.assignModal.dispose();
+        }
+
+        // 移除loading元素
+        if (this.$loading) {
+            this.$loading.remove();
+        }
+    }
 }
 
 // 页面加载完成后初始化
-$(document).ready(() => {
+$(document).ready(function() {
     window.deptWorkspace = new DepartmentWorkspace();
 });

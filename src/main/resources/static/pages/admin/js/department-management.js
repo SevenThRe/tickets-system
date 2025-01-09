@@ -171,10 +171,19 @@ class DepartmentManagement {
      * 填充部门表单
      * @param {Object} department - 部门信息
      */
-    _fillDepartmentForm(department) {
+    _fillDepartmentForm(data) {
+        let department = data.department || {};
         $('#departmentId').val(department.departmentId);  // 隐藏字段，仅用于回显
         $('#departmentName').val(department.departmentName);
-        $('#managerId').val(department.managerId);
+        // 遍歷部門負責人 並回显
+        $('#managerId').empty();
+        data.charge.forEach((i,e) => {
+            if(e == 1){
+                $('#managerId').append(`<option selected value="${i.userId}" >${i.realName}</option>`);
+            }else{
+                $('#managerId').append(`<option value="${i.userId}">${i.realName}</option>`);
+            }
+        });
         $('#parentDepartment').val(department.parentId);
         $('#deptLevel').val(department.deptLevel);
         $('#description').val(department.description);
@@ -217,7 +226,7 @@ class DepartmentManagement {
             this._disableForm(true);
             const response = await $.ajax({
                 url: isEdit ?
-                    `/api/departments/${this.state.currentDepartment.departmentId}` :
+                    `/api/departments/${this.state.currentDepartment.department.departmentId}` :
                     '/api/departments',
                 method: isEdit ? 'PUT' : 'POST',
                 contentType: 'application/json',
@@ -228,7 +237,7 @@ class DepartmentManagement {
                 this._showSuccess(isEdit ? '更新部门成功' : '创建部门成功');
                 await this._loadDepartmentTrees();
                 if (isEdit) {
-                    await this._selectDepartment(this.state.currentDepartment.departmentId);
+                    await this._selectDepartment(this.state.currentDepartment.department.departmentId);
                 }
                 this.departmentModal.hide();
             } else {
@@ -240,12 +249,6 @@ class DepartmentManagement {
             this._disableForm(false);
         }
     }
-
-
-
-
-
-
 
     /**
      * 绑定表单验证事件
@@ -447,27 +450,6 @@ class DepartmentManagement {
         };
         return data.map(dept => prepareNode(dept, null));
     }
-
-
-    /**
-     * 更新部门表单
-     * @private
-     */
-    _updateDepartmentForm() {
-        const dept = this.state.currentDepartment;
-        if (!dept) return;
-
-        $('#departmentName').val(dept.departmentName);
-        $('#departmentCode').val(dept.departmentCode);
-        $('#departmentManager').val(dept.managerId);
-        $('#departmentOrder').val(dept.orderNum);
-        $('#departmentDesc').val(dept.description);
-
-        // 设置父部门选项
-        this._updateParentOptions();
-        $('#parentDepartment').val(dept.parentId || '');
-    }
-
     /**
      * 更新父部门选项
      * @private
@@ -477,8 +459,8 @@ class DepartmentManagement {
             return departments.reduce((options, dept) => {
                 // 排除当前部门及其子部门
                 if (this.state.currentDepartment &&
-                    (dept.departmentId === this.state.currentDepartment.departmentId ||
-                        this._isChildDepartment(dept, this.state.currentDepartment.departmentId))) {
+                    (dept.departmentId === this.state.currentDepartment.department.departmentId ||
+                        this._isChildDepartment(dept, this.state.currentDepartment.department.departmentId))) {
                     return options;
                 }
 
@@ -523,7 +505,7 @@ class DepartmentManagement {
 
         try {
             const response = await $.ajax({
-                url: `/api/departments/members/${this.state.currentDepartment.departmentId}`,
+                url: `/api/departments/members/${this.state.currentDepartment.department.departmentId}`,
                 method: 'GET'
             });
 
@@ -677,17 +659,22 @@ class DepartmentManagement {
             this._showError('请选择要添加的成员');
             return;
         }
-
+        let param;
+        $(this.state.selectedMembers.size).each(
+            async (index, userId) => {
+                param = JSON.stringify({
+                    departmentId: this.state.currentDepartment.department.departmentId,
+                    userId: userId
+                });
+            }
+        )
         try {
             const response = await $.ajax({
-                url: `/api/departments/${this.state.currentDepartment.departmentId}/members`,
+                url: `/api/departments/addUser`,
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({
-                    userIds: Array.from(this.state.selectedMembers)
-                })
+                data: param
             });
-
             if(response.code === 200) {
                 this._showSuccess('添加成员成功');
                 await this._loadDepartmentMembers();
@@ -713,7 +700,12 @@ class DepartmentManagement {
 
         try {
             const response = await $.ajax({
-                url: `/api/departments/${this.state.currentDepartment.departmentId}/members/${userId}`,
+                
+                url: `/api/departments/deleteUser`,
+                data: {
+                    departmentId: this.state.currentDepartment.department.departmentId,
+                    userId: userId
+                },
                 method: 'DELETE'
             });
 
@@ -749,13 +741,6 @@ class DepartmentManagement {
             this._showError('部门名称长度必须在2-50个字符之间');
             return false;
         }
-
-        // 部门编码验证
-        if (!/^[A-Z0-9]{2,10}$/.test(formData.departmentCode)) {
-            this._showError('部门编码必须为2-10位大写字母或数字');
-            return false;
-        }
-
         // 排序号验证
         if (!Number.isInteger(Number(formData.orderNum)) || Number(formData.orderNum) < 0) {
             this._showError('排序号必须是非负整数');
@@ -873,18 +858,6 @@ class DepartmentManagement {
         this._selectDepartment(departmentId); // 加载部门详情和成员
     }
 
-    /**
-     * 失去焦点时验证字段
-     * @private
-     */
-    _bindFieldValidation() {
-        this.$departmentForm.find('input,select').on('blur', (e) => {
-            const $field = $(e.target);
-            const fieldName = $field.attr('name');
-            this._validateField(fieldName);
-        });
-    }
-
 
     /**
      * 选择部门
@@ -937,7 +910,7 @@ class DepartmentManagement {
 
         try {
             const response = await $.ajax({
-                url: `/api/departments/del/${this.state.currentDepartment.departmentId}`,
+                url: `/api/departments/del/${this.state.currentDepartment.department.departmentId}`,
                 method: 'DELETE'
             });
 
@@ -976,23 +949,6 @@ class DepartmentManagement {
         // 显示弹窗
         this.departmentModal.show();
     }
-
-    /**
-     * 处理编辑部门
-     * @private
-     */
-    _handleEditDepartment() {
-        if(!this.state.currentDepartment) {
-            this._showError('请先选择部门');
-            return;
-        }
-
-        // 回填当前部门数据
-        this._fillDepartmentForm(this.state.currentDepartment);
-        // 显示弹窗
-        this.departmentModal.show();
-    }
-
 
 
     async _handleMemberSearch(e) {
@@ -1054,21 +1010,6 @@ class DepartmentManagement {
         });
         return isValid;
     }
-
-    /**
-     * 重置表单验证状态
-     * @private
-     */
-    _resetFormValidation() {
-        this.$departmentForm
-            .find('.is-valid, .is-invalid')
-            .removeClass('is-valid is-invalid');
-        this.$departmentForm
-            .find('.invalid-feedback')
-            .remove();
-    }
-
-
 
     // 显示错误信息
     _showError(message) {

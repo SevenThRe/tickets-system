@@ -6,6 +6,8 @@ import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
 
 import java.util.List;
+import java.util.Map;
+
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -82,6 +84,10 @@ public interface UserMapper {
      */
     Integer addUser(DeptMemberDTO deptMemberDTO);
 
+    /**
+     * 根据部门ID和用户ID批量添加用户
+     */
+    Integer batchaddUserToDept(List<DeptMemberDTO> list);
     /**
      * 根据部门ID和用户ID删除用户
      * @param deptMemberDTO 部门ID和用户ID

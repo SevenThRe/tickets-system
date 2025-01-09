@@ -92,7 +92,7 @@ public class RoleController {
      * 回显角色下拉列表
      * @return 所有角色信息
      */
-    @GetMapping("/role/list")
+    @GetMapping("/role/getList")
     public R selectAllRolesName(){
         List<ChooseRolesVO> chooseRolesVO = roleService.chooseRoles();
         return R.OK(chooseRolesVO);
