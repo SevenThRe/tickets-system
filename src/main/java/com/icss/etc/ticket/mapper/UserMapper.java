@@ -88,4 +88,10 @@ public interface UserMapper {
      * @return  删除结果
      */
     Integer deleteUser(DeptMemberDTO deptMemberDTO);
+
+    /**
+     * 获取所有用户名
+     * @return 用户名列表
+     */
+    List<String> getUsernames();
 }

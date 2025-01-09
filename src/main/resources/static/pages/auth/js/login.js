@@ -60,7 +60,11 @@ class LoginPage {
 
     // 检查是否已登录
     checkLoggedIn() {
-        const token = localStorage.getItem('token');
+        let token = localStorage.getItem('token');
+        if (!token) {
+            token = localStorage.getItem('Authorization');
+            alert("使用旧版登录");
+        }
         return !!token;
     }
 
