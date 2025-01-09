@@ -46,4 +46,6 @@ public interface UserService {
     Integer deleteUser(DeptMemberDTO deptMemberDTO);
 
     void logout(User user);
+
+    List<String> getUsernames();
 }

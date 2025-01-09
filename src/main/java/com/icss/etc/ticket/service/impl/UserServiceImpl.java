@@ -49,6 +49,10 @@ public class UserServiceImpl implements UserService{
         // TODO: logout logic
     }
 
+    @Override
+    public List<String> getUsernames() {
+        return userMapper.getUsernames();
+    }
 
 
 }

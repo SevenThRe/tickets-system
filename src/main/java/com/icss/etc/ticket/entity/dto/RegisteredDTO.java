@@ -10,10 +10,9 @@ import lombok.NoArgsConstructor;
 public class RegisteredDTO {
     private String username;
     private String password;
-    private String real_name;
-    private Long department_id;
+    private String realName;
     private String email;
     private String phone;
-    private Long position_id;
+    private Long roleId;
 
 }

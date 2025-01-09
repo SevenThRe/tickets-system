@@ -9,73 +9,84 @@
     <link href="/pages/auth/css/register.css" rel="stylesheet">
 </head>
 <body>
+<div class="register-container">
+    <div class="rg_center">
+        <div class="register-box" >
+            <h2>欢迎加入!</h2>
+            <p>创建您的账户</p>
+        </div>
+        <div class="rg_form">
+            <form id="registerForm" action="#" method="post">
+                <table>
+                    <tr>
+                        <td class="td_left"><label for="username">用户名</label></td>
+                        <td class="td_right">
+                            <input type="text" name="username" id="username"
+                                   placeholder="用户名只能包含字母、数字和下划线，3-20个字符">
+                        </td>
+                    </tr>
 
+                    <tr>
+                        <td class="td_left"><label for="realName">真实姓名</label></td>
+                        <td class="td_right">
+                            <input type="text" name="realName" id="realName">
+                        </td>
+                    </tr>
 
- <div class="register-container">
+                    <tr>
+                        <td class="td_left"><label for="password">密码</label></td>
+                        <td class="td_right">
+                            <input type="password" name="password" id="password"
+                                   placeholder="密码必须包含字母和数字，6-20个字符">
+                        </td>
+                    </tr>
 
-     <div class="rg_center">
-         <div class="register-box" >
-             <h2>欢迎加入!</h2>
-             <p>创建您的账户</p>
-         </div>
-         <div class="rg_form">
-             <form action="#" method="post">
-                 <table>
-                     <tr><!--label 标签的作用是当点击文字也会跳到文本输出框-->
-                         <!--for属性与ID属性对应规定 label 绑定到哪个表单元素。-->
-                         <td class="td_left"><label for="username">用户名</label> </td>
-                         <td class="td_right" ><input type="text" name="username" id="username" placeholder="用户名只能包含字母、数字和下划线，3-20个字符"> </td>
-                     </tr>
+                    <tr>
+                        <td class="td_left"><label for="confirmPassword">确认密码</label></td>
+                        <td class="td_right">
+                            <input type="password" name="confirmPassword" id="confirmPassword">
+                        </td>
+                    </tr>
 
-                     <tr>
-                         <td class="td_left"><label for="realName">真实姓名</label> </td>
-                         <td class="td_right"><input type="text" name="realName" id="realName"> </td>
-                     </tr>
-                     <tr>
-                         <td class="td_left"><label for="password">密码</label> </td>
-                         <td class="td_right"><input type="password" name="password" id="password" placeholder="密码必须包含字母和数字，6-20个字符" > </td>
-                     </tr>
-                     <tr>
-                         <td class="td_left"><label for="confirmPassword">确认密码</label> </td>
-                         <td class="td_right"><input type="password" name="confirmPassword" id="confirmPassword"> </td>
-                     </tr>
-                     <tr><!--label 标签的作用是当点击文字也会跳到文本输出框-->
-                         <td class="td_left"><label for="email">邮箱</label> </td>
-                         <td class="td_right"><input type="email" name="email" id="email"> </td>
-                     </tr>
-                     <tr>
-                         <td class="td_left"><label for="departmentId">选择部门</label></td>
-                         <td class="td_right"><select name="departmentId" id="departmentId"><option value="">请选择</option></select> </td>
-                     </tr>
-                     <tr>
-                         <td class="td_left"><label for="positionId">选择职位</label></td>
-                         <td class="td_right"><select name="positionId" id="positionId"><option value="">请选择</option></select> </td>
-                     </tr>
-                     <tr>
-                         <td class="td_left"><label for="phone">手机号</label> </td>
-                         <td class="td_right"><input type="tel" name="phone" id="phone" > </td>
-                     </tr>
+                    <tr>
+                        <td class="td_left"><label for="email">邮箱</label></td>
+                        <td class="td_right">
+                            <input type="email" name="email" id="email">
+                        </td>
+                    </tr>
 
-                     <tr>
-                         <td colspan="2" align="center">
-                             <input type="submit" value="注册" id="submitBtn" class="btn btn-primary w-50">
-                         </td>
-                     </tr>
+                    <tr>
+                        <td class="td_left"><label for="roleId">选择角色</label></td>
+                        <td class="td_right">
+                            <select name="roleId" id="roleId">
+                                <option value="4">请选择</option>
+                            </select>
+                        </td>
+                    </tr>
 
-                 </table>
-             </form>
-         </div>
-     </div>
-     <div class="rg_right">
-         <p>已有账号？<a href="/pages/auth/login.html" class="text-primary">立即登录</a> </p>
-     </div>
- </div>
+                    <tr>
+                        <td class="td_left"><label for="phone">手机号</label></td>
+                        <td class="td_right">
+                            <input type="tel" name="phone" id="phone">
+                        </td>
+                    </tr>
 
+                    <tr>
+                        <td colspan="2" align="center">
+                            <input type="submit" value="注册" id="submitBtn" class="btn btn-primary w-50">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+    <div class="rg_right">
+        <p>已有账号？<a href="/pages/auth/login.html" class="text-primary">立即登录</a></p>
+    </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-<script src="/js/utils/event-bus.js"></script>
-<script src="/js/components/base/base-component.js"></script>
 <script src="/config/constants.js"></script>
 <script src="/js/utils/request-util.js"></script>
 <script src="/js/utils/validator-util.js"></script>
@@ -83,76 +94,3 @@
 <script src="/pages/auth/js/register.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -26,29 +26,25 @@
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="username != null  and username!=''">username,</if>
       <if test="password != null   and password!=''">password,</if>
-      <if test="real_name != null and real_name!=''">real_name,</if>
-      <if test="department_id != null">department_id,</if>
+      <if test="realName != null and realName!=''">real_name,</if>
       <if test="email != null  and email!=''">email,</if>
       <if test="phone != null   and phone!=''">phone,</if>
       status,
       is_deleted,
       create_by,
       update_by,
-      <if test="position_id != null">position_id,</if>
       create_time,
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
      <if test="username != null  and username!=''">#{username},</if>
      <if test="password != null   and password!=''">#{password},</if>
-     <if test="real_name != null and real_name!=''">#{real_name},</if>
-     <if test="department_id != null">#{department_id},</if>
+     <if test="realName != null and realName!=''">#{realName},</if>
      <if test="email != null  and email!=''">#{email},</if>
      <if test="phone != null   and phone!=''">#{phone},</if>
      1,
       0,
      0,
     null,
-     <if test="position_id != null">#{position_id},</if>
      default,
     </trim>
   </insert>
@@ -363,13 +359,13 @@
     <!--@mbg.generated-->
     insert into t_user
     (username, `password`, real_name, department_id, email, phone, `status`, is_deleted, 
-      create_by, update_by, create_time, update_time, position_id)
+      create_by, update_by, create_time, update_time)
     values
     <foreach collection="list" item="item" separator=",">
       (#{item.username,jdbcType=VARCHAR}, #{item.password,jdbcType=VARCHAR}, #{item.realName,jdbcType=VARCHAR}, 
         #{item.departmentId,jdbcType=BIGINT}, #{item.email,jdbcType=VARCHAR}, #{item.phone,jdbcType=VARCHAR}, 
         #{item.status,jdbcType=TINYINT}, #{item.isDeleted,jdbcType=TINYINT}, #{item.createBy,jdbcType=BIGINT}, 
-        #{item.updateBy,jdbcType=BIGINT}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP},
+        #{item.updateBy,jdbcType=BIGINT}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP}
         )
     </foreach>
   </insert>
@@ -406,4 +402,9 @@
       and is_deleted = 0
       and status = 1
   </delete>
+
+  <select id="getUsernames" resultType="java.lang.String">
+    select username from t_user
+    where is_deleted = 0 and status = 1
+  </select>
 </mapper>
