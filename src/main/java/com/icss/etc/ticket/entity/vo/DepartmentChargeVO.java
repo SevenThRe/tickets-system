@@ -8,8 +8,8 @@ package com.icss.etc.ticket.entity.vo;
  * @since 1.0
  */
 public record DepartmentChargeVO (
-        String realName,
-        Long userId
+        Long userId,
+        String realName
 ){
 
 }

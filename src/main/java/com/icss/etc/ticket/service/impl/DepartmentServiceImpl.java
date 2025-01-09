@@ -1,19 +1,30 @@
 package com.icss.etc.ticket.service.impl;
 
 import com.icss.etc.ticket.entity.Department;
-import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
 import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
 import com.icss.etc.ticket.mapper.DepartmentMapper;
 import com.icss.etc.ticket.service.DepartmentService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * TODO 类作用描述
+ *
+ * @author 陈明
+ * @Date 2025/1/9
+ */
+
+@Slf4j
 @Service
-public class DepartmentServiceImlp implements DepartmentService {
+public class DepartmentServiceImpl implements DepartmentService {
     @Autowired
     private DepartmentMapper departmentMapper;
 
