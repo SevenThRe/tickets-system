@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.vo.ChooseRolesVO;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -52,4 +53,7 @@ public interface RoleMapper {
 
     //一个角色查询所有权限
     List<Role2> OneRoleMorePermission();
+
+    List<ChooseRolesVO> chooseRoles();
+
 }

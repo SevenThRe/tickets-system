@@ -2,6 +2,7 @@ package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.Role;
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.vo.ChooseRolesVO;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -51,4 +52,6 @@ public interface RoleService {
 
     //一个角色查询所有权限
     List<Role2> OneRoleMorePermission();
+
+    List<ChooseRolesVO> chooseRoles();
 }

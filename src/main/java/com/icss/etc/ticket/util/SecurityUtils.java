@@ -23,14 +23,7 @@ public class SecurityUtils {
     public static Long getCurrentUserId() {
         User user = userHolder.get();
         if (user == null) {
-//            throw new IllegalStateException("未获取到当前登录用户");
-            new User().builder().userId(1L).
-                    username("admin").password("admin")
-                    .realName("管理员").departmentId(1L).
-                    email("admin@admin.com").phone("12345678901").
-                    status(1).isDeleted(0).createBy(1L).
-                    updateBy(1L).createTime(LocalDateTime.now()).
-                    updateTime(LocalDateTime.now()). build();
+            throw new IllegalStateException("未获取到当前登录用户");
         }
         return user.getUserId();
     }

@@ -212,6 +212,13 @@
         where p.is_deleted=0
     </select>
 
+      <select id="chooseRoles" resultType="com.icss.etc.ticket.entity.vo.ChooseRolesVO">
+          select
+              role_id,role_name
+          from t_role
+          where is_deleted=0
+    </select>
+
     <!--  <update id="updateBatchSelective" parameterType="java.util.List">-->
     <!--    &lt;!&ndash;@mbg.generated&ndash;&gt;-->
     <!--    update t_role-->

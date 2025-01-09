@@ -1,20 +1,16 @@
 /**
- * profile.js
+ * Profile.js
  * 个人中心页面控制器
  */
-class Profile extends BaseComponent {
+class Profile {
     constructor() {
-        super({
-            container: '#main',
-            events: {
-                'submit #basicInfoForm': '_handleBasicInfoSubmit',
-                'submit #passwordForm': '_handlePasswordSubmit',
-                'click #uploadAvatarBtn': '_showAvatarModal',
-                'change #avatarFile': '_handleAvatarPreview',
-                'click #uploadAvatarSubmit': '_handleAvatarUpload',
-                'change input[type="checkbox"]': '_handleSettingChange'
-            }
-        });
+        // 缓存DOM引用
+        this.$container = $('#main');
+        this.$basicInfoForm = $('#basicInfoForm');
+        this.$passwordForm = $('#passwordForm');
+        this.$avatarModal = $('#avatarModal');
+        this.$avatarPreview = $('#avatarPreview');
+        this.$uploadBtn = $('#uploadAvatarBtn');
 
         // 状态管理
         this.state = {
@@ -29,14 +25,31 @@ class Profile extends BaseComponent {
             }
         };
 
-        // 初始化模态框
-        this.avatarModal = new bootstrap.Modal('#avatarModal');
+        // 初始化Bootstrap模态框
+        this.avatarModal = new bootstrap.Modal(this.$avatarModal[0]);
 
-        // 初始化验证器
-        this.validator = window.validatorUtil;
+        // 绑定事件处理器
+        this.bindEvents();
 
-        // 初始化
+        // 初始化组件
         this.init();
+    }
+
+    /**
+     * 绑定事件处理器
+     */
+    bindEvents() {
+        // 表单提交
+        this.$basicInfoForm.on('submit', (e) => this.handleBasicInfoSubmit(e));
+        this.$passwordForm.on('submit', (e) => this.handlePasswordSubmit(e));
+
+        // 头像上传
+        this.$uploadBtn.on('click', () => this.showAvatarModal());
+        $('#avatarFile').on('change', (e) => this.handleAvatarPreview(e));
+        $('#uploadAvatarSubmit').on('click', () => this.handleAvatarUpload());
+
+        // 设置变更
+        $('input[type="checkbox"]').on('change', (e) => this.handleSettingChange(e));
     }
 
     /**
@@ -44,10 +57,11 @@ class Profile extends BaseComponent {
      */
     async init() {
         try {
-            await this._loadUserInfo();
-            await this._loadUserSettings();
-            this._initNavbar();
-            this._updateUI();
+            await Promise.all([
+                this.loadUserInfo(),
+                this.loadUserSettings()
+            ]);
+            this.updateUI();
         } catch (error) {
             console.error('初始化失败:', error);
             this.showError('页面初始化失败，请刷新重试');
@@ -56,12 +70,22 @@ class Profile extends BaseComponent {
 
     /**
      * 加载用户信息
-     * @private
      */
-    async _loadUserInfo() {
+    async loadUserInfo() {
         try {
-            const response = await window.requestUtil.get(Const.API.USER.GET_CURRENT);
-            this.state.userInfo = response.data;
+            const response = await $.ajax({
+                url: '/api/users/current',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.code === 200) {
+                this.state.userInfo = response.data;
+            } else {
+                throw new Error(response.message || '加载用户信息失败');
+            }
         } catch (error) {
             console.error('加载用户信息失败:', error);
             throw error;
@@ -70,15 +94,25 @@ class Profile extends BaseComponent {
 
     /**
      * 加载用户设置
-     * @private
      */
-    async _loadUserSettings() {
+    async loadUserSettings() {
         try {
-            const response = await window.requestUtil.get(Const.API.USER.GET_SETTING);
-            this.state.settings = {
-                ...this.state.settings,
-                ...response.data
-            };
+            const response = await $.ajax({
+                url: '/api/users/settings',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.code === 200) {
+                this.state.settings = {
+                    ...this.state.settings,
+                    ...response.data
+                };
+            } else {
+                throw new Error(response.message || '加载用户设置失败');
+            }
         } catch (error) {
             console.error('加载用户设置失败:', error);
             throw error;
@@ -86,18 +120,18 @@ class Profile extends BaseComponent {
     }
 
     /**
-     * 更新UI
-     * @private
+     * 更新UI显示
      */
-    _updateUI() {
-        // 更新用户基本信息
+    updateUI() {
         const { userInfo } = this.state;
+
+        // 更新用户基本信息
         $('#userName').text(userInfo.realName);
         $('#userRole').text(userInfo.roleName);
         $('#userAvatar').attr('src', userInfo.avatar || '/images/default-avatar.png');
 
         // 填充表单
-        $('#basicInfoForm').find('input').each((_, input) => {
+        this.$basicInfoForm.find('input').each((_, input) => {
             const name = input.name;
             if (name in userInfo) {
                 $(input).val(userInfo[name]);
@@ -112,113 +146,106 @@ class Profile extends BaseComponent {
 
     /**
      * 处理基本信息提交
-     * @param {Event} e - 事件对象
-     * @private
      */
-    async _handleBasicInfoSubmit(e) {
+    async handleBasicInfoSubmit(e) {
         e.preventDefault();
         if (this.state.loading) return;
 
-        const form = e.target;
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-
-        // 表单验证
-        const errors = await this.validator.validateForm('profileForm', data);
-        if (Object.keys(errors).length > 0) {
-            this._showFormErrors(form, errors);
+        if (!this.validateBasicInfoForm()) {
             return;
         }
 
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
         try {
             this.state.loading = true;
-            this._disableForm(form, true);
+            this.disableForm(this.$basicInfoForm, true);
 
-            const response = await window.requestUtil.put(Const.API.USER.PUT_UPDATE_PROFILE, data);
+            const response = await $.ajax({
+                url: '/api/users/profile',
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(data)
+            });
 
-            this.state.userInfo = {
-                ...this.state.userInfo,
-                ...response.data
-            };
-
-            this.showSuccess('个人信息更新成功');
-            this._updateUI();
+            if (response.code === 200) {
+                this.state.userInfo = {
+                    ...this.state.userInfo,
+                    ...response.data
+                };
+                this.showSuccess('个人信息更新成功');
+                this.updateUI();
+            } else {
+                throw new Error(response.message || '更新失败');
+            }
 
         } catch (error) {
             console.error('更新个人信息失败:', error);
             this.showError(error.message || '更新失败，请重试');
         } finally {
             this.state.loading = false;
-            this._disableForm(form, false);
+            this.disableForm(this.$basicInfoForm, false);
         }
     }
 
     /**
      * 处理密码修改
-     * @param {Event} e - 事件对象
-     * @private
      */
-    async _handlePasswordSubmit(e) {
+    async handlePasswordSubmit(e) {
         e.preventDefault();
         if (this.state.loading) return;
 
-        const form = e.target;
-        const formData = new FormData(form);
+        const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
 
-        // 表单验证
-        if (data.newPassword !== data.confirmPassword) {
-            this.showError('两次输入的密码不一致');
-            return;
-        }
-
-        const errors = await this.validator.validateForm('passwordForm', data);
-        if (Object.keys(errors).length > 0) {
-            this._showFormErrors(form, errors);
+        if (!this.validatePasswordForm(data)) {
             return;
         }
 
         try {
             this.state.loading = true;
-            this._disableForm(form, true);
+            this.disableForm(this.$passwordForm, true);
 
-            await window.requestUtil.put(Const.API.USER.PUT_CHANGE_PASSWORD, {
-                oldPassword: data.currentPassword,
-                newPassword: data.newPassword
+            const response = await $.ajax({
+                url: '/api/users/password',
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({
+                    oldPassword: data.currentPassword,
+                    newPassword: data.newPassword
+                })
             });
 
-            this.showSuccess('密码修改成功');
-            form.reset();
+            if (response.code === 200) {
+                this.showSuccess('密码修改成功');
+                this.$passwordForm[0].reset();
+            } else {
+                throw new Error(response.message || '修改失败');
+            }
 
         } catch (error) {
             console.error('修改密码失败:', error);
             this.showError(error.message || '修改失败，请重试');
         } finally {
             this.state.loading = false;
-            this._disableForm(form, false);
+            this.disableForm(this.$passwordForm, false);
         }
     }
 
     /**
-     * 显示头像上传模态框
-     * @private
-     */
-    _showAvatarModal() {
-        $('#avatarPreview').hide();
-        $('#avatarFile').val('');
-        this.avatarModal.show();
-    }
-
-    /**
      * 处理头像预览
-     * @param {Event} e - 事件对象
-     * @private
      */
-    _handleAvatarPreview(e) {
+    handleAvatarPreview(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        // 验证文件类型和大小
         if (!file.type.startsWith('image/')) {
             this.showError('请选择图片文件');
             return;
@@ -229,10 +256,9 @@ class Profile extends BaseComponent {
             return;
         }
 
-        // 预览图片
         const reader = new FileReader();
         reader.onload = (e) => {
-            $('#avatarPreview')
+            this.$avatarPreview
                 .attr('src', e.target.result)
                 .show();
         };
@@ -241,9 +267,8 @@ class Profile extends BaseComponent {
 
     /**
      * 处理头像上传
-     * @private
      */
-    async _handleAvatarUpload() {
+    async handleAvatarUpload() {
         const file = $('#avatarFile')[0].files[0];
         if (!file) {
             this.showError('请选择图片');
@@ -254,13 +279,25 @@ class Profile extends BaseComponent {
             const formData = new FormData();
             formData.append('avatar', file);
 
-            const response = await window.requestUtil.post(Const.API.USER.POST_AVATAR_UPLOAD, formData);
+            const response = await $.ajax({
+                url: '/api/users/avatar',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                data: formData,
+                processData: false,
+                contentType: false
+            });
 
-            this.state.userInfo.avatar = response.data.url;
-            this._updateUI();
-
-            this.avatarModal.hide();
-            this.showSuccess('头像更新成功');
+            if (response.code === 200) {
+                this.state.userInfo.avatar = response.data.url;
+                this.updateUI();
+                this.avatarModal.hide();
+                this.showSuccess('头像更新成功');
+            } else {
+                throw new Error(response.message || '上传失败');
+            }
 
         } catch (error) {
             console.error('上传头像失败:', error);
@@ -270,21 +307,31 @@ class Profile extends BaseComponent {
 
     /**
      * 处理设置变更
-     * @param {Event} e - 事件对象
-     * @private
      */
-    async _handleSettingChange(e) {
+    async handleSettingChange(e) {
         const target = e.target;
         const setting = target.id;
         const value = target.checked;
 
         try {
-            await window.requestUtil.put(Const.API.USER.PUT_SETTING_UPDATE, {
-                [setting]: value
+            const response = await $.ajax({
+                url: '/api/users/settings',
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({
+                    [setting]: value
+                })
             });
 
-            this.state.settings[setting] = value;
-            this.showSuccess('设置已更新');
+            if (response.code === 200) {
+                this.state.settings[setting] = value;
+                this.showSuccess('设置已更新');
+            } else {
+                throw new Error(response.message || '更新失败');
+            }
 
         } catch (error) {
             console.error('更新设置失败:', error);
@@ -295,37 +342,112 @@ class Profile extends BaseComponent {
     }
 
     /**
-     * 显示表单错误
-     * @param {HTMLFormElement} form - 表单元素
-     * @param {Object} errors - 错误信息对象
-     * @private
+     * 显示头像上传模态框
      */
-    _showFormErrors(form, errors) {
-        // 清除现有错误提示
-        $(form).find('.is-invalid').removeClass('is-invalid');
-        $(form).find('.invalid-feedback').remove();
+    showAvatarModal() {
+        this.$avatarPreview.hide();
+        $('#avatarFile').val('');
+        this.avatarModal.show();
+    }
 
-        // 显示错误提示
-        Object.entries(errors).forEach(([field, message]) => {
-            const input = $(form).find(`[name="${field}"]`);
-            input.addClass('is-invalid');
-            input.after(`<div class="invalid-feedback">${message}</div>`);
-        });
+    /**
+     * 验证基本信息表单
+     */
+    validateBasicInfoForm() {
+        const email = $('#email').val();
+        const phone = $('#phone').val();
+
+        if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+            this.showError('请输入有效的邮箱地址');
+            return false;
+        }
+
+        if (!/^1[3-9]\d{9}$/.test(phone)) {
+            this.showError('请输入有效的手机号码');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 验证密码表单
+     */
+    validatePasswordForm(data) {
+        if (!data.currentPassword) {
+            this.showError('请输入当前密码');
+            return false;
+        }
+
+        if (!data.newPassword || data.newPassword.length < 6) {
+            this.showError('新密码长度不能少于6位');
+            return false;
+        }
+
+        if (data.newPassword !== data.confirmPassword) {
+            this.showError('两次输入的密码不一致');
+            return false;
+        }
+
+        return true;
     }
 
     /**
      * 禁用/启用表单
-     * @param {HTMLFormElement} form - 表单元素
-     * @param {boolean} disabled - 是否禁用
-     * @private
      */
-    _disableForm(form, disabled) {
-        $(form).find('input, button').prop('disabled', disabled);
+    disableForm($form, disabled) {
+        $form.find('input,button').prop('disabled', disabled);
+        const $submitBtn = $form.find('[type="submit"]');
         if (disabled) {
-            $(form).find('[type="submit"]').html('<span class="spinner-border spinner-border-sm"></span> 提交中...');
+            $submitBtn.html('<span class="spinner-border spinner-border-sm"></span> 提交中...');
         } else {
-            $(form).find('[type="submit"]').text('保存');
+            $submitBtn.text('保存');
         }
+    }
+
+    /**
+     * 显示成功提示
+     */
+    showSuccess(message) {
+        $.notify(message, {
+            className: 'success',
+            position: 'top right'
+        });
+    }
+
+    /**
+     * 显示错误提示
+     */
+    showError(message) {
+        $.notify(message, {
+            className: 'error',
+            position: 'top right'
+        });
+    }
+
+    /**
+     * 销毁实例
+     */
+    destroy() {
+        // 清理事件监听
+        this.$basicInfoForm.off();
+        this.$passwordForm.off();
+        this.$uploadBtn.off();
+        $('input[type="checkbox"]').off();
+
+        // 销毁模态框
+        if (this.avatarModal) {
+            this.avatarModal.dispose();
+        }
+
+        // 清理状态和引用
+        this.state = null;
+        this.$container = null;
+        this.$basicInfoForm = null;
+        this.$passwordForm = null;
+        this.$avatarModal = null;
+        this.$avatarPreview = null;
+        this.$uploadBtn = null;
     }
 }
 

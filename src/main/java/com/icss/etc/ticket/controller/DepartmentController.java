@@ -19,7 +19,7 @@ public class DepartmentController {
     private UserService userService;
 
 
-    @GetMapping("")
+    @GetMapping("list")
     public R list() {
         return R.OK(departmentService.selectAll());
     }

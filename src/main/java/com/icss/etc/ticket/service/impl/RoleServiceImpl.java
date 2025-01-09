@@ -2,6 +2,7 @@ package com.icss.etc.ticket.service.impl;
 
 import com.icss.etc.ticket.entity.Role;
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.vo.ChooseRolesVO;
 import com.icss.etc.ticket.mapper.RoleMapper;
 import com.icss.etc.ticket.service.RoleService;
 import lombok.extern.slf4j.Slf4j;
@@ -54,5 +55,10 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public List<Role2> OneRoleMorePermission() {
         return roleMapper.OneRoleMorePermission();
+    }
+
+    @Override
+    public List<ChooseRolesVO> chooseRoles() {
+        return roleMapper.chooseRoles();
     }
 }
