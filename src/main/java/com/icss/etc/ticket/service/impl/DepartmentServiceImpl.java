@@ -3,6 +3,7 @@ package com.icss.etc.ticket.service.impl;
 import com.icss.etc.ticket.entity.Department;
 import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
 import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
+import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.mapper.DepartmentMapper;
 import com.icss.etc.ticket.service.DepartmentService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,23 +31,19 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public int insert(Department record) {
-        return 0;
+        if(departmentMapper.selectByPrimaryKey(record.getDepartmentId()) != null){
+            log.error(CodeEnum.DEPARTMENT_IS_EXIST.getMsg());
+            return CodeEnum.DEPARTMENT_IS_EXIST.getCode();
+        }
+         return departmentMapper.insert(record);
     }
 
-    @Override
-    public int insertSelective(Department record) {
-        return departmentMapper.insertSelective(record);
-    }
 
     @Override
     public Department selectByPrimaryKey(Long departmentId) {
-        return null;
+        return departmentMapper.selectByPrimaryKey(departmentId);
     }
 
-    @Override
-    public int updateByPrimaryKeySelective(Department record) {
-        return 0;
-    }
 
     @Override
     public List<Department> selectSubDepartments(Long parent_id) {
@@ -55,7 +52,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public int updateByPrimaryKey(Department record) {
-        return 0;
+        return departmentMapper.updateByPrimaryKey(record);
     }
 
     @Override
@@ -65,23 +62,14 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public int updateBatchSelective(List<Department> list) {
-        return 0;
+        return departmentMapper.updateBatchSelective(list);
     }
 
     @Override
     public int batchInsert(List<Department> list) {
-        return 0;
+        return departmentMapper.batchInsert(list);
     }
 
-    /**
-     * 根据部门ID查询部门信息
-     * @param department_id 部门ID
-     * @return 部门信息
-     */
-    @Override
-    public Department selectByDpartmentId(Long department_id) {
-        return departmentMapper.selectByDpartmentId(department_id);
-    }
 
     /**
      * 部门详情
@@ -127,6 +115,10 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public int deleteByPrimaryKey(Long departmentId) {
+        if(departmentMapper.selectByPrimaryKey(departmentId)==null){
+            log.error(CodeEnum.DEPARTMENT_IS_NOT_EXIST.getMsg());
+            return CodeEnum.DEPARTMENT_IS_NOT_EXIST.getCode();
+        }
         return departmentMapper.deleteByPrimaryKey(departmentId);
     }
 

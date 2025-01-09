@@ -9,32 +9,35 @@ import java.util.List;
 import java.util.Map;
 
 public interface DepartmentService {
-
-    int insert(Department record);
-
     /**
-     * insert record to table selective
+     * insert record departmentMapper table
      *
      * @param record the record
      * @return insert count
      */
-    int insertSelective(Department record);
+    int insert(Department record);
 
     /**
-     * 根据主键查询
-     *
-     * @param departmentId primary key
-     * @return object by primary key
+     * 修改部门信息
+     * @param record  部门信息DTO
+     * @return 修改结果
      */
-    Department selectByPrimaryKey(Long departmentId);
+    int updateByPrimaryKey(Department record);
 
     /**
-     * update record selective
-     *
-     * @param record the updated record
-     * @return update count
+     * 删除部门
+     * @param department_id 部门ID
+     * @return 删除结果
      */
-    int updateByPrimaryKeySelective(Department record);
+    int deleteByPrimaryKey(Long department_id);
+
+    /**
+     * 查询部门详情
+     * @param department_id 部门ID
+     * @return department object
+     */
+    Department selectByPrimaryKey(Long department_id);
+
 
     /**
      * 根据父部门ID查询子部门列表
@@ -46,32 +49,51 @@ public interface DepartmentService {
 
 
     /**
-     * update record
-     *
-     * @param record the updated record
-     * @return update count
+     * 查询所有状态正常未删除的部门列表
+     * @return department list
      */
-    int updateByPrimaryKey(Department record);
-
-    List<Department> selectByAll(Department department);
-
-    int updateBatchSelective(@Param("list") List<Department> list);
-
-    int batchInsert(@Param("list") List<Department> list);
-
-    //   查询部门详情
-    Department selectByDpartmentId(Long department_id);
-
     List<Department> selectAll();
 
+    /**
+     * 查询部门列表
+     * @param department department object
+     * @return department list
+     */
+    List<Department> selectByAll(Department department);
+
+
+    /**
+     * 批量更新部门
+     * @param list department list
+     * @return update count
+     */
+    int updateBatchSelective(@Param("list") List<Department> list);
+
+    /**
+     * 批量插入部门
+     * @param list department list
+     * @return insert count
+     */
+    int batchInsert(@Param("list") List<Department> list);
+
+    /**
+     * @return 部门表根节点集合
+     */
     List<Department> selectParentAll();
 
-    List<Map<String, Object>> getDepartmentTree();
 
-    int deleteByPrimaryKey(Long departmentId);
-
-
+    /**
+     * 查询部门负责人列表
+     * @param department_id 部门ID
+     * @return 部门负责人列表
+     */
     List<DepartmentChargeVO> selectManagerByDepartmentId(Long department_id);
 
+
+
+
+
     DepartmentDetailVO getDepartmentDetail(Long departmentId);
+
+    List<Map<String, Object>> getDepartmentTree();
 }

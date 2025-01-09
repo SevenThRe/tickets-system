@@ -18,16 +18,19 @@ import lombok.Setter;
 public enum CodeEnum {
 
     OK(200, "成功"),
-    FAIL(400, "失败"),
-    BAD_REQUEST(400, "请求错误"),
+    FAIL(1400, "失败"),
+    BAD_REQUEST(1400, "请求错误"),
     NOT_FOUND(404, "未找到资源"),
     INTERNAL_ERROR(500, "内部服务器错误"),
-    MODIFICATION_FAILED(400, "修改失败"),
-    DELETION_FAILED(400, "删除失败"),
-    CREATION_FAILED(400, "创建失败"),
-    USERNAME_OR_PASSWORD_ERROR(400, "用户名或密码错误"),
-    REGISTER_FAILED(400, "注册失败"),
-    USERNAME_EXIST(400, "用户名已存在");
+    MODIFICATION_FAILED(1400, "修改失败"),
+    DELETION_FAILED(1400, "删除失败"),
+    CREATION_FAILED(1400, "创建失败"),
+    USERNAME_OR_PASSWORD_ERROR(1400, "用户名或密码错误"),
+    REGISTER_FAILED(1400, "注册失败"),
+    USERNAME_EXIST(1400, "用户名已存在"),
+    DEPARTMENT_IS_EXIST(1400, "部门已存在"),
+    DEPARTMENT_IS_NOT_EXIST(1400, "部门不存在"),
+    DEPARTMENT_IS_NOT_EMPTY(1400, "部门不为空");
 
 
     @Getter
