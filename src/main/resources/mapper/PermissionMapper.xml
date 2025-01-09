@@ -167,7 +167,7 @@
 
 
   <!--  查询所有权限-->
-  <select id="selectAllPermission" parameterType="com.icss.etc.ticket.entity.Permission">
+  <select id="selectAllPermission" resultType="com.icss.etc.ticket.entity.Permission">
         <!--@mbg.generated-->
         select
         <include refid="Base_Column_List" />

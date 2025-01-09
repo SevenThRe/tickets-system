@@ -161,14 +161,9 @@
         </set>
         where role_id = #{roleId,jdbcType=BIGINT}
       </update>
-<!--        根据角色名字查询-->
-    <select id="selectRoleByName" parameterType="com.icss.etc.ticket.entity.Role">
-        select t_role.role_name,t_role.base_role_code,t_role.status,t_role.description
-        from t_role
-        where is_deleted=0 and role_name=#{roleName}
-    </select>
+
     <!--根据id查询角色-->
-      <select id="selectByByRoleId" resultMap="BaseResultMap">
+      <select id="selectByByRoleId" resultType="com.icss.etc.ticket.entity.Role">
             <!--@mbg.generated-->
             select
             <include refid="Base_Column_List" />
