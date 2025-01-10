@@ -8,10 +8,7 @@ import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.service.UserService;
 import com.icss.etc.ticket.util.MD5Util;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -83,7 +80,9 @@ public class UserController {
         // 验证新密码是否与旧密码相同
         if (record.getNewPassword().equals(record.getOldPassword())) {
             return R.FAIL(CodeEnum.PASSWORD_SAME);}
-
+        if(!isStrongPassword(record.getNewPassword())){
+            throw new RuntimeException("密码强度不够");
+        }
         // 更新密码
         record.setNewPassword(MD5Util.getMD5(record.getNewPassword()));
         int result = userService.updateByPrimaryKey(record);
