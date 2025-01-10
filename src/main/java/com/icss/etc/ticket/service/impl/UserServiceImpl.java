@@ -27,7 +27,7 @@ public class UserServiceImpl implements UserService{
     private UserRoleMapper userRoleMapper;
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int register(RegisteredDTO user) {
+    public int register(RegisteredDTO user)  {
         int count =0;
         try {
             count = userMapper.register(user);
@@ -36,10 +36,11 @@ public class UserServiceImpl implements UserService{
             Long userId = userMapper.login(user.getUsername());
             count += userRoleMapper.insert(new UserRole(userId, user.getRoleId()));
             if (count != 2) {
-                throw new Exception("register failed");
+                throw new RuntimeException("register failed");
             }
-        } catch (Exception e) {
-            log.error(this.getClass().getSimpleName()+ "register rollback :" + user.getUsername() + " count: " + count);
+        } catch (Exception ignored) {
+            log.error(this.getClass().getSimpleName()+ "user register failed :" + user.getUsername());
+            throw ignored;
         }
         return count;
     }

@@ -36,6 +36,150 @@ class Profile {
     }
 
     /**
+     * 加载用户信息
+     */
+    async loadUserInfo() {
+        try {
+            // 从localStorage获取用户基本信息
+            const storedUserInfo = localStorage.getItem('userInfo');
+            if (!storedUserInfo) {
+                window.location.href = '/pages/auth/login.html';
+                return;
+            }
+
+            const parsedUserInfo = JSON.parse(storedUserInfo);
+            const userId = parsedUserInfo.userId; // 或使用 username，取决于后端API的设计
+
+            // 发送请求获取完整的用户信息
+            const response = await $.ajax({
+                url: `/api/users/${userId}/info`, // 或 /api/users/info/${username}
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.code === 200) {
+                this.state.userInfo = response.data;
+                this.updateUI();
+            } else {
+                throw new Error(response.message || '加载用户信息失败');
+            }
+        } catch (error) {
+            console.error('加载用户信息失败:', error);
+            if (error.status === 401) {
+                // token过期或无效，跳转到登录页
+                localStorage.removeItem('token');
+                localStorage.removeItem('userInfo');
+                window.location.href = '/pages/auth/login.html';
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * 更新UI显示
+     */
+    updateUI() {
+        const { userInfo } = this.state;
+        if (!userInfo) return;
+
+        // 更新头部显示信息
+        $('#userName').text(userInfo.realName || userInfo.username);
+        $('#userRole').text(userInfo.roleName || '普通用户');
+        $('#userAvatar').attr('src', userInfo.avatar || '/images/default-avatar.png');
+
+        // 填充表单
+        const formMappings = {
+            'username': userInfo.username,
+            'realName': userInfo.realName,
+            'email': userInfo.email,
+            'phone': userInfo.phone,
+            'departmentName': userInfo.departmentName,
+            'position': userInfo.position,
+            // 添加其他需要显示的字段
+        };
+
+        // 遍历字段映射并填充表单
+        Object.entries(formMappings).forEach(([field, value]) => {
+            const $input = this.$basicInfoForm.find(`[name="${field}"]`);
+            if ($input.length) {
+                $input.val(value || '');
+
+                // 对于只读字段添加禁用状态
+                if (['username', 'departmentName', 'position'].includes(field)) {
+                    $input.prop('readonly', true)
+                        .addClass('bg-light');
+                }
+            }
+        });
+
+        // 更新设置状态
+        Object.entries(this.state.settings).forEach(([key, value]) => {
+            $(`#${key}`).prop('checked', value);
+        });
+    }
+
+    /**
+     * 处理基本信息提交
+     */
+    async handleBasicInfoSubmit(e) {
+        e.preventDefault();
+        if (this.state.loading) return;
+
+        if (!this.validateBasicInfoForm()) {
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            this.state.loading = true;
+            this.disableForm(this.$basicInfoForm, true);
+
+            // 添加用户ID
+            data.userId = this.state.userInfo.userId;
+
+            const response = await $.ajax({
+                url: '/api/users/profile',
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(data)
+            });
+
+            if (response.code === 200) {
+                this.state.userInfo = {
+                    ...this.state.userInfo,
+                    ...response.data
+                };
+                NotifyUtil.success('个人信息更新成功');
+                this.updateUI();
+            } else {
+                throw new Error(response.message || '更新失败');
+            }
+
+        } catch (error) {
+            console.error('更新个人信息失败:', error);
+            NotifyUtil.error(error.message || '更新失败，请重试');
+
+            if (error.status === 401) {
+                setTimeout(() => {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userInfo');
+                    window.location.href = '/pages/auth/login.html';
+                }, 1500);
+            }
+        } finally {
+            this.state.loading = false;
+            this.disableForm(this.$basicInfoForm, false);
+        }
+    }
+
+    /**
      * 绑定事件处理器
      */
     bindEvents() {
@@ -51,6 +195,7 @@ class Profile {
         // 设置变更
         $('input[type="checkbox"]').on('change', (e) => this.handleSettingChange(e));
     }
+
 
     /**
      * 初始化
@@ -68,29 +213,6 @@ class Profile {
         }
     }
 
-    /**
-     * 加载用户信息
-     */
-    async loadUserInfo() {
-        try {
-            const response = await $.ajax({
-                url: '/api/users/current',
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (response.code === 200) {
-                this.state.userInfo = response.data;
-            } else {
-                throw new Error(response.message || '加载用户信息失败');
-            }
-        } catch (error) {
-            console.error('加载用户信息失败:', error);
-            throw error;
-        }
-    }
 
     /**
      * 加载用户设置
@@ -118,80 +240,6 @@ class Profile {
             throw error;
         }
     }
-
-    /**
-     * 更新UI显示
-     */
-    updateUI() {
-        const { userInfo } = this.state;
-
-        // 更新用户基本信息
-        $('#userName').text(userInfo.realName);
-        $('#userRole').text(userInfo.roleName);
-        $('#userAvatar').attr('src', userInfo.avatar || '/images/default-avatar.png');
-
-        // 填充表单
-        this.$basicInfoForm.find('input').each((_, input) => {
-            const name = input.name;
-            if (name in userInfo) {
-                $(input).val(userInfo[name]);
-            }
-        });
-
-        // 更新设置开关状态
-        Object.entries(this.state.settings).forEach(([key, value]) => {
-            $(`#${key}`).prop('checked', value);
-        });
-    }
-
-    /**
-     * 处理基本信息提交
-     */
-    async handleBasicInfoSubmit(e) {
-        e.preventDefault();
-        if (this.state.loading) return;
-
-        if (!this.validateBasicInfoForm()) {
-            return;
-        }
-
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
-
-        try {
-            this.state.loading = true;
-            this.disableForm(this.$basicInfoForm, true);
-
-            const response = await $.ajax({
-                url: '/api/users/profile',
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify(data)
-            });
-
-            if (response.code === 200) {
-                this.state.userInfo = {
-                    ...this.state.userInfo,
-                    ...response.data
-                };
-                this.showSuccess('个人信息更新成功');
-                this.updateUI();
-            } else {
-                throw new Error(response.message || '更新失败');
-            }
-
-        } catch (error) {
-            console.error('更新个人信息失败:', error);
-            this.showError(error.message || '更新失败，请重试');
-        } finally {
-            this.state.loading = false;
-            this.disableForm(this.$basicInfoForm, false);
-        }
-    }
-
     /**
      * 处理密码修改
      */
@@ -405,24 +453,13 @@ class Profile {
         }
     }
 
-    /**
-     * 显示成功提示
-     */
+    // 在 Profile 类中
     showSuccess(message) {
-        $.notify(message, {
-            className: 'success',
-            position: 'top right'
-        });
+        NotifyUtil.success(message);
     }
 
-    /**
-     * 显示错误提示
-     */
     showError(message) {
-        $.notify(message, {
-            className: 'error',
-            position: 'top right'
-        });
+        NotifyUtil.error(message);
     }
 
     /**
