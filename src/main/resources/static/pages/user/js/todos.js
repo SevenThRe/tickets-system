@@ -1,122 +1,207 @@
 /**
  * TodoList.js
  * 待办工单列表页面控制器
+ * 实现工单的搜索、查看、处理等功能
  */
 class TodoList {
+    /**
+     * 构造函数 - 初始化组件属性和状态
+     */
     constructor() {
-        // 缓存jQuery选择器
-        this.$container = $('#main');
+        // 缓存DOM元素引用
         this.$todoList = $('#todoList');
+        this.$searchForm = $('#searchForm');
         this.$pagination = $('#pagination');
         this.$totalCount = $('#totalCount');
-        this.$searchForm = $('#searchForm');
-        this.$processModal = $('#processModal');
 
-        // 获取用户信息
-        try {
-            this.userInfo = JSON.parse(localStorage.getItem('userInfo'));
-            if (!this.userInfo || !this.userInfo.userId) {
-                window.location.href = '/login.html';
-                return;
-            }
-        } catch (error) {
-            console.error('解析用户信息失败:', error);
-            window.location.href = '/login.html';
-            return;
-        }
+        // 加载状态元素
+        this.$loading = null;
 
         // 状态管理
         this.state = {
-            loading: false,
-            currentTicket: null,
-            pagination: {
-                current: 1,
-                pageSize: 10,
-                total: 0
-            },
-            filters: {
-                keyword: '',
-                priority: '',
-                startDate: '',
-                endDate: ''
+            loading: false,          // 加载状态标记
+            currentPage: 1,          // 当前页码
+            pageSize: 10,            // 每页条数
+            total: 0,                // 总记录数
+            filters: {               // 筛选条件
+                keyword: '',         // 关键词
+                priority: '',        // 优先级
+                startDate: '',       // 开始日期
+                endDate: ''          // 结束日期
             }
         };
 
-        // 绑定事件处理器
-        this.bindEvents();
+        // 初始化事件绑定
+        this.initEventHandlers();
 
-        // 初始化Bootstrap模态框
-        this.processModal = new bootstrap.Modal(this.$processModal[0]);
-
-        // 初始化
-        this.init();
+        // 加载初始数据
+        this.loadTodoList();
     }
 
     /**
-     * 绑定事件处理器
+     * 显示加载状态
+     * 创建并显示全局loading遮罩
      */
-    bindEvents() {
-        // 搜索和重置
-        this.$searchForm.on('submit', (e) => this.handleSearch(e));
-        $('#resetBtn').on('click', () => this.handleReset());
+    showLoading() {
+        if (!this.$loading) {
+            this.$loading = $(`
+                <div class="loading-overlay">
+                    <div class="spinner-border text-primary"></div>
+                    <div class="loading-text">加载中...</div>
+                </div>
+            `).appendTo('body');
 
-        // 工单处理
-        this.$container.on('click', '.process-ticket', (e) => this.showProcessModal(e));
-        $('#submitProcessBtn').on('click', (e) => this.handleProcessSubmit(e));
+            // 添加样式
+            this.$loading.css({
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(255, 255, 255, 0.8)',
+                display: 'flex',
+                'justify-content': 'center',
+                'align-items': 'center',
+                'z-index': 9999
+            });
+        }
+        this.$loading.show();
+    }
 
-        // 分页事件委托
-        this.$pagination.on('click', '.page-link', (e) => {
-            e.preventDefault();
-            const page = $(e.currentTarget).data('page');
-            if (page && page !== this.state.pagination.current) {
-                this.state.pagination.current = page;
-                this.loadTickets();
-            }
+    /**
+     * 隐藏加载状态
+     * 隐藏全局loading遮罩
+     */
+    hideLoading() {
+        if (this.$loading) {
+            this.$loading.hide();
+        }
+    }
+
+    /**
+     * 显示成功提示
+     * @param {string} message - 提示信息
+     */
+    showSuccess(message) {
+        // 使用Bootstrap Toast或其他提示组件
+        $.notify({
+            message: message,
+            type: 'success',
+            delay: 3000
         });
     }
 
     /**
-     * 初始化
+     * 显示错误提示
+     * @param {string} message - 错误信息
      */
-    async init() {
-        try {
-            await this.loadTickets();
-            this.checkUrlParams();
-        } catch (error) {
-            console.error('初始化失败:', error);
-            NotifyUtil.error('页面加载失败,请刷新重试');
-        }
+    showError(message) {
+        // 使用Bootstrap Toast或其他提示组件
+        $.notify({
+            message: message,
+            type: 'danger',
+            delay: 3000
+        });
     }
 
     /**
-     * 检查URL参数
+     * 初始化事件处理器
+     * 绑定各种DOM事件
      */
-    checkUrlParams() {
-        const params = new URLSearchParams(window.location.search);
-        const ticketId = params.get('id');
-        if (ticketId) {
-            this.showProcessModal(null, ticketId);
-        }
+    initEventHandlers() {
+        // 搜索表单提交
+        this.$searchForm.on('submit', (e) => {
+            e.preventDefault();
+            this.handleSearch();
+        });
+
+        // 表单字段变化时自动触发搜索
+        this.$searchForm.find('select, input[type="date"]').on('change', () => {
+            this.handleSearch();
+        });
+
+        // 关键词搜索防抖
+        let searchTimeout = null;
+        this.$searchForm.find('input[type="text"]').on('input', (e) => {
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            searchTimeout = setTimeout(() => {
+                this.handleSearch();
+            }, 500);
+        });
+
+        // 重置按钮点击
+        $('#resetBtn').on('click', () => this.handleReset());
+
+        // 分页点击事件
+        this.$pagination.on('click', '.page-link', (e) => {
+            e.preventDefault();
+            const page = $(e.currentTarget).data('page');
+            if (page && page !== this.state.currentPage) {
+                this.state.currentPage = page;
+                this.loadTodoList();
+            }
+        });
+    }
+
+
+    /**
+     * 处理搜索请求
+     */
+    async handleSearch() {
+        // 收集表单数据
+        const formData = new FormData(this.$searchForm[0]);
+        this.state.filters = {
+            keyword: formData.get('keyword') || '',
+            priority: formData.get('priorityFilter') || '',
+            startDate: formData.get('startDate') || '',
+            endDate: formData.get('endDate') || ''
+        };
+
+        // 重置页码并重新加载
+        this.state.currentPage = 1;
+        await this.loadTodoList();
     }
 
     /**
-     * 加载工单列表
+     * 处理重置操作
      */
-    async loadTickets() {
+    async handleReset() {
+        // 重置表单
+        this.$searchForm[0].reset();
+
+        // 重置过滤条件
+        this.state.filters = {
+            keyword: '',
+            priority: '',
+            startDate: '',
+            endDate: ''
+        };
+
+        // 重新加载数据
+        this.state.currentPage = 1;
+        await this.loadTodoList();
+    }
+
+    /**
+     * 加载待办工单列表
+     */
+    async loadTodoList() {
         if (this.state.loading) return;
 
         try {
             this.state.loading = true;
             this.showLoading();
 
-            const { current, pageSize } = this.state.pagination;
+            // 构造请求参数
             const params = {
-                pageNum: current,
-                pageSize,
-                userId: this.userInfo.userId,
+                pageNum: this.state.currentPage,
+                pageSize: this.state.pageSize,
                 ...this.state.filters
             };
 
+            // 发起请求
             const response = await $.ajax({
                 url: '/api/tickets/todos',
                 method: 'GET',
@@ -127,102 +212,150 @@ class TodoList {
             });
 
             if (response.code === 200) {
-                const { list = [], total = 0 } = response.data;
-                this.state.pagination.total = total;
-                this.renderTicketList(list);
-                this.updatePagination();
+                // 更新状态
+                this.state.total = response.data.total;
+
+                // 渲染列表和分页
+                this.renderTodoList(response.data.list);
+                this.renderPagination();
+
+                // 更新总数显示
+                this.$totalCount.text(this.state.total);
             } else {
                 throw new Error(response.message || '加载失败');
             }
 
         } catch (error) {
             console.error('加载待办工单失败:', error);
-            this.handleError(error);
+            this.showError(error.message || '加载失败，请重试');
         } finally {
             this.state.loading = false;
             this.hideLoading();
         }
     }
-
     /**
-     * 渲染工单列表
+     * 渲染待办工单列表
+     * @param {Array} todos - 工单列表数据
      */
-    renderTicketList(tickets) {
-        const html = tickets.map(ticket => `
+    renderTodoList(todos) {
+        if (!todos || todos.length === 0) {
+            this.$todoList.html(`
             <tr>
-                <td>${ticket.code}</td>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <span class="priority-indicator priority-${ticket.priority.toLowerCase()}"></span>
-                        ${ticket.title}
-                    </div>
-                </td>
-                <td>${ticket.departmentName}</td>
-                <td>${this.getPriorityText(ticket.priority)}</td>
-                <td>${ticket.expectFinishTime ? this.formatDate(ticket.expectFinishTime) : '-'}</td>
-                <td>${this.formatDate(ticket.createTime)}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary process-ticket" 
-                            data-id="${ticket.ticketId}">处理工单</button>
-                </td>
+                <td colspan="7" class="text-center">暂无待办工单</td>
             </tr>
-        `).join('');
+        `);
+            return;
+        }
 
-        this.$todoList.html(html || '<tr><td colspan="7" class="text-center">暂无待办工单</td></tr>');
-        this.$totalCount.text(this.state.pagination.total);
+        const html = todos.map(ticket => `
+        <tr>
+            <td>${this.escapeHtml(ticket.code)}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <span class="priority-indicator priority-${ticket.priority.toLowerCase()}"></span>
+                    ${this.escapeHtml(ticket.title)}
+                </div>
+            </td>
+            <td>${this.escapeHtml(ticket.departmentName)}</td>
+            <td>${this.getPriorityText(ticket.priority)}</td>
+            <td>${ticket.expectFinishTime ? this.formatDateTime(ticket.expectFinishTime) : '-'}</td>
+            <td>${this.formatDateTime(ticket.createTime)}</td>
+            <td>
+                <button class="btn btn-sm btn-primary process-btn" 
+                        data-id="${ticket.id}">
+                    处理工单
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+        this.$todoList.html(html);
     }
 
     /**
-     * 更新分页控件
+     * 渲染分页控件
      */
-    updatePagination() {
-        const { current, pageSize, total } = this.state.pagination;
+    renderPagination() {
+        const { currentPage, pageSize, total } = this.state;
         const totalPages = Math.ceil(total / pageSize);
+
         let html = '';
 
         // 上一页
         html += `
-            <li class="page-item ${current === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="${current - 1}">上一页</a>
-            </li>
-        `;
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" data-page="${currentPage - 1}">
+                上一页
+            </a>
+        </li>
+    `;
 
         // 页码
         for (let i = 1; i <= totalPages; i++) {
-            if (i === 1 || i === totalPages || (i >= current - 2 && i <= current + 2)) {
+            if (i === 1 || i === totalPages ||
+                (i >= currentPage - 2 && i <= currentPage + 2)) {
                 html += `
-                    <li class="page-item ${i === current ? 'active' : ''}">
-                        <a class="page-link" href="#" data-page="${i}">${i}</a>
-                    </li>
-                `;
-            } else if (i === current - 3 || i === current + 3) {
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
                 html += `
-                    <li class="page-item disabled">
-                        <span class="page-link">...</span>
-                    </li>
-                `;
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            `;
             }
         }
 
         // 下一页
         html += `
-            <li class="page-item ${current === totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="${current + 1}">下一页</a>
-            </li>
-        `;
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" data-page="${currentPage + 1}">
+                下一页
+            </a>
+        </li>
+    `;
 
         this.$pagination.html(html);
     }
+    /**
+     * 处理工单
+     * @param {string} ticketId - 工单ID
+     */
+    async processTicket(ticketId) {
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${ticketId}/process`,
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    note: $('#processNote').val().trim()
+                })
+            });
+
+            if (response.code === 200) {
+                this.showSuccess('工单处理成功');
+                await this.loadTodoList();
+                $('#processModal').modal('hide');
+            } else {
+                throw new Error(response.message || '处理失败');
+            }
+
+        } catch (error) {
+            console.error('处理工单失败:', error);
+            this.showError(error.message || '处理失败，请重试');
+        }
+    }
 
     /**
-     * 显示处理工单模态框
+     * 显示工单处理模态框
+     * @param {string} ticketId - 工单ID
      */
-    async showProcessModal(e, ticketId) {
-        if (e) {
-            e.preventDefault();
-            ticketId = $(e.currentTarget).data('id');
-        }
-
+    async showProcessModal(ticketId) {
         try {
             const response = await $.ajax({
                 url: `/api/tickets/${ticketId}`,
@@ -233,263 +366,65 @@ class TodoList {
             });
 
             if (response.code === 200) {
-                this.state.currentTicket = response.data;
-                this.updateModalContent();
-                this.processModal.show();
+                const ticket = response.data;
+
+                // 填充模态框数据
+                $('#ticketCode').text(ticket.code);
+                $('#ticketTitle').text(ticket.title);
+                $('#ticketContent').text(ticket.content);
+                $('#createTime').text(this.formatDateTime(ticket.createTime));
+
+                // 显示模态框
+                $('#processModal').modal('show');
+
+                // 清空处理说明
+                $('#processNote').val('');
+
             } else {
-                throw new Error(response.message || '加载工单详情失败');
+                throw new Error(response.message || '加载失败');
             }
+
         } catch (error) {
             console.error('加载工单详情失败:', error);
-            NotifyUtil.error('加载工单详情失败');
+            this.showError(error.message || '加载失败，请重试');
         }
     }
 
     /**
-     * 更新模态框内容
+     * 工具方法
      */
-    updateModalContent() {
-        const ticket = this.state.currentTicket;
-        if (!ticket) return;
 
-        $('#ticketCode').text(ticket.code);
-        $('#ticketTitle').text(ticket.title);
-        $('#ticketContent').text(ticket.content);
-        $('#createTime').text(this.formatDate(ticket.createTime));
-        this.renderAttachments(ticket.attachments);
-    }
-
-    /**
-     * 处理工单提交
-     */
-    async handleProcessSubmit(e) {
-        e.preventDefault();
-
-        if (!this.state.currentTicket) return;
-
-        const note = $('#processNote').val().trim();
-        if (!note) {
-            NotifyUtil.error('请输入处理说明');
-            return;
-        }
-
-        try {
-            const response = await $.ajax({
-                url: `/api/tickets/${this.state.currentTicket.ticketId}/process`,
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify({ note })
-            });
-
-            if (response.code === 200) {
-                const files = $('#processAttachments')[0].files;
-                if (files.length > 0) {
-                    await this.uploadAttachments(files);
-                }
-
-                NotifyUtil.success('工单处理成功');
-                this.processModal.hide();
-                await this.loadTickets();
-            } else {
-                throw new Error(response.message || '处理工单失败');
-            }
-        } catch (error) {
-            console.error('处理工单失败:', error);
-            NotifyUtil.error(error.message || '处理工单失败');
-        }
-    }
-
-    /**
-     * 上传附件
-     */
-    async uploadAttachments(files) {
-        // 验证文件
-        if (files.length > 5) {
-            throw new Error('最多只能上传5个附件');
-        }
-
-        const formData = new FormData();
-        Array.from(files).forEach(file => {
-            formData.append('files', file);
+    // 格式化日期时间
+    formatDateTime(date) {
+        return new Date(date).toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
         });
-
-        try {
-            const response = await $.ajax({
-                url: `/api/tickets/${this.state.currentTicket.ticketId}/attachments`,
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (response.code !== 200) {
-                throw new Error(response.message || '上传附件失败');
-            }
-        } catch (error) {
-            console.error('上传附件失败:', error);
-            throw new Error('上传附件失败，请重试');
-        }
     }
 
-    /**
-     * 处理搜索
-     */
-    handleSearch(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        this.state.filters = {
-            keyword: formData.get('keyword'),
-            priority: formData.get('priorityFilter'),
-            startDate: formData.get('startDate'),
-            endDate: formData.get('endDate')
-        };
-        this.state.pagination.current = 1;
-        this.loadTickets();
-    }
-
-    /**
-     * 处理重置
-     */
-    handleReset() {
-        this.$searchForm[0].reset();
-        this.state.filters = {
-            keyword: '',
-            priority: '',
-            startDate: '',
-            endDate: ''
-        };
-        this.state.pagination.current = 1;
-        this.loadTickets();
-    }
-
-    /**
-     * 获取优先级文本
-     */
+    // 获取优先级文本
     getPriorityText(priority) {
-        const priorityMap = {
-            'HIGH': '高优先级',
-            'MEDIUM': '中等优先级',
-            'LOW': '低优先级'
+        const map = {
+            'HIGH': '高',
+            'MEDIUM': '中',
+            'LOW': '低'
         };
-        return priorityMap[priority] || priority;
+        return map[priority] || priority;
     }
 
-    /**
-     * 格式化日期
-     */
-    formatDate(date) {
-        if (!date) return '-';
-        const d = new Date(date);
-        const pad = num => String(num).padStart(2, '0');
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-
-    /**
-     * 渲染附件列表
-     */
-    renderAttachments(attachments) {
-        if (!attachments?.length) {
-            $('#ticketAttachments').html('<div class="text-muted">无附件</div>');
-            return;
-        }
-
-        const html = attachments.map(file => `
-            <div class="attachment-item">
-                <i class="bi bi-paperclip"></i>
-                <a href="/api/attachments/${file.id}" target="_blank">
-                    ${file.fileName}
-                </a>
-                <span class="text-muted ms-2">(${this.formatFileSize(file.fileSize)})</span>
-            </div>
-        `).join('');
-
-        $('#ticketAttachments').html(html);
-    }
-
-    /**
-     * 格式化文件大小
-     */
-    formatFileSize(bytes) {
-        if (!bytes) return '0 B';
-        const units = ['B', 'KB', 'MB', 'GB'];
-        let size = bytes;
-        let unitIndex = 0;
-        while (size >= 1024 && unitIndex < units.length - 1) {
-            size /= 1024;
-            unitIndex++;
-        }
-        return `${size.toFixed(1)} ${units[unitIndex]}`;
-    }
-
-    /**
-     * 显示加载状态
-     */
-    showLoading() {
-        if (!this.$loading) {
-            this.$loading = $('<div class="loading-overlay">')
-                .append('<div class="spinner-border text-primary">')
-                .appendTo('body');
-        }
-        this.$loading.show();
-    }
-
-    /**
-     * 隐藏加载状态
-     */
-    hideLoading() {
-        if (this.$loading) {
-            this.$loading.hide();
-        }
-    }
-
-    /**
-     * 处理错误
-     */
-    handleError(error) {
-        if (error.status === 401) {
-            localStorage.removeItem('token');
-            window.location.href = '/login.html';
-            return;
-        }
-
-        if (error.status === 403) {
-            NotifyUtil.error('您没有访问权限');
-            return;
-        }
-
-        const errorMessage = error.responseJSON?.message || error.message || '操作失败，请重试';
-        NotifyUtil.error(errorMessage);
-    }
-
-    /**
-     * 销毁实例
-     */
-    destroy() {
-        this.$searchForm.off();
-        this.$container.off();
-        this.$pagination.off();
-        if (this.processModal) {
-            this.processModal.dispose();
-        }
-        if (this.$loading) {
-            this.$loading.remove();
-        }
-        this.$container = null;
-        this.$todoList = null;
-        this.$pagination = null;
-        this.$processModal = null;
-        this.$loading = null;
-        this.state = null;
+    // 转义HTML
+    escapeHtml(str) {
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 }
-
-// 初始化
 $(document).ready(() => {
     window.todoList = new TodoList();
 });
