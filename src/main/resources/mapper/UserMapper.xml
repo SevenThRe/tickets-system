@@ -65,6 +65,7 @@
     select
         u.user_id,u.password,
     u.username,u.real_name,u.phone,d.department_name,r.role_name,r.base_role_code
+    ,u.email
     from t_user u,t_role r,t_department d,t_user_role ur
     where u.department_id = d.department_id
       and u.user_id = #{user_id}

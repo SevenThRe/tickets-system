@@ -68,7 +68,7 @@ public class TicketController {
      */
     @GetMapping("/todos")
     public R<List<Ticket>> getTodos(TicketQueryDTO queryDTO) {
-        return R.OK(ticketService.getTodoTickets(queryDTO.getUserId(), queryDTO));
+        return R.OK(ticketService.getTodoTickets( queryDTO));
     }
 
     /**
@@ -76,8 +76,7 @@ public class TicketController {
      */
     @GetMapping("/my")
     public R<List<Ticket>> getMyTickets(TicketQueryDTO queryDTO) {
-        Long userId = SecurityUtils.getCurrentUserId();
-        return R.OK(ticketService.getMyTickets(queryDTO.getUserId(), queryDTO));
+        return R.OK(ticketService.getMyTickets(queryDTO));
     }
 
     /**

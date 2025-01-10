@@ -7,7 +7,9 @@ import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.service.UserService;
 import com.icss.etc.ticket.util.MD5Util;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -68,7 +70,7 @@ public class UserController {
 
     //    修改密码
     @PutMapping("/password")
-    public R updatePassword(UserPasswordDTO record) {
+    public R updatePassword(@RequestBody UserPasswordDTO record) {
         User u= userService.selectByPrimaryKey(record.getUserId());
         //用户是否存在
         if (u == null){return R.FAIL(CodeEnum.UNKNOW_USER);}
@@ -78,10 +80,12 @@ public class UserController {
         if (!userOldPassword.equals(u.getPassword())){return R.FAIL(CodeEnum.PASSWORD_ERROR);}
 
         // 验证新密码是否与旧密码相同
-        if (record.getNewPassword().equals(record.getOldPassword())) {
-            return R.FAIL(CodeEnum.PASSWORD_SAME);}
-        if(!isStrongPassword(record.getNewPassword())){
-            throw new RuntimeException("密码强度不够");
+        if (record.getNewPassword().equals(record.getOldPassword())){
+            return R.FAIL(CodeEnum.PASSWORD_SAME);
+        }
+
+        if(isStrongPassword(record.getNewPassword())){
+            return R.FAIL(CodeEnum.PASSWORD_WEAK);
         }
         // 更新密码
         record.setNewPassword(MD5Util.getMD5(record.getNewPassword()));

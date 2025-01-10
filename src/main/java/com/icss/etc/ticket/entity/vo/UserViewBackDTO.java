@@ -37,7 +37,11 @@ public class UserViewBackDTO {
      */
     private String password;
     /**
-     *  角色ID
+     *  邮箱
+     */
+    private String email;
+    /**
+     * 角色编码
      */
     private String baseRoleCode;
 }

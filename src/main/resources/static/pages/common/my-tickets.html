@@ -7,6 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link href="/css/navbar.css" rel="stylesheet">
+    <link href="/css/notify.css" rel="stylesheet">
     <link href="/pages/common/css/my-tickets.css" rel="stylesheet">
 </head>
 <body>
@@ -27,12 +28,15 @@
     <div class="card ticket-filter-panel">
         <div class="card-body">
             <form id="searchForm" class="row g-3">
+                <!-- 关键词搜索 -->
                 <div class="col-md-4">
-                    <input type="text" class="form-control" id="keyword"
+                    <input type="text" class="form-control" id="keyword" name="keyword"
                            placeholder="搜索工单号/标题/内容">
                 </div>
+
+                <!-- 状态筛选 -->
                 <div class="col-md-2">
-                    <select class="form-select" id="statusFilter">
+                    <select class="form-select" name="statusFilter" id="statusFilter">
                         <option value="">所有状态</option>
                         <option value="PENDING">待处理</option>
                         <option value="PROCESSING">处理中</option>
@@ -40,21 +44,32 @@
                         <option value="CLOSED">已关闭</option>
                     </select>
                 </div>
+
+                <!-- 优先级筛选 -->
                 <div class="col-md-2">
-                    <select class="form-select" id="priorityFilter">
+                    <select class="form-select" name="priorityFilter" id="priorityFilter">
                         <option value="">所有优先级</option>
-                        <option value="HIGH">高优先级</option>
-                        <option value="MEDIUM">中等优先级</option>
-                        <option value="LOW">低优先级</option>
+                        <option value="0">普通</option>
+                        <option value="1">紧急</option>
+                        <option value="2">非常紧急</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
+
+                <!-- 日期范围选择 -->
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="date" class="form-control" id="startDate" name="startDate">
+                        <span class="input-group-text">至</span>
+                        <input type="date" class="form-control" id="endDate" name="endDate">
+                    </div>
+                </div>
+
+                <!-- 搜索和重置按钮 -->
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary me-2">
                         <i class="bi bi-search"></i> 搜索
                     </button>
-                </div>
-                <div class="col-md-2">
-                    <button type="button" id="resetBtn" class="btn btn-outline-secondary w-100">
+                    <button type="button" class="btn btn-outline-secondary" id="resetBtn">
                         <i class="bi bi-arrow-counterclockwise"></i> 重置
                     </button>
                 </div>
@@ -182,31 +197,55 @@
             </div>
             <div class="modal-body">
                 <form id="ticketForm">
+                    <!-- 工单类型 -->
+                    <div class="mb-3">
+                        <label class="form-label">工单类型</label>
+                        <select class="form-select" id="typeId" name="typeId" required>
+                            <option value="">请选择工单类型</option>
+                        </select>
+                    </div>
+
+                    <!-- 工单标题 -->
                     <div class="mb-3">
                         <label class="form-label">标题</label>
-                        <input type="text" class="form-control" id="title" required>
+                        <input type="text" class="form-control" id="title" name="title" required>
                     </div>
+
+                    <!-- 工单内容 -->
                     <div class="mb-3">
                         <label class="form-label">内容描述</label>
-                        <textarea class="form-control" id="content" rows="5" required></textarea>
+                        <textarea class="form-control" id="content" name="content" rows="5" required></textarea>
                     </div>
+
+                    <!-- 处理部门和优先级 -->
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">处理部门</label>
-                            <select class="form-select" id="department" required></select>
+                            <select class="form-select" id="departmentId" name="departmentId" required>
+                                <option value="">请选择处理部门</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">优先级</label>
-                            <select class="form-select" id="priority" required>
-                                <option value="LOW">低</option>
-                                <option value="MEDIUM">中</option>
-                                <option value="HIGH">高</option>
+                            <select class="form-select" id="priority" name="priority" required>
+                                <option value="0">普通</option>
+                                <option value="1">紧急</option>
+                                <option value="2">非常紧急</option>
                             </select>
                         </div>
                     </div>
+
+                    <!-- 期望完成时间 -->
+                    <div class="mb-3">
+                        <label class="form-label">期望完成时间</label>
+                        <input type="datetime-local" class="form-control" id="expectFinishTime" name="expectFinishTime">
+                    </div>
+
+                    <!-- 附件上传 -->
                     <div class="mb-3">
                         <label class="form-label">附件</label>
-                        <input type="file" class="form-control" id="attachments" multiple>
+                        <input type="file" class="form-control" id="attachments" name="attachments" multiple>
+                        <div id="fileList" class="mt-2"></div>
                     </div>
                 </form>
             </div>
@@ -217,7 +256,6 @@
         </div>
     </div>
 </div>
-
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>

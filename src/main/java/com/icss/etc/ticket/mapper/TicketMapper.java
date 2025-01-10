@@ -67,7 +67,7 @@ public interface TicketMapper {
      * @param queryDTO 查询条件
      * @return 工单列表
      */
-    List<Ticket> getMyTickets(@Param("userId") Long userId, @Param("queryDTO") TicketQueryDTO queryDTO);
+    List<Ticket> getMyTickets(@Param("queryDTO") TicketQueryDTO queryDTO);
 
     /**
      * 查询待办工单
@@ -75,7 +75,7 @@ public interface TicketMapper {
      * @param queryDTO 查询条件
      * @return 工单列表
      */
-    List<Ticket> getTodoTickets(@Param("userId") Long userId, @Param("queryDTO") TicketQueryDTO queryDTO);
+    List<Ticket> getTodoTickets(@Param("queryDTO") TicketQueryDTO queryDTO);
 
     /**
      * 查询部门工单

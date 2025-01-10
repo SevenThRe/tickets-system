@@ -48,11 +48,11 @@ class Profile {
             }
 
             const parsedUserInfo = JSON.parse(storedUserInfo);
-            const userId = parsedUserInfo.userId; // 或使用 username，取决于后端API的设计
+            const userId = parsedUserInfo.userId;
 
             // 发送请求获取完整的用户信息
             const response = await $.ajax({
-                url: `/api/users/${userId}/info`, // 或 /api/users/info/${username}
+                url: `/api/users/${userId}/info`,
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -63,7 +63,7 @@ class Profile {
                 this.state.userInfo = response.data;
                 this.updateUI();
             } else {
-                throw new Error(response.message || '加载用户信息失败');
+                throw new Error(response.msg || '加载用户信息失败');
             }
         } catch (error) {
             console.error('加载用户信息失败:', error);
@@ -84,35 +84,44 @@ class Profile {
         const { userInfo } = this.state;
         if (!userInfo) return;
 
-        // 更新头部显示信息
+        // 更新头部显示信息 头像是假的，因为后端没有头像字段
         $('#userName').text(userInfo.realName || userInfo.username);
         $('#userRole').text(userInfo.roleName || '普通用户');
         $('#userAvatar').attr('src', userInfo.avatar || '/images/default-avatar.png');
 
-        // 填充表单
-        const formMappings = {
-            'username': userInfo.username,
-            'realName': userInfo.realName,
-            'email': userInfo.email,
-            'phone': userInfo.phone,
-            'departmentName': userInfo.departmentName,
-            'position': userInfo.position,
-            // 添加其他需要显示的字段
+        // 基本信息表单填充
+        const formData = {
+            'username': userInfo.username,        // 用户名(只读)
+            'userId': userInfo.userId,            // 用户ID(隐藏)
+            'realName': userInfo.realName,        // 真实姓名
+            'email': userInfo.email,              // 邮箱
+            'phone': userInfo.phone,              // 手机号
+            'departmentName': userInfo.departmentName,  // 部门名称(只读,用于展示)
+            'departmentId': userInfo.departmentId,      // 部门ID(隐藏,用于提交)
+            'roleName': userInfo.roleName,        // 角色名称(只读,用于展示)
+            'roleId': userInfo.roleId             // 角色ID(隐藏,用于提交)
         };
 
-        // 遍历字段映射并填充表单
-        Object.entries(formMappings).forEach(([field, value]) => {
+        // 遍历表单字段进行填充
+        Object.keys(formData).forEach(field => {
             const $input = this.$basicInfoForm.find(`[name="${field}"]`);
-            if ($input.length) {
-                $input.val(value || '');
+            if($input.length) {
+                $input.val(formData[field] || '');
 
-                // 对于只读字段添加禁用状态
-                if (['username', 'departmentName', 'position'].includes(field)) {
+                // 设置只读字段
+                if(['username', 'departmentName', 'roleName'].includes(field)) {
                     $input.prop('readonly', true)
                         .addClass('bg-light');
                 }
+
+                // 隐藏字段
+                if(['departmentId', 'roleId', 'userId'].includes(field)) {
+                    $input.prop('hidden', true);
+                }
             }
         });
+
+
 
         // 更新设置状态
         Object.entries(this.state.settings).forEach(([key, value]) => {
@@ -122,25 +131,34 @@ class Profile {
 
     /**
      * 处理基本信息提交
+     * @param {Event} e - 表单提交事件对象
      */
     async handleBasicInfoSubmit(e) {
         e.preventDefault();
-        if (this.state.loading) return;
+        if(this.state.loading) return;
 
-        if (!this.validateBasicInfoForm()) {
+        // 表单验证
+        if(!this.validateBasicInfoForm()) {
             return;
         }
 
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
-
         try {
             this.state.loading = true;
-            this.disableForm(this.$basicInfoForm, true);
+            this.disableForm(true);
 
-            // 添加用户ID
-            data.userId = this.state.userInfo.userId;
+            // 获取表单数据
+            const formData = new FormData(e.target);
+            const submitData = {
+                userId: formData.get('userId'),
+                username: formData.get('username'),
+                realName: formData.get('realName'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                departmentId: formData.get('departmentId'),  // 提交部门ID
+                roleId: formData.get('roleId')               // 提交角色ID
+            };
 
+            // 发送请求
             const response = await $.ajax({
                 url: '/api/users/profile',
                 method: 'PUT',
@@ -148,36 +166,76 @@ class Profile {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify(data)
+                data: JSON.stringify(submitData)
             });
 
-            if (response.code === 200) {
+            if(response.code === 200) {
+                // 更新本地状态
                 this.state.userInfo = {
                     ...this.state.userInfo,
                     ...response.data
                 };
+
                 NotifyUtil.success('个人信息更新成功');
                 this.updateUI();
             } else {
-                throw new Error(response.message || '更新失败');
+                throw new Error(response.msg || '更新失败');
             }
 
-        } catch (error) {
+        } catch(error) {
             console.error('更新个人信息失败:', error);
             NotifyUtil.error(error.message || '更新失败，请重试');
-
-            if (error.status === 401) {
-                setTimeout(() => {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('userInfo');
-                    window.location.href = '/pages/auth/login.html';
-                }, 1500);
-            }
         } finally {
             this.state.loading = false;
-            this.disableForm(this.$basicInfoForm, false);
+            this.disableForm(false);
         }
     }
+
+    /**
+     * 验证表单数据
+     * @returns {boolean} 验证结果
+     */
+    validateBasicInfoForm() {
+        const email = $('#email').val();
+        const phone = $('#phone').val();
+        const realName = $('#realName').val();
+
+        // 真实姓名验证
+        if(!realName || realName.length < 2) {
+            NotifyUtil.error('请输入有效的真实姓名');
+            return false;
+        }
+
+        // 邮箱格式验证
+        if(!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+            NotifyUtil.error('请输入有效的邮箱地址');
+            return false;
+        }
+
+        // 手机号验证
+        if(!/^1[3-9]\d{9}$/.test(phone)) {
+            NotifyUtil.error('请输入有效的手机号码');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 禁用/启用表单
+     * @param {boolean} disabled - 是否禁用
+     */
+    disableForm(disabled) {
+        this.$basicInfoForm.find('input,button').not('[readonly]').prop('disabled', disabled);
+        const $submitBtn = this.$basicInfoForm.find('[type="submit"]');
+
+        if(disabled) {
+            $submitBtn.html('<span class="spinner-border spinner-border-sm me-1"></span>提交中...');
+        } else {
+            $submitBtn.text('保存修改');
+        }
+    }
+
 
     /**
      * 绑定事件处理器
@@ -233,7 +291,7 @@ class Profile {
                     ...response.data
                 };
             } else {
-                throw new Error(response.message || '加载用户设置失败');
+                throw new Error(response.msg || '加载用户设置失败');
             }
         } catch (error) {
             console.error('加载用户设置失败:', error);
@@ -267,7 +325,8 @@ class Profile {
                 },
                 data: JSON.stringify({
                     oldPassword: data.currentPassword,
-                    newPassword: data.newPassword
+                    newPassword: data.newPassword,
+                    userId: this.state.userInfo.userId
                 })
             });
 
@@ -275,12 +334,12 @@ class Profile {
                 this.showSuccess('密码修改成功');
                 this.$passwordForm[0].reset();
             } else {
-                throw new Error(response.message || '修改失败');
+                throw new Error(response.msg || '修改失败');
             }
 
         } catch (error) {
             console.error('修改密码失败:', error);
-            this.showError(error.message || '修改失败，请重试');
+            this.showError(error.msg || '修改失败，请重试');
         } finally {
             this.state.loading = false;
             this.disableForm(this.$passwordForm, false);
@@ -294,7 +353,7 @@ class Profile {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (!file.type.startsWith('image/')) {
+        if (!file.type.startsWith('/images/')) {
             this.showError('请选择图片文件');
             return;
         }
@@ -344,7 +403,7 @@ class Profile {
                 this.avatarModal.hide();
                 this.showSuccess('头像更新成功');
             } else {
-                throw new Error(response.message || '上传失败');
+                throw new Error(response.msg || '上传失败');
             }
 
         } catch (error) {
@@ -378,7 +437,7 @@ class Profile {
                 this.state.settings[setting] = value;
                 this.showSuccess('设置已更新');
             } else {
-                throw new Error(response.message || '更新失败');
+                throw new Error(response.msg || '更新失败');
             }
 
         } catch (error) {
@@ -398,25 +457,7 @@ class Profile {
         this.avatarModal.show();
     }
 
-    /**
-     * 验证基本信息表单
-     */
-    validateBasicInfoForm() {
-        const email = $('#email').val();
-        const phone = $('#phone').val();
 
-        if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-            this.showError('请输入有效的邮箱地址');
-            return false;
-        }
-
-        if (!/^1[3-9]\d{9}$/.test(phone)) {
-            this.showError('请输入有效的手机号码');
-            return false;
-        }
-
-        return true;
-    }
 
     /**
      * 验证密码表单
@@ -440,18 +481,6 @@ class Profile {
         return true;
     }
 
-    /**
-     * 禁用/启用表单
-     */
-    disableForm($form, disabled) {
-        $form.find('input,button').prop('disabled', disabled);
-        const $submitBtn = $form.find('[type="submit"]');
-        if (disabled) {
-            $submitBtn.html('<span class="spinner-border spinner-border-sm"></span> 提交中...');
-        } else {
-            $submitBtn.text('保存');
-        }
-    }
 
 
     showSuccess(message) {
@@ -487,6 +516,12 @@ class Profile {
         this.$uploadBtn = null;
     }
 }
+
+
+
+
+
+
 
 // 页面加载完成后初始化
 $(document).ready(() => {

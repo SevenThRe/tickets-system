@@ -198,9 +198,10 @@
       select
           <include refid="Base_Column_List" />
       from t_ticket
-        where create_by = #{userId,jdbcType=BIGINT}
+        where create_by = #{queryDTO.userId,jdbcType=BIGINT}
         and is_deleted = 0
-        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
+        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">
+            and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
         <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>
         <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
         <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
@@ -213,7 +214,7 @@
       select
             <include refid="Base_Column_List" />
       from t_ticket
-        where processor_id = #{userId,jdbcType=BIGINT}
+        where processor_id = #{queryDTO.userId,jdbcType=BIGINT}
         and is_deleted = 0
         <if test="queryDTO.keyword != null and queryDTO.keyword != ''">and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
         <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>

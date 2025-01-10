@@ -60,6 +60,24 @@
 .priority-high { background-color: #dc3545; }
 .priority-medium { background-color: #ffc107; }
 .priority-low { background-color: #28a745; }
+/* 搜索表单样式优化 */
+.search-form {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: #80bdff;
+}
+
+.date-range-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
 
 /* 表格样式优化 */
 .table th {
@@ -161,17 +179,55 @@
 .attachment-item i {
     margin-right: 0.5rem;
 }
+/* 工单表格样式 */
+.ticket-code {
+    font-family: monospace;
+    color: #666;
+}
 
-/* 按钮样式优化 */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+.priority-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.priority-high {
+    background-color: #dc3545;
+}
+
+.priority-medium {
+    background-color: #ffc107;
+}
+
+.priority-low {
+    background-color: #28a745;
+}
+
+/* 状态徽章样式优化 */
+.badge {
+    padding: 0.4em 0.6em;
     font-weight: 500;
 }
 
-.btn i {
-    font-size: 1.1em;
+/* 表格行样式优化 */
+.table > tbody > tr {
+    transition: background-color 0.2s;
+}
+
+.table > tbody > tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* 操作按钮组样式 */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn .bi {
+    font-size: 0.875rem;
 }
 
 /* 模态框样式优化 */
@@ -182,6 +238,27 @@
 
 .modal-footer {
     border-top-color: var(--border-color);
+}
+/* 工单列表样式 */
+.priority-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.priority-high { background-color: #dc3545; }
+.priority-medium { background-color: #ffc107; }
+.priority-low { background-color: #28a745; }
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.table td {
+    vertical-align: middle;
 }
 
 /* 加载状态样式 */

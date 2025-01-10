@@ -280,13 +280,13 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public List<Ticket> getMyTickets(Long userId, TicketQueryDTO queryDTO) {
-        return ticketMapper.getMyTickets(userId, queryDTO);
+    public List<Ticket> getMyTickets (TicketQueryDTO queryDTO) {
+        return ticketMapper.getMyTickets(queryDTO);
     }
 
     @Override
-    public List<Ticket> getTodoTickets(Long userId, TicketQueryDTO queryDTO) {
-        return ticketMapper.getTodoTickets(userId, queryDTO);
+    public List<Ticket> getTodoTickets(TicketQueryDTO queryDTO) {
+        return ticketMapper.getTodoTickets(queryDTO);
     }
 
     @Override
@@ -358,9 +358,6 @@ public class TicketServiceImpl implements TicketService {
     }
 
 
-    public UserMapper getUserMapper() {
-        return userMapper;
-    }
 
     @Override
     public List<TicketRecentDTO> selectRecentTickets(TicketQueryDTO queryDTO) {
