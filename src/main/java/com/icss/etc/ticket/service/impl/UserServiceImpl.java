@@ -27,7 +27,7 @@ public class UserServiceImpl implements UserService{
     private UserRoleMapper userRoleMapper;
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int register(RegisteredDTO user) {
+    public int register(RegisteredDTO user)  {
         int count =0;
         try {
             count = userMapper.register(user);
@@ -36,10 +36,11 @@ public class UserServiceImpl implements UserService{
             Long userId = userMapper.login(user.getUsername());
             count += userRoleMapper.insert(new UserRole(userId, user.getRoleId()));
             if (count != 2) {
-                throw new Exception("register failed");
+                throw new RuntimeException("register failed");
             }
-        } catch (Exception e) {
-            log.error(this.getClass().getSimpleName()+ "register rollback :" + user.getUsername() + " count: " + count);
+        } catch (Exception ignored) {
+            log.error(this.getClass().getSimpleName()+ "user register failed :" + user.getUsername());
+            throw ignored;
         }
         return count;
     }
@@ -66,6 +67,29 @@ public class UserServiceImpl implements UserService{
     @Override
     public int updateByPrimaryKey(UserPasswordDTO record) {
         return userMapper.updateByPrimaryKey(record);
+    }
+
+    //修改个人基本信息
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int updateByPrimaryKeySelective(User record) {
+        if (record == null || record.getUserId() == null) {
+            log.warn("Invalid user record for update: {}", record);
+            throw new IllegalArgumentException("User record or userId cannot be null");
+        }
+        // Log before update
+        log.info("Updating user with id: {}", record.getUserId());
+
+        int result = userMapper.updateByPrimaryKeySelective(record);
+
+        // Log after update
+        if (result > 0) {
+            log.info("Successfully updated user with id: {}", record.getUserId());
+        } else {
+            log.warn("Failed to update user with id: {}", record.getUserId());
+        }
+
+        return result;
     }
 
     @Override
