@@ -149,7 +149,6 @@ class TicketManagement {
         $('#assigneeFilter').on('change', (e) => {
             // 将处理人ID保存到过滤条件
             this.state.filters.processorId = e.target.value;
-
         });
 
         // 绑定状态切换事件
@@ -177,7 +176,7 @@ class TicketManagement {
     async _loadDepartments() {
         try {
             const response = await $.ajax({
-                url: '/api/departments/selectAll',
+                url: '/api/departments/list',
                 method: 'GET'
             });
 
@@ -221,12 +220,8 @@ class TicketManagement {
 
             if(response.code === 200) {
                 this.state.assignees = response.data;
-                if (this.state.assignees.length === 0) {
-                    $('#assigneeFilter').html('<option value="">暂无处理人</option>')
-                    return;
-                }
                 const options = response.data.map(user =>
-                    `<option value="${user.userId}">${user.realName}</option>`
+                    `<option value="${user.userId}">${user.username}</option>`
                 ).join('');
 
                 // 保存初始选项以供重置使用
@@ -494,43 +489,66 @@ class TicketManagement {
 
 
 
-    // 重新写在上面了 但是为了bug修复，先保留原来的代码
-    // /**
-    //  * 渲染工单详情
-    //  * @param {Object} ticket - 工单详情数据
-    //  */
-    // renderTicketDetail(ticket) {
-    //     if (!ticket) return;
-    //
-    //     // 基本信息渲染
-    //     $('#ticketCode').text(ticket.ticketCode || '-');
-    //     $('#ticketTitle').text(ticket.title);
-    //     $('#ticketContent').text(ticket.content);
-    //     $('#createTime').text(this.formatDate(ticket.createTime));
-    //     $('#expectFinishTime').text(this.formatDate(ticket.expectFinishTime));
-    //     $('#departmentName').text(ticket.departmentName || '-');
-    //     $('#processorName').text(ticket.processorName || '-');
-    //
-    //     // 状态渲染
-    //     $('#ticketStatus').html(`
-    //         <span class="ticket-status status-${ticket.status.toLowerCase()}">
-    //             ${this.STATUS_MAP[ticket.status]}
-    //         </span>
-    //     `);
-    //
-    //     // 优先级渲染
-    //     $('#ticketPriority').html(`
-    //         <span class="priority-badge priority-${this.getPriorityClass(ticket.priority)}">
-    //             ${this.getPriorityText(ticket.priority)}
-    //         </span>
-    //     `);
-    //
-    //     // 处理记录渲染
-    //     this.renderProcessRecords(ticket.records || []);
-    //
-    //     // 更新操作按钮状态
-    //     this.updateActionButtons(ticket.status);
-    // }
+
+    /**
+     * 显示工单详情
+     * @param {number} ticketId - 工单ID
+     * @returns {Promise<void>}
+     */
+    async showTicketDetail(ticketId) {
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${ticketId}`,
+                method: 'GET'
+            });
+
+            if (response.code === 200) {
+                this.state.currentTicket = response.data;
+                this.renderTicketDetail(response.data);
+                this.elements.ticketDetail.addClass('show');
+            }
+        } catch (error) {
+            console.error('加载工单详情失败:', error);
+            this.showError('加载详情失败');
+        }
+    }
+
+    /**
+     * 渲染工单详情
+     * @param {Object} ticket - 工单详情数据
+     */
+    renderTicketDetail(ticket) {
+        if (!ticket) return;
+
+        // 基本信息渲染
+        $('#ticketCode').text(ticket.ticketCode || '-');
+        $('#ticketTitle').text(ticket.title);
+        $('#ticketContent').text(ticket.content);
+        $('#createTime').text(this.formatDate(ticket.createTime));
+        $('#expectFinishTime').text(this.formatDate(ticket.expectFinishTime));
+        $('#departmentName').text(ticket.departmentName || '-');
+        $('#processorName').text(ticket.processorName || '-');
+
+        // 状态渲染
+        $('#ticketStatus').html(`
+            <span class="ticket-status status-${ticket.status.toLowerCase()}">
+                ${this.STATUS_MAP[ticket.status]}
+            </span>
+        `);
+
+        // 优先级渲染
+        $('#ticketPriority').html(`
+            <span class="priority-badge priority-${this.getPriorityClass(ticket.priority)}">
+                ${this.getPriorityText(ticket.priority)}
+            </span>
+        `);
+
+        // 处理记录渲染
+        this.renderProcessRecords(ticket.records || []);
+
+        // 更新操作按钮状态
+        this.updateActionButtons(ticket.status);
+    }
 
     /**
      * 渲染处理记录时间线

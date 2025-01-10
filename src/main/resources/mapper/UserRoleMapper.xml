@@ -24,7 +24,7 @@
     <!--@mbg.generated-->
     insert into t_user_role (user_id, role_id, create_time
       )
-    values (#{userId,jdbcType=BIGINT}, #{roleId,jdbcType=BIGINT}, #{createTime,jdbcType=TIMESTAMP}
+    values (#{userId,jdbcType=BIGINT}, #{roleId,jdbcType=BIGINT}, default
       )
   </insert>
   <insert id="insertSelective" parameterType="com.icss.etc.ticket.entity.UserRole">

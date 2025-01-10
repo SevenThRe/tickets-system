@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
  */
 @Data
 public class TicketQueryDTO {
+    private Long userId;
     private String keyword;
     private Long processorId;
     private Long departmentId;

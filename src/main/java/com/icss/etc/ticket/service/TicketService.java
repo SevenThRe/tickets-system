@@ -3,14 +3,13 @@ package com.icss.etc.ticket.service;
 import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.entity.TicketRecord;
 import com.icss.etc.ticket.entity.dto.*;
-import com.icss.etc.ticket.entity.dto.ticket.TicketExportDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketQueryDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketTrendDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketTypeStatsDTO;
+import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketVO;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @ClassName TicketService
@@ -194,4 +193,7 @@ public interface TicketService {
      * @return 影响行数
      */
     int addRecord(TicketRecord record);
+
+    //最近工单
+    List<TicketRecentDTO> selectRecentTickets(TicketQueryDTO queryDTO);
 }
