@@ -48,6 +48,6 @@ public class UserController {
      * @param userId 用户ID
      * @return 用户信息
      */
-    @GetMapping("/current")
+
 
 }
