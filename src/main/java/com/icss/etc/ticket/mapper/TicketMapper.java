@@ -2,13 +2,12 @@ package com.icss.etc.ticket.mapper;
 
 import com.icss.etc.ticket.entity.Ticket;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import com.icss.etc.ticket.entity.dto.*;
-import com.icss.etc.ticket.entity.dto.ticket.TicketExportDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketQueryDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketTrendDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketTypeStatsDTO;
+import com.icss.etc.ticket.entity.dto.ticket.*;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -160,4 +159,8 @@ public interface TicketMapper {
      * @return 工单列表
      */
     List<TicketExportDTO> selectForExport(TicketQueryDTO queryDTO);
+
+    //最近工单
+    List<TicketRecentDTO> selectRecentTickets(TicketQueryDTO queryDTO);
+
 }

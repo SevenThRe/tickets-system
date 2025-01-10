@@ -69,6 +69,29 @@ public class UserServiceImpl implements UserService{
         return userMapper.updateByPrimaryKey(record);
     }
 
+    //修改个人基本信息
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int updateByPrimaryKeySelective(User record) {
+        if (record == null || record.getUserId() == null) {
+            log.warn("Invalid user record for update: {}", record);
+            throw new IllegalArgumentException("User record or userId cannot be null");
+        }
+        // Log before update
+        log.info("Updating user with id: {}", record.getUserId());
+
+        int result = userMapper.updateByPrimaryKeySelective(record);
+
+        // Log after update
+        if (result > 0) {
+            log.info("Successfully updated user with id: {}", record.getUserId());
+        } else {
+            log.warn("Failed to update user with id: {}", record.getUserId());
+        }
+
+        return result;
+    }
+
     @Override
     public User getUserInfo(Long userId) {
         return userMapper.getUserInfo(userId);

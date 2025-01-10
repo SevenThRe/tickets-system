@@ -339,4 +339,10 @@
         where ticket_id = #{ticketId,jdbcType=BIGINT}
         and is_deleted = 0
     </update>
+
+    <select id="selectRecentTickets" parameterType="com.icss.etc.ticket.entity.dto.ticket.TicketQueryDTO" resultType="com.icss.etc.ticket.entity.dto.ticket.TicketRecentDTO">
+        select ticket_id,title,create_by,status,priority,create_time from t_ticket
+                                                                     where is_deleted = 0
+        order by create_time desc
+    </select>
 </mapper>

@@ -4,12 +4,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.Ticket;
-import com.icss.etc.ticket.entity.dto.ticket.CloseTicketRequest;
-import com.icss.etc.ticket.entity.dto.ticket.ProcessTicketRequest;
-import com.icss.etc.ticket.entity.dto.ticket.TransferTicketRequest;
-import com.icss.etc.ticket.entity.dto.ticket.TicketExportDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketQueryDTO;
-import com.icss.etc.ticket.entity.dto.ticket.TicketTrendDTO;
+import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketVO;
 import com.icss.etc.ticket.enums.TicketEnum;
 import com.icss.etc.ticket.enums.TicketStatus;
@@ -17,12 +12,14 @@ import com.icss.etc.ticket.service.TicketService;
 import com.icss.etc.ticket.util.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 @RestController
 @RequestMapping("/tickets")
@@ -185,5 +182,20 @@ public class TicketController {
         return R.OK(ticketService.getTrendStats(deptId, days));
     }
 
+    @GetMapping("/recent")
+    public R recentTickets(TicketQueryDTO queryDTO) {
+        if(queryDTO.getPageNum()==null){
+            return  R.FAIL(TicketEnum.TICKET_NOT_EXIST);
+        }else {
+            PageHelper.startPage(queryDTO.getPageNum(), queryDTO.getPageSize(), true);
+            List<TicketRecentDTO> list = ticketService.selectRecentTickets(queryDTO);
+            PageInfo<TicketRecentDTO> pageInfo = new PageInfo<>(list);
+
+            Map<String, Object> map1 = new HashMap<>();
+            map1.put("list", list);
+            map1.put("total", pageInfo.getPages());
+            return R.OK(map1);
+        }
+    }
 
 }

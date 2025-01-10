@@ -17,11 +17,14 @@ import com.icss.etc.ticket.mapper.UserMapper;
 import com.icss.etc.ticket.service.TicketService;
 import com.icss.etc.ticket.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -187,6 +190,7 @@ public class TicketServiceImpl implements TicketService {
     public int addRecord(TicketRecord record) {
         return ticketRecordMapper.insert(record);
     }
+
 
 
 
@@ -356,5 +360,11 @@ public class TicketServiceImpl implements TicketService {
 
     public UserMapper getUserMapper() {
         return userMapper;
+    }
+
+    @Override
+    public List<TicketRecentDTO> selectRecentTickets(TicketQueryDTO queryDTO) {
+
+        return ticketMapper.selectRecentTickets(queryDTO);
     }
 }
