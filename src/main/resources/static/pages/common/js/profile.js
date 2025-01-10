@@ -35,6 +35,49 @@ class Profile {
         this.init();
     }
 
+    async loadUserInfo() {
+        try {
+            // 从localStorage获取用户信息
+            const storedUserInfo = localStorage.getItem('userInfo');
+            if (!storedUserInfo) {
+                window.location.href = '/pages/auth/login.html';
+                return;
+            }
+
+            // 解析存储的用户信息
+            this.state.userInfo = JSON.parse(storedUserInfo);
+
+            // 同步更新到服务器获取最新信息
+            const response = await $.ajax({
+                url: '/api/users/current',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.code === 200) {
+                // 更新本地存储的用户信息
+                this.state.userInfo = {
+                    ...this.state.userInfo,
+                    ...response.data
+                };
+                localStorage.setItem('userInfo', JSON.stringify(this.state.userInfo));
+            } else {
+                throw new Error(response.message || '加载用户信息失败');
+            }
+        } catch (error) {
+            console.error('加载用户信息失败:', error);
+            if (error.status === 401) {
+                // token过期或无效，跳转到登录页
+                localStorage.removeItem('token');
+                localStorage.removeItem('userInfo');
+                window.location.href = '/pages/auth/login.html';
+            }
+            throw error;
+        }
+    }
+
     /**
      * 绑定事件处理器
      */
@@ -52,6 +95,7 @@ class Profile {
         $('input[type="checkbox"]').on('change', (e) => this.handleSettingChange(e));
     }
 
+
     /**
      * 初始化
      */
@@ -68,28 +112,36 @@ class Profile {
         }
     }
 
-    /**
-     * 加载用户信息
-     */
-    async loadUserInfo() {
-        try {
-            const response = await $.ajax({
-                url: '/api/users/current',
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
+    updateUI() {
+        const { userInfo } = this.state;
+        if (!userInfo) return;
 
-            if (response.code === 200) {
-                this.state.userInfo = response.data;
-            } else {
-                throw new Error(response.message || '加载用户信息失败');
+        // 更新基本信息显示
+        $('#userName').text(userInfo.realName || userInfo.username);
+        $('#userRole').text(userInfo.roleName || '普通用户');
+        $('#userAvatar').attr('src', userInfo.avatar || '/images/default-avatar.png');
+
+        // 填充基本信息表单
+        const basicInfoFields = [
+            'username',
+            'realName',
+            'email',
+            'phone',
+            'departmentName',
+            'roleName'
+        ];
+
+        basicInfoFields.forEach(field => {
+            const $input = this.$basicInfoForm.find(`[name="${field}"]`);
+            if ($input.length) {
+                $input.val(userInfo[field] || '');
             }
-        } catch (error) {
-            console.error('加载用户信息失败:', error);
-            throw error;
-        }
+        });
+
+        // 更新设置开关状态
+        Object.entries(this.state.settings).forEach(([key, value]) => {
+            $(`#${key}`).prop('checked', value);
+        });
     }
 
     /**
@@ -118,32 +170,6 @@ class Profile {
             throw error;
         }
     }
-
-    /**
-     * 更新UI显示
-     */
-    updateUI() {
-        const { userInfo } = this.state;
-
-        // 更新用户基本信息
-        $('#userName').text(userInfo.realName);
-        $('#userRole').text(userInfo.roleName);
-        $('#userAvatar').attr('src', userInfo.avatar || '/images/default-avatar.png');
-
-        // 填充表单
-        this.$basicInfoForm.find('input').each((_, input) => {
-            const name = input.name;
-            if (name in userInfo) {
-                $(input).val(userInfo[name]);
-            }
-        });
-
-        // 更新设置开关状态
-        Object.entries(this.state.settings).forEach(([key, value]) => {
-            $(`#${key}`).prop('checked', value);
-        });
-    }
-
     /**
      * 处理基本信息提交
      */
@@ -173,10 +199,13 @@ class Profile {
             });
 
             if (response.code === 200) {
+                // 更新本地存储的用户信息
                 this.state.userInfo = {
                     ...this.state.userInfo,
                     ...response.data
                 };
+                localStorage.setItem('userInfo', JSON.stringify(this.state.userInfo));
+
                 this.showSuccess('个人信息更新成功');
                 this.updateUI();
             } else {
@@ -186,6 +215,15 @@ class Profile {
         } catch (error) {
             console.error('更新个人信息失败:', error);
             this.showError(error.message || '更新失败，请重试');
+
+            if (error.status === 401) {
+                // token过期处理
+                setTimeout(() => {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userInfo');
+                    window.location.href = '/pages/auth/login.html';
+                }, 1500);
+            }
         } finally {
             this.state.loading = false;
             this.disableForm(this.$basicInfoForm, false);
@@ -405,24 +443,13 @@ class Profile {
         }
     }
 
-    /**
-     * 显示成功提示
-     */
+    // 在 Profile 类中
     showSuccess(message) {
-        $.notify(message, {
-            className: 'success',
-            position: 'top right'
-        });
+        NotifyUtil.success(message);
     }
 
-    /**
-     * 显示错误提示
-     */
     showError(message) {
-        $.notify(message, {
-            className: 'error',
-            position: 'top right'
-        });
+        NotifyUtil.error(message);
     }
 
     /**

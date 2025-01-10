@@ -83,7 +83,7 @@ class Navbar {
                     id: 'users',
                     title: '用户管理',
                     icon: 'bi bi-people',
-                    url: '/pages/pages/admin/user-management.html'
+                    url: '/pages/admin/user-management.html'
                 },
                 {
                     id: 'departments',
@@ -243,41 +243,35 @@ class Navbar {
      */
     _renderLogo() {
         return `
-            <li class="navbar-logo">
-                <a class="navbar-item-inner">
-                    <i class="bi bi-kanban navbar-logo-icon"></i>
-                    <span class="navbar-logo-text">工单系统</span>
-                </a>
-            </li>
-        `;
+        <li class="navbar-logo">
+            <a class="navbar-item-inner">
+                <i class="bi bi-kanban navbar-logo-icon"></i>
+                <span class="navbar-logo-text">工单系统</span>
+            </a>
+        </li>
+    `;
     }
 
-    /**
-     * 渲染菜单项
-     */
     _renderMenuItems() {
         return this.state.userMenus.map(menu => `
-            <li class="navbar-item ${menu.id === this.state.activeMenu ? 'active' : ''}">
-                <a class="navbar-item-inner" href="${menu.url}">
-                    <i class="${menu.icon} navbar-item-icon"></i>
-                    <span class="navbar-item-text">${menu.title}</span>
-                </a>
-            </li>
-        `).join('');
+        <li class="navbar-item ${menu.id === this.state.activeMenu ? 'active' : ''}">
+            <a class="navbar-item-inner" href="${menu.url}">
+                <i class="${menu.icon} navbar-item-icon"></i>
+                <span class="navbar-item-text">${menu.title}</span>
+            </a>
+        </li>
+    `).join('');
     }
 
-    /**
-     * 渲染登出按钮
-     */
     _renderLogoutButton() {
         return `
-            <li class="navbar-item mt-auto">
-                <a class="navbar-item-inner" href="#" id="logoutBtn">
-                    <i class="bi bi-box-arrow-right navbar-item-icon"></i>
-                    <span class="navbar-item-text">退出登录</span>
-                </a>
-            </li>
-        `;
+        <li class="navbar-item mt-auto">
+            <a class="navbar-item-inner" href="#" id="logoutBtn">
+                <i class="bi bi-box-arrow-right navbar-item-icon"></i>
+                <span class="navbar-item-text">退出登录</span>
+            </a>
+        </li>
+    `;
     }
 
     /**
