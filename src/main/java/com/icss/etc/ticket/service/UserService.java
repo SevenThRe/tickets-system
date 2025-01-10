@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface UserService {
     //  注册
-    int register(RegisteredDTO user);
+    int register(RegisteredDTO user) ;
 
     //登陆
     UserViewBackDTO login(String username);
