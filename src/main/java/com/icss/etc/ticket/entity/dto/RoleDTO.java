@@ -11,8 +11,8 @@ package com.icss.etc.ticket.entity.dto;
 
 
 public record RoleDTO(
-        Integer pageSize,
         Integer pageNumber,
+        Integer pageSize,
         String keyword
 ) {
 }
