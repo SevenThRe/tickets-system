@@ -27,7 +27,7 @@ public interface UserMapper {
     int register(RegisteredDTO user);
 
     //登陆
-    User login(@Param("username") String username);
+    Long login(@Param("username") String username);
 
     User selectByPrimaryKey(@Param("user_id") Long user_id);
 
@@ -102,4 +102,6 @@ public interface UserMapper {
     List<String> getUsernames();
 
     User getUserInfo(Long userId);
+
+    User selectByUsername(String username);
 }

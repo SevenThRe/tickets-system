@@ -154,79 +154,23 @@ class Register {
         this.$roleSelect.append(options);
     }
 
-    // 处理表单提交
-    async _handleSubmit(e) {
-        e.preventDefault();
-        if(this.isSubmitting) return;
-
-        if(!this._validateForm()) {
-            return;
-        }
-
-        try {
-            this.isSubmitting = true;
-            this._setSubmitting(true);
-
-            const formData = this._getFormData();
-
-            const response = await $.ajax({
-                url: '/api/auth/register',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(formData)
-            });
-
-            if(response.code === 200) {
-                this._showSuccess('注册成功!');
-                setTimeout(() => {
-                    window.location.href = '/login.html';
-                }, 1500);
-            } else {
-                throw new Error(response.message);
-            }
-
-        } catch(error) {
-            this._showError(error.message || '注册失败');
-        } finally {
-            this.isSubmitting = false;
-            this._setSubmitting(false);
-        }
-    }
-
-    // 获取表单数据
-    _getFormData() {
-        return {
-            username: this.$username.val().trim(),
-            password: this.$password.val(),
-            realName: this.$realName.val().trim(),
-            email: this.$email.val().trim(),
-            phone: this.$phone.val().trim(),
-            roleId: this.$roleSelect.val()
-        };
-    }
-
-    // 表单验证
-    _validateForm() {
-        let isValid = true;
-
-        // 验证所有字段
-        Object.keys(this.validationRules).forEach(field => {
-            if(!this.validateField(field)) {
-                isValid = false;
-            }
-        });
-
-        return isValid;
-    }
 
     // 字段验证
     validateField(field) {
-        const $field = this[`$${field}`];
+        let $field;
+        // 特殊处理roleId字段
+        if (field === 'roleId') {
+            $field = this.$roleSelect;
+        } else {
+            $field = this[`$${field}`];
+        }
+
         if (!$field || $field.length === 0) {
             console.error(`Field ${field} not found`);
             return false;
         }
-        const value = $field.val().trim();
+
+        const value = $field.val()?.trim() || '';
         const rules = this.validationRules[field];
         let errorMessage = '';
 
@@ -275,6 +219,73 @@ class Register {
         if(field === 'username' && isValid) {
             return this._checkUsernameUnique(value);
         }
+
+        return isValid;
+    }
+
+    // 处理表单提交
+    async _handleSubmit(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if(this.isSubmitting) return;
+
+        if(!this._validateForm()) {
+            return;
+        }
+
+        try {
+            this.isSubmitting = true;
+            this._setSubmitting(true);
+
+            const formData = this._getFormData();
+
+            const response = await $.ajax({
+                url: '/api/auth/register',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData)
+            });
+
+            if(response.code === 200) {
+                this._showSuccess('注册成功!');
+                setTimeout(() => {
+                    window.location.href = '/pages/auth/login.html';
+                }, 1500);
+            } else {
+                throw new Error(response.message);
+            }
+
+        } catch(error) {
+            this._showError(error.message || '注册失败');
+        } finally {
+            this.isSubmitting = false;
+            this._setSubmitting(false);
+        }
+    }
+
+    // 获取表单数据
+    _getFormData() {
+        return {
+            username: this.$username.val().trim(),
+            password: this.$password.val(),
+            realName: this.$realName.val().trim(),
+            email: this.$email.val().trim(),
+            phone: this.$phone.val().trim(),
+            roleId: this.$roleSelect.val()
+        };
+    }
+
+    // 表单验证
+    _validateForm() {
+        let isValid = true;
+
+        // 验证所有字段
+        Object.keys(this.validationRules).forEach(field => {
+            if(!this.validateField(field)) {
+                isValid = false;
+            }
+        });
 
         return isValid;
     }
@@ -330,21 +341,52 @@ class Register {
         this.$form.find('input, select').prop('disabled', isSubmitting);
     }
 
-    // 显示成功提示
+
+    /**
+     * 显示成功提示
+     * @param {string} message - 成功消息
+     * @private
+     */
     _showSuccess(message) {
-        $.notify({
-            message: message,
-            type: 'success'
-        });
+        this._showNotification(message, 'success');
     }
 
-    // 显示错误提示
+    /**
+     * 显示错误提示
+     * @param {string} message - 错误消息
+     * @private
+     */
     _showError(message) {
-        $.notify({
-            message: message,
-            type: 'danger'
-        });
+        this._showNotification(message, 'danger');
     }
+
+    /**
+     * 显示通知
+     * @param {string} message - 消息内容
+     * @param {string} type - 消息类型 ('success' | 'danger')
+     * @private
+     */
+    _showNotification(message, type) {
+        // 移除已有的通知
+        $('.notification-alert').remove();
+
+        // 创建新的通知元素
+        const $notification = $(`
+            <div class="notification-alert alert alert-${type} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 1050;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `);
+
+        // 添加到页面
+        $('body').append($notification);
+
+        // 3秒后自动消失
+        setTimeout(() => {
+            $notification.alert('close');
+        }, 3000);
+    }
+
 
     // 防抖函数
     _debounce(func, wait) {

@@ -9,8 +9,6 @@ class RoleManagement {
      */
     constructor() {
         // 验证必要的DOM元素
-        this._validateDOMElements();
-
         // 缓存DOM元素引用
         this.$roleList = $('#roleList');
         this.$permissionTree = $('#permissionTree');

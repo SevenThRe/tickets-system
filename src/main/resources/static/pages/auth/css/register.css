@@ -24,6 +24,24 @@ body{
     border-radius: 20px;
     background-color: #F0F8FF;
 }
+.notification-alert {
+    min-width: 250px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 .register-box{
     float: left;
     margin: 15px;

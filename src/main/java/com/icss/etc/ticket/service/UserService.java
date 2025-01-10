@@ -15,7 +15,7 @@ public interface UserService {
     int register(RegisteredDTO user);
 
     //登陆
-    User login(String username);
+    UserViewBackDTO login(String username);
 
     User selectByPrimaryKey(@Param("user_id") Long user_id);
 
@@ -59,4 +59,6 @@ public interface UserService {
     void logout(User user);
 
     List<String> getUsernames();
+
+    User selectByUsername(String username);
 }

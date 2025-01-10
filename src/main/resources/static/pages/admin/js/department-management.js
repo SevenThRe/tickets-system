@@ -529,7 +529,7 @@ class DepartmentManagement {
                 <div class="card member-card">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-2">
-                            <div class="member-avatar me-2">
+                            <div class="member-avatar me-2" style="background-image: url(${member.avatarUrl || 'images/default-avatar.png'});">
                                 <i class="bi bi-person-circle fs-4"></i>
                             </div>
                             <div>

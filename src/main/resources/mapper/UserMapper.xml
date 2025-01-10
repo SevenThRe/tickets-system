@@ -50,8 +50,8 @@
   </insert>
 
   <!--  登陆-->
-  <select id="login" resultMap="BaseResultMap">
-    select * from t_user where username = #{username}
+  <select id="login" resultType="java.lang.Long" parameterType="java.lang.String">
+    select user_id from t_user where username = #{username} and is_deleted = 0 and status = 1
   </select>
 
   <sql id="Base_Column_List">
@@ -60,11 +60,11 @@
     is_deleted, create_by, update_by, create_time, update_time
   </sql>
 
-  <select id="selectUserInfo" parameterType="com.icss.etc.ticket.entity.vo.UserViewBackDTO">
+  <select id="selectUserInfo" resultType="com.icss.etc.ticket.entity.vo.UserViewBackDTO">
     <!--@mbg.generated-->
     select
-        u.user_id,
-    u.username,u.real_name,u.phone,d.department_name,r.role_name
+        u.user_id,u.password,
+    u.username,u.real_name,u.phone,d.department_name,r.role_name,r.base_role_code
     from t_user u,t_role r,t_department d,t_user_role ur
     where u.department_id = d.department_id
       and u.user_id = #{user_id}
@@ -411,12 +411,16 @@
     select
         <include refid="Base_Column_List"/>
         from t_user
-    where user_id = #{userId,jdbcType=BIGINT}
+    where user_id = #{user_id,jdbcType=BIGINT}
     and is_deleted = 0 and status = 1
 
   </select>
 
   <select id="getUserInfo" resultMap="BaseResultMap">
     select * from t_user where user_id = #{userId} and is_deleted = 0 and status = 1
+  </select>
+
+  <select id="selectByUsername" resultMap="BaseResultMap">
+    select * from t_user where username = #{username}
   </select>
 </mapper>

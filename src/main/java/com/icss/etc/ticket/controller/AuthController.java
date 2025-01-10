@@ -4,6 +4,7 @@ import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
 import com.icss.etc.ticket.entity.dto.AuthDTO;
+import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.service.UserService;
 import com.icss.etc.ticket.util.JWTUtils;
@@ -21,8 +22,8 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/register")
-    public R register(@ModelAttribute RegisteredDTO user) {
-        if(userService.login(user.getUsername())!=null){
+    public R register(@RequestBody RegisteredDTO user) {
+        if(userService.selectByUsername(user.getUsername()) != null){
             return R.FAIL(CodeEnum.USERNAME_EXIST);
         }
         user.setPassword( MD5Util.getMD5(user.getPassword()));
@@ -36,10 +37,9 @@ public class AuthController {
 
     @RequestMapping("/login")
     public R login(@RequestBody AuthDTO user) {
-        User u = userService.login(user.username());
-        String newpass = user.password();
-        if (u != null && u.getPassword().equals(newpass)) {
-            String token = JWTUtils.generToken(u.getUserId().toString(), "AccessToken", u.getPassword());
+        UserViewBackDTO u = userService.login(user.username());
+        if (u != null && u.getPassword().equals(MD5Util.getMD5(user.password()))) {
+            String token = JWTUtils.generToken(u.getUserId().toString(), "AuthToken", u.getPassword());
             Map<String, Object> map = new HashMap<>();
             map.put("token", token);
             u.setPassword("");

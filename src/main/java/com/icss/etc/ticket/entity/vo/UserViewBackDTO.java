@@ -8,10 +8,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserViewBackDTO {
-    private String userName;
+    private String username;
     private Long userId;
     private String realName;
     private String phone;
     private String departmentName;
     private String roleName;
+    private String password;
+    private String baseRoleCode;
 }

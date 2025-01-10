@@ -1,204 +1,31 @@
 /**
- * navbar.js
- * 导航栏组件配置和实现
+ * Navbar 类 - 导航栏组件实现
  */
-class Navbar extends BaseComponent {
-    constructor(options) {
-        super(options);
+class Navbar {
+    constructor(element) {
+        // DOM 元素引用
+        this.container = $(element);
 
         // 状态管理
         this.state = {
-            expanded: true,              // 是否展开
-            activeMenu: null,             // 当前激活菜单
-            currentUser: null,            // 当前用户信息
-            userMenus: [],                // 用户菜单列表
-            loading: false,               // 加载状态
-            isMobile: window.innerWidth <= 768  // 是否移动端
+            expanded: true,
+            activeMenu: null,
+            currentUser: null,
+            userMenus: [],
+            loading: false,
+            isMobile: window.innerWidth <= 768
         };
 
-        window.addEventListener('resize', this._handleResize.bind(this));
+        // 绑定方法到实例
+        this._handleResize = this._handleResize.bind(this);
+        this._handleLogout = this._handleLogout.bind(this);
 
-        // 初始化事件绑定
-        this._bindEvents();
-        // 监听Logo更新事件
-        window.eventBus.on('system:logoUpdated', () => {
-            this.render();
-        });
+        // 初始化
+        this.init();
     }
 
     /**
-     * 绑定事件
-     * @private
-     */
-    _bindEvents() {
-        // 切换导航栏展开状态
-        document.addEventListener('click', (e) => {
-            const navbar = document.getElementById('navbar');
-            const toggleBtn = document.getElementById('navbarToggle');
-            const isMobile = window.innerWidth <= 768;
-
-            // 处理移动端导航栏切换
-            if (toggleBtn && toggleBtn.contains(e.target)) {
-                this.state.expanded = !this.state.expanded;
-                this._updateNavbarState();
-                return;
-            }
-
-            // 移动端点击外部区域收起导航栏
-            if (isMobile && navbar && !navbar.contains(e.target)) {
-                this.state.expanded = false;
-                this._updateNavbarState();
-            }
-        });
-
-        // 监听窗口大小变化
-        window.addEventListener('resize', () => {
-            const isMobile = window.innerWidth <= 768;
-            if (isMobile) {
-                this.state.expanded = false;
-                this._updateNavbarState();
-            }
-        });
-    }
-
-    /**
-     * 更新导航栏状态
-     * @private
-     */
-    _updateNavbarState() {
-        const navbar = document.getElementById('navbar');
-        if (navbar) {
-            navbar.classList.toggle('expanded', this.state.expanded);
-        }
-    }
-
-
-
-    /**
-     * 处理窗口大小变化
-     * @private
-     */
-    _handleResize() {
-        const isMobile = window.innerWidth <= 768;
-        if (this.state.isMobile !== isMobile) {
-            this.state.isMobile = isMobile;
-            this.state.expanded = false;
-            this.render();
-        }
-    }
-
-    /**
-     * 加载用户菜单配置
-     * @private
-     */
-    async _loadUserMenus() {
-        const roleCode = this.state.currentUser.role.roleCode;
-
-        // 公共菜单项 - 不需要权限验证
-        const commonMenus = [{
-            id: 'my-profile',
-            title: '个人中心',
-            icon: 'person-outline',
-            url: '/common/profile.html'
-        }, {
-            id: 'my-tickets',
-            title: '我的工单',
-            icon: 'document-text-outline',
-            url: '/common/my-tickets.html'
-        }];
-
-        // 角色特定菜单映射
-        const menuGroups = {
-            'ADMIN': [
-                {
-                    id: 'dashboard',
-                    title: '控制台',
-                    icon: 'speedometer-outline',
-                    url: '/admin/dashboard.html',
-                    permissions: ['ADMIN_DASHBOARD']
-                },
-                {
-                    id: 'tickets',
-                    title: '工单管理',
-                    icon: 'ticket-outline',
-                    url: '/admin/ticket-management.html',
-                    permissions: ['TICKET_MANAGE']
-                },
-                {
-                    id: 'users',
-                    title: '用户管理',
-                    icon: 'people-outline',
-                    url: '/admin/user-management.html',
-                    permissions: ['USER_MANAGE']
-                },
-                {
-                    id: 'departments',
-                    title: '部门管理',
-                    icon: 'git-branch-outline',
-                    url: '/admin/department-management.html',
-                    permissions: ['DEPT_MANAGE']
-                },
-                {
-                    id: 'system',
-                    title: '系统设置',
-                    icon: 'settings-outline',
-                    url: '/admin/system-settings.html',
-                    permissions: ['SYSTEM_MANAGE']
-                }
-            ],
-            'DEPT': [
-                {
-                    id: 'dept-dashboard',
-                    title: '部门统计',
-                    icon: 'bar-chart-outline',
-                    url: '/dept/dashboard.html',
-                    permissions: ['DEPT_DASHBOARD']
-                },
-                {
-                    id: 'dept-tickets',
-                    title: '部门工单',
-                    icon: 'documents-outline',
-                    url: '/dept/ticket-management.html',
-                    permissions: ['DEPT_TICKET_MANAGE']
-                },
-                {
-                    id: 'dept-members',
-                    title: '成员管理',
-                    icon: 'people-circle-outline',
-                    url: '/dept/member-management.html',
-                    permissions: ['DEPT_MEMBER_MANAGE']
-                }
-            ],
-            'USER': [
-                {
-                    id: 'user-dashboard',
-                    title: '工作台',
-                    icon: 'grid-outline',
-                    url: '/user/dashboard.html'
-                }
-            ]
-        };
-
-        // 获取角色特定菜单
-        const roleMenus = menuGroups[roleCode] || [];
-
-        // 过滤需要权限验证的菜单项
-        const filteredRoleMenus = roleMenus.filter(menu => {
-            if (!menu.permissions) return true;
-            return menu.permissions.some(permission =>
-                this.state.currentUser.permissions.includes(permission)
-            );
-        });
-
-        // 合并公共菜单和角色菜单
-        this.state.userMenus = [...filteredRoleMenus, ...commonMenus];
-
-        // 根据当前页面设置活动菜单
-        this._setActiveMenu();
-    }
-
-    /**
-     * 初始化
+     * 初始化导航栏
      */
     async init() {
         try {
@@ -207,11 +34,13 @@ class Navbar extends BaseComponent {
             await this._loadUserInfo();
             // 加载用户菜单
             await this._loadUserMenus();
+            // 绑定事件监听
+            this._bindEvents();
             // 渲染导航栏
-            await this.render();
+            this.render();
         } catch (error) {
             console.error('导航栏初始化失败:', error);
-            this.showError('加载失败，请刷新重试');
+            this._showError('加载失败，请刷新重试');
         } finally {
             this.state.loading = false;
         }
@@ -221,30 +50,216 @@ class Navbar extends BaseComponent {
      * 加载用户信息
      */
     async _loadUserInfo() {
-        try {
-            const userInfo = localStorage.getItem('userInfo');
-            if (!userInfo) {
-                throw new Error('未登录');
-            }
-            this.state.currentUser = JSON.parse(userInfo);
-        } catch (error) {
-            console.error('加载用户信息失败:', error);
+        const userInfo = localStorage.getItem('userInfo');
+        if (!userInfo) {
             window.location.href = '/pages/auth/login.html';
+            return;
+        }
+        this.state.currentUser = JSON.parse(userInfo);
+    }
+
+    /**
+     * 加载用户菜单
+     */
+    async _loadUserMenus() {
+        const roleCode = this.state.currentUser.baseRoleCode;
+
+        // 角色菜单映射
+        const menuGroups = {
+            'ADMIN': [
+                {
+                    id: 'dashboard',
+                    title: '控制台',
+                    icon: 'bi bi-speedometer2',
+                    url: '/pages/admin/dashboard.html'
+                },
+                {
+                    id: 'tickets',
+                    title: '工单管理',
+                    icon: 'bi bi-ticket-detailed',
+                    url: '/pages/admin/ticket-management.html'
+                },
+                {
+                    id: 'users',
+                    title: '用户管理',
+                    icon: 'bi bi-people',
+                    url: '/pages/pages/admin/user-management.html'
+                },
+                {
+                    id: 'departments',
+                    title: '部门管理',
+                    icon: 'bi bi-diagram-3',
+                    url: '/pages/admin/department-management.html'
+                },
+                {
+                    id: 'roles',
+                    title: '角色管理',
+                    icon: 'bi bi-person-badge',
+                    url: '/pages/admin/role-management.html'
+                },
+                {
+                    id: 'system',
+                    title: '系统设置',
+                    icon: 'bi bi-gear',
+                    url: '/pages/admin/system-settings.html'
+                }
+            ],
+            'DEPT': [
+                {
+                    id: 'dept-workspace',
+                    title: '部门工作台',
+                    icon: 'bi bi-grid',
+                    url: '/pages/dept/dept-workspace.html'
+                },
+                {
+                    id: 'dept-members',
+                    title: '部门成员',
+                    icon: 'bi bi-people',
+                    url: '/pages/dept/dept-members.html'
+                }
+            ],
+            'USER': [
+                {
+                    id: 'dashboard',
+                    title: '工作台',
+                    icon: 'bi bi-grid',
+                    url: '/pages/user/dashboard.html'
+                },
+                {
+                    id: 'todos',
+                    title: '待办工单',
+                    icon: 'bi bi-check2-square',
+                    url: '/pages/user/todos.html'
+                }
+            ]
+        };
+
+        // 公共菜单项
+        const commonMenus = [{
+            id: 'my-tickets',
+            title: '我的工单',
+            icon: 'bi bi-folder',
+            url: '/pages/common/my-tickets.html'
+        }, {
+            id: 'profile',
+            title: '个人中心',
+            icon: 'bi bi-person',
+            url: '/pages/common/profile.html'
+        }];
+
+        // 获取当前角色的菜单
+        const roleMenus = menuGroups[roleCode] || [];
+
+        // 合并菜单
+        this.state.userMenus = [...roleMenus, ...commonMenus];
+
+        // 设置当前激活的菜单
+        this._setActiveMenu();
+    }
+
+    /**
+     * 绑定事件
+     */
+    _bindEvents() {
+        // 窗口大小变化监听
+        $(window).on('resize', this._handleResize);
+
+        // 登出按钮点击
+        this.container.on('click', '#logoutBtn', this._handleLogout);
+
+        // 移动端菜单切换
+        this.container.on('click', '#navbarToggle', () => {
+            this.state.expanded = !this.state.expanded;
+            this._updateNavbarState();
+        });
+    }
+
+    /**
+     * 处理窗口大小变化
+     */
+    _handleResize() {
+        const isMobile = window.innerWidth <= 768;
+        if (this.state.isMobile !== isMobile) {
+            this.state.isMobile = isMobile;
+            this.state.expanded = !isMobile;
+            this.render();
         }
     }
 
     /**
+     * 处理登出
+     */
+    _handleLogout(e) {
+        e.preventDefault();
+        // 清除认证信息
+        localStorage.removeItem('token');
+        localStorage.removeItem('userInfo');
+        // 跳转到登录页
+        window.location.href = '/pages/auth/login.html';
+    }
+
+    /**
+     * 设置当前激活的菜单
+     */
+    _setActiveMenu() {
+        const currentPath = window.location.pathname;
+        const menu = this.state.userMenus.find(item =>
+            currentPath.includes(item.url.split('.')[0])
+        );
+        this.state.activeMenu = menu ? menu.id : null;
+    }
+
+    /**
+     * 更新导航栏状态
+     */
+    _updateNavbarState() {
+        this.container
+            .find('.navbar-items')
+            .toggleClass('expanded', this.state.expanded);
+    }
+
+    /**
+     * 渲染导航栏
+     */
+    render() {
+        const html = `
+            ${this.state.isMobile ? `
+                <button id="navbarToggle" class="navbar-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+            ` : ''}
+            <ul class="navbar-items ${this.state.expanded ? 'expanded' : ''}">
+                ${this._renderLogo()}
+                ${this._renderMenuItems()}
+                ${this._renderLogoutButton()}
+            </ul>
+        `;
+
+        this.container.html(html);
+    }
+
+    /**
+     * 渲染Logo
+     */
+    _renderLogo() {
+        return `
+            <li class="navbar-logo">
+                <a class="navbar-item-inner">
+                    <i class="bi bi-kanban navbar-logo-icon"></i>
+                    <span class="navbar-logo-text">工单系统</span>
+                </a>
+            </li>
+        `;
+    }
+
+    /**
      * 渲染菜单项
-     * @private
      */
     _renderMenuItems() {
         return this.state.userMenus.map(menu => `
-            <li class="navbar-item ${menu.id === this.state.activeMenu ? 'active' : ''}"
-                data-menu-id="${menu.id}">
+            <li class="navbar-item ${menu.id === this.state.activeMenu ? 'active' : ''}">
                 <a class="navbar-item-inner" href="${menu.url}">
-                    <div class="navbar-item-icon">
-                        <i class="icon ${menu.icon}"></i>
-                    </div>
+                    <i class="${menu.icon} navbar-item-icon"></i>
                     <span class="navbar-item-text">${menu.title}</span>
                 </a>
             </li>
@@ -252,100 +267,31 @@ class Navbar extends BaseComponent {
     }
 
     /**
-     * 设置当前激活菜单
-     * @private
-     */
-    _setActiveMenu() {
-        const path = window.location.pathname;
-        const menu = this.state.userMenus.find(item =>
-            path.includes(item.url.split('/').pop().split('.')[0])
-        );
-        this.state.activeMenu = menu ? menu.id : null;
-    }
-
-    /**
-     * 渲染导航栏
-     */
-    render() {
-        if (this.state.loading) {
-            return this._renderLoading();
-        }
-
-        const html = `
-            ${window.innerWidth <= 768 ? `
-                <button id="navbarToggle" class="navbar-toggle">
-                    <i class="bi bi-list"></i>
-                </button>
-            ` : ''}
-            <nav id="navbar" class="${this.state.expanded ? 'expanded' : ''}">
-                <ul class="navbar-items">
-                    ${this._renderLogo()}
-                    ${this._renderMenuItems()}
-                    ${this._renderLogoutButton()}
-                </ul>
-            </nav>
-        `;
-
-        this.container.html(html);
-        this._cacheDomRefs();
-    }
-
-    /**
-     * 渲染Logo
-     */
-    _renderLogo() {
-        // 从localStorage或系统配置获取Logo配置
-        const systemConfig = this._getSystemConfig();
-        const logoUrl = systemConfig?.logoUrl;
-
-        return `
-        <li class="navbar-logo">
-            <a class="navbar-item-inner">
-                ${logoUrl ? `
-                    <img src="${logoUrl}" alt="系统Logo" class="navbar-logo-image">
-                ` : `
-                    <!-- 默认SVG Logo -->
-                    <div class="navbar-logo-default">
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-                        </svg>
-                    </div>
-                `}
-            </a>
-        </li>
-    `;
-    }
-
-    /**
-     * 获取系统配置
-     * @private
-     */
-    _getSystemConfig() {
-        try {
-            const config = localStorage.getItem('system_config');
-            return config ? JSON.parse(config) : null;
-        } catch (error) {
-            console.error('获取系统配置失败:', error);
-            return null;
-        }
-    }
-
-    /**
-     * 渲染退出按钮
+     * 渲染登出按钮
      */
     _renderLogoutButton() {
         return `
             <li class="navbar-item mt-auto">
                 <a class="navbar-item-inner" href="#" id="logoutBtn">
-                    <div class="navbar-item-icon">
-                        <i class="icon log-out-outline"></i>
-                    </div>
+                    <i class="bi bi-box-arrow-right navbar-item-icon"></i>
                     <span class="navbar-item-text">退出登录</span>
                 </a>
             </li>
         `;
     }
+
+    /**
+     * 显示错误提示
+     */
+    _showError(message) {
+        console.error(message);
+        // 可以添加更友好的错误提示UI
+    }
 }
 
-// 导出组件
-window.Navbar = Navbar;
+// 自动初始化导航栏
+$(document).ready(function() {
+    $('.navbar-container').each(function() {
+        new Navbar(this);
+    });
+});
