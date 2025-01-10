@@ -79,7 +79,7 @@ project-root/
 │       │   ├── theme-store.js
 │       │   └── user-store.js
 │       └── utils/
-│           ├── notify.js
+│           ├── event-bus.js
 │           ├── pagination-util.js
 │           ├── permission-control.js
 │           ├── request-util.js
