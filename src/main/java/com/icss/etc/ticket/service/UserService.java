@@ -7,6 +7,7 @@ import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,7 +29,8 @@ public interface UserService {
 
     // TODO:忘记密码
 
-    // TODO:修改个人信息
+    // TODO:修改个人基本信息
+    int updateByPrimaryKeySelective(User record);
 
 
     // TODO:修改头像
