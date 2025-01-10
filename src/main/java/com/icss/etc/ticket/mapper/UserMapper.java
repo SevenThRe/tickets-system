@@ -8,6 +8,7 @@ import com.icss.etc.ticket.entity.User;
 
 import java.util.List;
 
+import com.icss.etc.ticket.entity.vo.UserQueryDTO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import org.apache.ibatis.annotations.Param;
 
@@ -102,7 +103,7 @@ public interface UserMapper {
     List<String> getUsernames();
 
     User getUserInfo(Long userId);
-    User getUserInfo1(Long userId);
+    List<UserViewBackDTO> selectUserInfo1(UserQueryDTO userQueryDTO);
 
     User selectByUsername(String username);
 }

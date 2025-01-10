@@ -5,6 +5,7 @@ import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.entity.vo.UserQueryDTO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,7 @@ public interface UserService {
     User selectByPrimaryKey(@Param("user_id") Long user_id);
 
 
-    List<UserViewBackDTO> selectUserInfo (@Param("user_id") Long user_id);
+    UserViewBackDTO selectUserInfo (@Param("user_id") Long user_id);
 
     // TODO:修改密码
     int updateByPrimaryKey(UserPasswordDTO record);
@@ -63,4 +64,8 @@ public interface UserService {
     List<String> getUsernames();
 
     User selectByUsername(String username);
+
+    List<UserViewBackDTO> selectUserInfo1(@Param("userQueryDTO") UserQueryDTO userQueryDTO);
+
+
 }

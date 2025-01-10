@@ -6,6 +6,7 @@ import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.entity.vo.UserQueryDTO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.mapper.UserMapper;
 import com.icss.etc.ticket.mapper.UserRoleMapper;
@@ -45,6 +46,8 @@ public class UserServiceImpl implements UserService{
         return count;
     }
 
+
+
     @Override
     public UserViewBackDTO login(String username) {
         Long userId = userMapper.login(username);
@@ -59,10 +62,14 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public List<UserViewBackDTO> selectUserInfo(Long user_id) {
+    public UserViewBackDTO selectUserInfo(Long user_id) {
         UserViewBackDTO userViewBackDTO = userMapper.selectUserInfo(user_id);
         return userViewBackDTO;
     }
+//
+//    public List<UserViewBackDTO> selectUserInfo1(UserQueryDTO userQueryDTO) {
+//        return userMapper.selectUserInfo1(userQueryDTO);
+//    }
 
     //修改密码
     @Override
@@ -126,6 +133,11 @@ public class UserServiceImpl implements UserService{
     @Override
     public User selectByUsername(String username) {
         return userMapper.selectByUsername(username);
+    }
+
+    @Override
+    public List<UserViewBackDTO> selectUserInfo1(UserQueryDTO userQueryDTO) {
+        return userMapper.selectUserInfo1(userQueryDTO);
     }
 
 

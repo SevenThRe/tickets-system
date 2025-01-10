@@ -76,26 +76,29 @@
   <select id="selectUserInfo1" resultType="com.icss.etc.ticket.entity.vo.UserViewBackDTO">
     <!--@mbg.generated-->
     SELECT
-    u.username as '用户名',
-    u.real_name as processorName,
-    r.role_name as '角色',
+    u.username,
+    u.user_id,
+    u.real_name,
+    r.role_name,
     d.department_name as departmentName,
-    u.email as '邮箱',
+    u.email,
     CASE u.status
     WHEN 0 THEN '待处理'
     WHEN 1 THEN '处理中'
     WHEN 2 THEN '已完成'
     WHEN 3 THEN '已关闭'
-    END as statusName,
-    u.create_time as '创建时间'
+    END,
+    u.create_time
     FROM t_user u
-    LEFT JOIN t_role r ON u.role_id = r.role_id
+    LEFT JOIN t_user_role ur ON u.user_id = ur.user_id
+    LEFT JOIN t_role r ON ur.role_id = r.role_id
     LEFT JOIN t_department d ON u.department_id = d.department_id
     <where>
       u.is_deleted = 0
-      <if test="userId != null and userId != ''">
-        AND (u.real_name LIKE CONCAT('%',#{userId},'%')
-        OR u.email LIKE CONCAT('%',#{userId},'%'))
+      <if test="keyword != null and keyword != ''">
+        AND (u.real_name LIKE CONCAT('%',#{keyword},'%')
+        OR u.email LIKE CONCAT('%',#{keyword},'%')
+        OR u.username LIKE  CONCAT('%',#{keyword},'%'))
       </if>
       <if test="status != null">
         AND u.status = #{status}
@@ -103,22 +106,10 @@
       <if test="departmentId != null">
         AND u.department_id = #{departmentId}
       </if>
-      <if test="startTime != null">
-        AND u.create_time >= #{startTime}
-      </if>
-      <if test="endTime != null">
-        AND u.create_time &lt;= #{endTime}
-      </if>
-    </if>
-    <if test="email != null">
-      AND u.email &lt;= #{email}
-    </if>
     <if test="roleName != null">
       AND u.role_name &lt;= #{roleName}
     </if>
-    <if test="realName != null">
-      AND u.real_name &lt;= #{realName}
-    </if>
+
     </where>
     ORDER BY u.create_time DESC
   </select>
