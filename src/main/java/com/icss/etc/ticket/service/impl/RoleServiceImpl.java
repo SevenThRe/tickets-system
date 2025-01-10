@@ -24,6 +24,11 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public int insert(Role role) {
+        log.info("insert role: {}", role);
+        if (roleMapper.selectByByRoleId(role.getRoleId()) != null) {
+
+            return 0;
+        }
         return roleMapper.insert(role);
     }
 
