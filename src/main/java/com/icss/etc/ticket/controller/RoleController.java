@@ -7,12 +7,11 @@ import com.icss.etc.ticket.entity.Role;
 import com.icss.etc.ticket.entity.Role2;
 import com.icss.etc.ticket.entity.dto.RoleDTO;
 import com.icss.etc.ticket.entity.vo.ChooseRolesVO;
+import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.service.RoleService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +23,7 @@ import java.util.Map;
  * @create: 2025-01-08 16:45
  **/
 
+@Slf4j
 @RestController
 @RequestMapping("/roles")
 public class RoleController {
@@ -38,7 +38,7 @@ public class RoleController {
     @RequestMapping("/insert")
     public R insert(Role role){
         int result=roleService.insert(role);
-        return result>0?R.OK():R.FAIL();
+        return result>0?R.OK():R.FAIL(CodeEnum.ROLE_ISEXIST);
     }
 
     /**

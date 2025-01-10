@@ -34,6 +34,7 @@ public enum CodeEnum {
     PASSWORD_ERROR(1400, "旧密码错误"),
     PASSWORD_SAME(1400, "旧密码不能与新密码相同"),
     UPDATE_FAILED(1423,"更新失败,请重试"),
+    ROLE_ISEXIST(1325,"角色已存在"),
     UNKNOW_USER(1411,"未知用户");
 
     @Getter

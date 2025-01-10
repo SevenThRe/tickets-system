@@ -87,6 +87,34 @@ function getList() {
         }
     });
 }
+//增加的模态层
+function showroleModal(){
+    $("#roleModal").modal('show');
+}
+
+$("#createRoleBtn").on('click', function() {
+    showroleModal();
+});
+
+//增加
+function addRole(){
+    let P= $("#roleForm").serialize();
+    console.log(P);
+    $.ajax({
+        url: "/api/roles/insert",
+        data:P,
+        headers:{"token":localStorage.getItem("token")},
+        success: function () {
+            alert("添加成功");
+                window.location.reload();
+        }, error: function (xhr, status, error) {
+            if (xhr.status == 401) {
+                alert('请登录！');
+                window.location.href = '/login.html';
+            }
+        }
+    })
+}
 
 // class RoleManagement {
 //     /**
