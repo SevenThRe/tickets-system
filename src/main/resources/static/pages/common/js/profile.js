@@ -453,7 +453,7 @@ class Profile {
         }
     }
 
-    // 在 Profile 类中
+
     showSuccess(message) {
         NotifyUtil.success(message);
     }

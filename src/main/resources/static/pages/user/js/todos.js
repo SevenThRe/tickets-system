@@ -1,17 +1,29 @@
 /**
  * TodoList.js
  * 待办工单列表页面控制器
- * 实现待办工单的查询、处理等功能
  */
 class TodoList {
     constructor() {
-        // 缓存jQuery选择器结果
+        // 缓存jQuery选择器
         this.$container = $('#main');
         this.$todoList = $('#todoList');
         this.$pagination = $('#pagination');
         this.$totalCount = $('#totalCount');
         this.$searchForm = $('#searchForm');
         this.$processModal = $('#processModal');
+
+        // 获取用户信息
+        try {
+            this.userInfo = JSON.parse(localStorage.getItem('userInfo'));
+            if (!this.userInfo || !this.userInfo.userId) {
+                window.location.href = '/login.html';
+                return;
+            }
+        } catch (error) {
+            console.error('解析用户信息失败:', error);
+            window.location.href = '/login.html';
+            return;
+        }
 
         // 状态管理
         this.state = {
@@ -72,7 +84,7 @@ class TodoList {
             this.checkUrlParams();
         } catch (error) {
             console.error('初始化失败:', error);
-            this.showError('页面加载失败,请刷新重试');
+            NotifyUtil.error('页面加载失败,请刷新重试');
         }
     }
 
@@ -101,6 +113,7 @@ class TodoList {
             const params = {
                 pageNum: current,
                 pageSize,
+                userId: this.userInfo.userId,
                 ...this.state.filters
             };
 
@@ -146,14 +159,11 @@ class TodoList {
                 </td>
                 <td>${ticket.departmentName}</td>
                 <td>${this.getPriorityText(ticket.priority)}</td>
-                <td>${ticket.expectFinishTime ?
-            this.formatDate(ticket.expectFinishTime) : '-'}</td>
+                <td>${ticket.expectFinishTime ? this.formatDate(ticket.expectFinishTime) : '-'}</td>
                 <td>${this.formatDate(ticket.createTime)}</td>
                 <td>
                     <button class="btn btn-sm btn-primary process-ticket" 
-                            data-id="${ticket.ticketId}">
-                        处理工单
-                    </button>
+                            data-id="${ticket.ticketId}">处理工单</button>
                 </td>
             </tr>
         `).join('');
@@ -168,7 +178,6 @@ class TodoList {
     updatePagination() {
         const { current, pageSize, total } = this.state.pagination;
         const totalPages = Math.ceil(total / pageSize);
-
         let html = '';
 
         // 上一页
@@ -180,11 +189,7 @@ class TodoList {
 
         // 页码
         for (let i = 1; i <= totalPages; i++) {
-            if (
-                i === 1 ||
-                i === totalPages ||
-                (i >= current - 2 && i <= current + 2)
-            ) {
+            if (i === 1 || i === totalPages || (i >= current - 2 && i <= current + 2)) {
                 html += `
                     <li class="page-item ${i === current ? 'active' : ''}">
                         <a class="page-link" href="#" data-page="${i}">${i}</a>
@@ -234,10 +239,9 @@ class TodoList {
             } else {
                 throw new Error(response.message || '加载工单详情失败');
             }
-
         } catch (error) {
             console.error('加载工单详情失败:', error);
-            this.showError('加载工单详情失败');
+            NotifyUtil.error('加载工单详情失败');
         }
     }
 
@@ -265,12 +269,11 @@ class TodoList {
 
         const note = $('#processNote').val().trim();
         if (!note) {
-            this.showError('请输入处理说明');
+            NotifyUtil.error('请输入处理说明');
             return;
         }
 
         try {
-            // 提交处理
             const response = await $.ajax({
                 url: `/api/tickets/${this.state.currentTicket.ticketId}/process`,
                 method: 'PUT',
@@ -282,80 +285,56 @@ class TodoList {
             });
 
             if (response.code === 200) {
-                // 处理附件上传
                 const files = $('#processAttachments')[0].files;
                 if (files.length > 0) {
                     await this.uploadAttachments(files);
                 }
 
-                this.showSuccess('工单处理成功');
+                NotifyUtil.success('工单处理成功');
                 this.processModal.hide();
                 await this.loadTickets();
             } else {
                 throw new Error(response.message || '处理工单失败');
             }
-
         } catch (error) {
             console.error('处理工单失败:', error);
-            this.showError(error.message || '处理工单失败');
+            NotifyUtil.error(error.message || '处理工单失败');
         }
     }
 
     /**
-     * 获取优先级文本
+     * 上传附件
      */
-    getPriorityText(priority) {
-        const priorityMap = {
-            'HIGH': '高优先级',
-            'MEDIUM': '中等优先级',
-            'LOW': '低优先级'
-        };
-        return priorityMap[priority] || priority;
-    }
-
-    /**
-     * 格式化日期
-     */
-    formatDate(date) {
-        if (!date) return '-';
-        const d = new Date(date);
-        const pad = num => String(num).padStart(2, '0');
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-
-    /**
-     * 渲染附件列表
-     */
-    renderAttachments(attachments) {
-        if (!attachments?.length) {
-            $('#ticketAttachments').html('<div class="text-muted">无附件</div>');
-            return;
+    async uploadAttachments(files) {
+        // 验证文件
+        if (files.length > 5) {
+            throw new Error('最多只能上传5个附件');
         }
 
-        const html = attachments.map(file => `
-        <div class="attachment-item">
-            <i class="bi bi-paperclip"></i>
-            <a href="/api/attachments/${file.id}" target="_blank">${file.fileName}</a>
-            <span class="text-muted ms-2">(${this.formatFileSize(file.fileSize)})</span>
-        </div>
-    `).join('');
+        const formData = new FormData();
+        Array.from(files).forEach(file => {
+            formData.append('files', file);
+        });
 
-        $('#ticketAttachments').html(html);
-    }
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${this.state.currentTicket.ticketId}/attachments`,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
 
-    /**
-     * 格式化文件大小
-     */
-    formatFileSize(bytes) {
-        if (!bytes) return '0 B';
-        const units = ['B', 'KB', 'MB', 'GB'];
-        let size = bytes;
-        let unitIndex = 0;
-        while (size >= 1024 && unitIndex < units.length - 1) {
-            size /= 1024;
-            unitIndex++;
+            if (response.code !== 200) {
+                throw new Error(response.message || '上传附件失败');
+            }
+        } catch (error) {
+            console.error('上传附件失败:', error);
+            throw new Error('上传附件失败，请重试');
         }
-        return `${size.toFixed(1)} ${units[unitIndex]}`;
     }
 
     /**
@@ -390,141 +369,62 @@ class TodoList {
     }
 
     /**
-     * 上传附件
+     * 获取优先级文本
      */
-    async uploadAttachments(files) {
-        // 文件验证配置
-        const maxSize = 10 * 1024 * 1024; // 10MB
-        const allowedTypes = [
-            'image/jpeg',
-            'image/png',
-            'image/gif',
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ];
-        const maxFiles = 5;
-
-        // 验证文件
-        if (files.length > maxFiles) {
-            throw new Error(`最多只能上传${maxFiles}个附件`);
-        }
-
-        for (const file of files) {
-            if (file.size > maxSize) {
-                throw new Error(`文件 ${file.name} 大小超过限制(10MB)`);
-            }
-            if (!allowedTypes.includes(file.type)) {
-                throw new Error(`文件 ${file.name} 类型不支持`);
-            }
-        }
-
-        // 构建表单数据
-        const formData = new FormData();
-        Array.from(files).forEach(file => {
-            formData.append('files', file);
-        });
-
-        try {
-            const response = await $.ajax({
-                url: `/api/tickets/${this.state.currentTicket.ticketId}/attachments`,
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                data: formData,
-                processData: false,
-                contentType: false,
-                xhr: () => {
-                    const xhr = new window.XMLHttpRequest();
-                    xhr.upload.addEventListener('progress', (e) => {
-                        if (e.lengthComputable) {
-                            const percent = Math.round((e.loaded / e.total) * 100);
-                            $('#uploadProgress').text(`上传进度：${percent}%`);
-                        }
-                    }, false);
-                    return xhr;
-                }
-            });
-
-            if (response.code !== 200) {
-                throw new Error(response.message || '上传附件失败');
-            }
-        } catch (error) {
-            console.error('上传附件失败:', error);
-            throw new Error('上传附件失败，请重试');
-        }
-    }
-
-    /**
-     * 处理错误
-     */
-    handleError(error) {
-        if (error.status === 401) {
-            localStorage.removeItem('token');
-            window.location.href = '/login.html';
-            return;
-        }
-
-        if (error.status === 403) {
-            this.showError('您没有访问权限');
-            return;
-        }
-
-        const errorMessage = error.responseJSON?.message || error.message || '操作失败，请重试';
-        this.showError(errorMessage);
-    }
-
-    /**
-     * 验证表单数据
-     */
-    validateForm() {
-        const note = $('#processNote').val().trim();
-        if (!note) {
-            this.showError('请输入处理说明');
-            return false;
-        }
-
-        const files = $('#processAttachments')[0].files;
-        if (files.length > 5) {
-            this.showError('最多只能上传5个附件');
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * 获取状态标签样式类
-     */
-    getStatusClass(status) {
-        const statusMap = {
-            'PENDING': 'status-pending',
-            'PROCESSING': 'status-processing',
-            'COMPLETED': 'status-completed',
-            'CLOSED': 'status-closed'
+    getPriorityText(priority) {
+        const priorityMap = {
+            'HIGH': '高优先级',
+            'MEDIUM': '中等优先级',
+            'LOW': '低优先级'
         };
-        return statusMap[status] || '';
+        return priorityMap[priority] || priority;
     }
 
     /**
-     * 显示错误提示
+     * 格式化日期
      */
-    showError(message) {
-        $.notify(message, {
-            className: 'error',
-            position: 'top right'
-        });
+    formatDate(date) {
+        if (!date) return '-';
+        const d = new Date(date);
+        const pad = num => String(num).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
 
     /**
-     * 显示成功提示
+     * 渲染附件列表
      */
-    showSuccess(message) {
-        $.notify(message, {
-            className: 'success',
-            position: 'top right'
-        });
+    renderAttachments(attachments) {
+        if (!attachments?.length) {
+            $('#ticketAttachments').html('<div class="text-muted">无附件</div>');
+            return;
+        }
+
+        const html = attachments.map(file => `
+            <div class="attachment-item">
+                <i class="bi bi-paperclip"></i>
+                <a href="/api/attachments/${file.id}" target="_blank">
+                    ${file.fileName}
+                </a>
+                <span class="text-muted ms-2">(${this.formatFileSize(file.fileSize)})</span>
+            </div>
+        `).join('');
+
+        $('#ticketAttachments').html(html);
+    }
+
+    /**
+     * 格式化文件大小
+     */
+    formatFileSize(bytes) {
+        if (!bytes) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let size = bytes;
+        let unitIndex = 0;
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        return `${size.toFixed(1)} ${units[unitIndex]}`;
     }
 
     /**
@@ -549,26 +449,37 @@ class TodoList {
     }
 
     /**
+     * 处理错误
+     */
+    handleError(error) {
+        if (error.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+            return;
+        }
+
+        if (error.status === 403) {
+            NotifyUtil.error('您没有访问权限');
+            return;
+        }
+
+        const errorMessage = error.responseJSON?.message || error.message || '操作失败，请重试';
+        NotifyUtil.error(errorMessage);
+    }
+
+    /**
      * 销毁实例
-     * 释放资源并销毁实例
      */
     destroy() {
-        // 移除事件监听
         this.$searchForm.off();
         this.$container.off();
         this.$pagination.off();
-
-        // 销毁模态框
         if (this.processModal) {
             this.processModal.dispose();
         }
-
-        // 移除加载遮罩
         if (this.$loading) {
             this.$loading.remove();
         }
-
-        // 清理引用
         this.$container = null;
         this.$todoList = null;
         this.$pagination = null;
@@ -578,7 +489,7 @@ class TodoList {
     }
 }
 
-// 页面加载完成后初始化
+// 初始化
 $(document).ready(() => {
     window.todoList = new TodoList();
 });

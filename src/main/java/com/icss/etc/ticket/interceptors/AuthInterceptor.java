@@ -1,5 +1,6 @@
 package com.icss.etc.ticket.interceptors;
 
+import com.icss.etc.ticket.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.icss.etc.ticket.util.JWTUtils;
@@ -38,13 +39,13 @@ public class AuthInterceptor implements HandlerInterceptor {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             return false;
         }
-
         try {
             // 更新并验证 token 有效性
             String newToken = JWTUtils.updateToken(token);
             // 将新 token 放入响应头
             response.setHeader("Authorization", newToken);
             log.info("用户已登录, 请求路径: {}", request.getRequestURI());
+            // 放行请求
             return true;
         } catch (Exception e) {
             // token 解析失败,返回 401 状态码
