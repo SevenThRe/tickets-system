@@ -1,15 +1,17 @@
 package com.icss.etc.ticket.controller;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
+import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * {@code UserController}
@@ -48,6 +50,16 @@ public class UserController {
      * @param userId 用户ID
      * @return 用户信息
      */
-    @GetMapping("/current")
+    @RequestMapping("/selectUserInfo")
+    public @ResponseBody R selectUserInfo(Integer pageNumber, Integer pageSize) {
+        PageHelper.startPage(pageNumber, pageSize, true);
+        List<UserViewBackDTO> list = userService.selectUserInfo();
+        PageInfo<UserViewBackDTO> pageInfo = new PageInfo<>(list);
+        Map<String, Object> map = new HashMap<>();
+        map.put("list", list);
+        map.put("total", pageInfo.getPages()); //总页数
+        return R.OK(map); //将list集合转换为json数组
+    }
+
 
 }

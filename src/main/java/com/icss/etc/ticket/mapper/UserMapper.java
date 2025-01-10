@@ -102,6 +102,7 @@ public interface UserMapper {
     List<String> getUsernames();
 
     User getUserInfo(Long userId);
+    User getUserInfo1(Long userId);
 
     User selectByUsername(String username);
 }

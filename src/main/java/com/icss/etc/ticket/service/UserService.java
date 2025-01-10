@@ -20,7 +20,7 @@ public interface UserService {
     User selectByPrimaryKey(@Param("user_id") Long user_id);
 
 
-    UserViewBackDTO selectUserInfo (@Param("user_id") Long user_id);
+    List<UserViewBackDTO> selectUserInfo (@Param("user_id") Long user_id);
 
     // TODO:修改密码
     int updateByPrimaryKey(UserPasswordDTO record);

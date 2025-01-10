@@ -51,13 +51,14 @@ public class UserServiceImpl implements UserService{
         return this.selectUserInfo(userId);
     }
 
+
     @Override
     public User selectByPrimaryKey(Long user_id) {
         return userMapper.selectByPrimaryKey(user_id);
     }
 
     @Override
-    public UserViewBackDTO selectUserInfo(Long user_id) {
+    public List<UserViewBackDTO> selectUserInfo(Long user_id) {
         UserViewBackDTO userViewBackDTO = userMapper.selectUserInfo(user_id);
         return userViewBackDTO;
     }
