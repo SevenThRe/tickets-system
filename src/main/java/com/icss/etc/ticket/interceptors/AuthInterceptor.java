@@ -31,7 +31,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         // 从请求头中获取名为 "Authorization" 的 token 值
-        String token = request.getHeader("Authorization");
+        String token = request.getHeader("token");
 
         if (token == null || token.isEmpty()) {
             // token 为空,未登录,返回 401 状态码
@@ -43,7 +43,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             // 更新并验证 token 有效性
             String newToken = JWTUtils.updateToken(token);
             // 将新 token 放入响应头
-            response.setHeader("Authorization", newToken);
+            response.setHeader("token", newToken);
             log.info("用户已登录, 请求路径: {}", request.getRequestURI());
             // 放行请求
             return true;
