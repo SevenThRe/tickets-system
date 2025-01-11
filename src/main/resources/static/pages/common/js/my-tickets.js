@@ -264,6 +264,7 @@ class MyTickets {
         return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
     }
 
+
     /**
      * 绑定事件处理
      * 处理搜索、重置、查看详情等事件
@@ -1105,9 +1106,28 @@ class MyTickets {
         }
     }
 
+    /**
+     *  导出工单
+     * @returns {Promise<void>}
+     */
+    async exportTickets() {
+        try {
+            const params = new URLSearchParams({
+                ...this.state.filters,
+                pageSize: 1000 // 导出更多数据
+            });
+
+            window.location.href = `/api/tickets/export?${params.toString()}`;
+        } catch(error) {
+            console.error('导出失败:', error);
+            NotifyUtil.error('导出失败');
+        }
+    }
 }
 
 // 页面加载完成后初始化
 $(document).ready(() => {
     window.myTickets = new MyTickets();
+    $('#exportBtn').on('click', () => this.exportTickets());
+
 });

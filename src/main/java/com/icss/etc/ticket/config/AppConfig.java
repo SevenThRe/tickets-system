@@ -3,6 +3,7 @@ package com.icss.etc.ticket.config;
 import com.icss.etc.ticket.interceptors.AuthInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -35,18 +36,22 @@ public class AppConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/attachment/**").addResourceLocations("classpath:/static/attachment/");
     }
 
-//    /**
-//     * TODO: 身份验证拦截器
-//     * 结合JWT实现身份验证
-//     */
-//    @Override
+    /**
+     * TODO: 身份验证拦截器
+     * 结合JWT实现身份验证
+     */
 //    public void addInterceptors(InterceptorRegistry registry) {
-//        // 添加登录认证拦截器
 //        registry.addInterceptor(authInterceptor)
-//                .addPathPatterns("/**")   // 拦截所有请求
-//                .excludePathPatterns("/pages/auth/**")
-//                .excludePathPatterns("/api/auth/**");   // 排除登录注册等不需要验证的路径
-//
+//                .addPathPatterns("/**")
+//                .excludePathPatterns(
+//                        "/auth/login",
+//                        "/auth/register",
+//                        "/error",
+//                        "/*.html",
+//                        "/css/**",
+//                        "/js/**",
+//                        "/images/**"
+//                );
 //    }
 
 }

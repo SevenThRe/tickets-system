@@ -6,12 +6,13 @@ import java.time.LocalDateTime;
 
 import com.icss.etc.ticket.enums.NotifyType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
  * {@code Notification} 
- * 
+ *  通知表
  * @since 1.0
  * @version 1.0
  * @author SevenThRe
@@ -23,47 +24,49 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Notification implements Serializable {
-    /**
-     * 通知ID
-     */
-    private Long notificationId;
-
-    /**
-     * 接收用户ID
-     */
-    private Long userId;
-
-    /**
-     * 相关工单ID
-     */
-    private Long ticketId;
-
-    /**
-     * 通知类型：0-工单分配，1-工单转交，2-工单完成，3-其他
-     */
-    private NotifyType notifyType;
-
-    /**
-     * 通知内容
-     */
-    private String content;
-
-    /**
-     * 是否已读：0-未读，1-已读
-     */
-    private Integer isRead;
-
-    /**
-     * 是否删除
-     */
-    private Integer isDeleted;
-
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
-
     @Serial
     private static final long serialVersionUID = 1L;
+
+    // 常量定义
+    public static final int UNREAD = 0;
+    public static final int READ = 1;
+    public static final int NOT_DELETED = 0;
+    public static final int DELETED = 1;
+
+    private Long notificationId;
+    private Long userId;
+    private Long ticketId;
+    private NotifyType notifyType;
+    private String content;
+
+    // 将@Builder.Default移到字段上
+    @Builder.Default
+    private Integer isRead = UNREAD;
+
+    @Builder.Default
+    private Integer isDeleted = NOT_DELETED;
+
+    @Builder.Default
+    private LocalDateTime createTime = LocalDateTime.now();
+
+    // 便捷方法
+    public boolean isUnread() {
+        return UNREAD == this.isRead;
+    }
+
+    public void markAsRead() {
+        this.isRead = READ;
+    }
+
+    // 添加删除标记方法
+    public void markAsDeleted() {
+        this.isDeleted = DELETED;
+    }
+
+    // 添加是否已删除判断
+    public boolean isDeleted() {
+        return DELETED == this.isDeleted;
+    }
 }
