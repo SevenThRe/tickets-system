@@ -42,6 +42,11 @@ public interface TicketService {
     Long createTicket(CreateTicketDTO createDTO);
 
     /**
+     * 删除工单
+     */
+    void deleteTicket(Long ticketId);
+
+    /**
      * 更新工单状态
      */
     void updateTicketStatus(UpdateTicketStatusDTO updateDTO);
@@ -81,4 +86,8 @@ public interface TicketService {
      */
     List<TicketExportDTO> exportTickets(TicketQueryDTO queryDTO);
 
+    /**
+     * 批量导入工单
+     */
+    void importTickets(List<TicketExportDTO> tickets);
 }

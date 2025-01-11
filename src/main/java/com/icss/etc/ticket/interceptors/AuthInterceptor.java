@@ -1,6 +1,7 @@
 package com.icss.etc.ticket.interceptors;
 
 import com.icss.etc.ticket.util.SecurityUtils;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.icss.etc.ticket.util.JWTUtils;
@@ -31,7 +32,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         // 从请求头中获取名为 "Authorization" 的 token 值
-        String token = request.getHeader("token");
+        String token = request.getHeader("Authorization");
 
         if (token == null || token.isEmpty()) {
             // token 为空,未登录,返回 401 状态码
@@ -41,11 +42,17 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
         try {
             // 更新并验证 token 有效性
+            Claims claims = JWTUtils.verifyToken(token);
+            // 将用户信息存入请求属性中，供后续使用
+            request.setAttribute("userId", claims.getSubject());
+            request.setAttribute("username", claims.get("username"));
+            request.setAttribute("role", claims.get("role"));
+
+            // 检查token是否需要更新
             String newToken = JWTUtils.updateToken(token);
-            // 将新 token 放入响应头
-            response.setHeader("token", newToken);
-            log.info("用户已登录, 请求路径: {}", request.getRequestURI());
-            // 放行请求
+            if (!newToken.equals(token)) {
+                response.setHeader("Authorization", newToken);
+            }
             return true;
         } catch (Exception e) {
             // token 解析失败,返回 401 状态码

@@ -1,6 +1,8 @@
 package com.icss.etc.ticket.util;
 
 import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.enums.CodeEnum;
+import com.icss.etc.ticket.exceptions.BusinessException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -14,21 +16,35 @@ import java.time.LocalDateTime;
  */
 @Component
 public class SecurityUtils {
-    private static final ThreadLocal<User> userHolder = new ThreadLocal<>();
+    private static final ThreadLocal<Long> userIdHolder = new ThreadLocal<>();
+    private static final ThreadLocal<String> userNameHolder = new ThreadLocal<>();
+    private static final ThreadLocal<String> roleHolder = new ThreadLocal<>();
 
-    public static void setCurrentUser(User user) {
-        userHolder.set(user);
+    public static void setCurrentUser(Long userId, String username, String role) {
+        userIdHolder.set(userId);
+        userNameHolder.set(username);
+        roleHolder.set(role);
     }
 
     public static Long getCurrentUserId() {
-        User user = userHolder.get();
-        if (user == null) {
-            throw new IllegalStateException("未获取到当前登录用户");
+        Long userId = userIdHolder.get();
+        if (userId == null) {
+            throw new BusinessException(CodeEnum.UNKNOW_USER);
         }
-        return user.getUserId();
+        return userId;
+    }
+
+    public static String getCurrentUsername() {
+        return userNameHolder.get();
+    }
+
+    public static String getCurrentRole() {
+        return roleHolder.get();
     }
 
     public static void clear() {
-        userHolder.remove();
+        userIdHolder.remove();
+        userNameHolder.remove();
+        roleHolder.remove();
     }
 }

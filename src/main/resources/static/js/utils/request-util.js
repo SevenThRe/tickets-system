@@ -37,11 +37,17 @@ class RequestUtil {
         $.ajaxSetup({
             timeout: 10000,  // 默认10秒超时
             contentType: 'application/json',
-            beforeSend: (xhr) => {
-                // 注入JWT令牌
+            beforeSend: function(xhr) {
                 const token = localStorage.getItem('token');
                 if (token) {
-                    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+                    xhr.setRequestHeader('Authorization', token);
+                }
+            },
+
+            complete: function(xhr) {
+                const newToken = xhr.getResponseHeader('Authorization');
+                if (newToken) {
+                    localStorage.setItem('token', newToken);
                 }
             }
         });
@@ -58,6 +64,7 @@ class RequestUtil {
             console.error('请求失败:', jqXHR.responseJSON?.message || '服务器错误');
         });
     }
+
 
     /**
      * 生成请求唯一标识
@@ -105,22 +112,20 @@ class RequestUtil {
             });
 
             // 处理响应
-            /**
-             * login.js:132
-             * 登录错误: ReferenceError: data is not defined
-             *     at LoginPage.redirectToDashboard (login.js:76:48)
-             *     at LoginPage.handleLoginSuccess (login.js:242:13)
-             *     at LoginPage.handleSubmit (login.js:127:22)
-             */
+
             if (response.code === 200) {
-                return response;
+                return response.data;
             } else {
                 throw new Error(response.message || '请求失败');
             }
         } catch (error) {
             // 处理超时
             if (error.statusText === 'timeout') {
-                throw new Error('请求超时,请稍后重试');
+                NotifyUtil.error('请求超时,请稍后重试');
+            } else if (error.responseJSON) {
+                NotifyUtil.error(error.responseJSON.message || '请求失败');
+            } else {
+                NotifyUtil.error('服务器错误');
             }
             throw error;
         } finally {

@@ -21,6 +21,7 @@ import com.icss.etc.ticket.mapper.DepartmentMapper;
 import com.icss.etc.ticket.mapper.TicketMapper;
 import com.icss.etc.ticket.mapper.TicketRecordMapper;
 import com.icss.etc.ticket.mapper.UserMapper;
+import com.icss.etc.ticket.service.NotificationService;
 import com.icss.etc.ticket.service.TicketService;
 import com.icss.etc.ticket.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -45,11 +46,17 @@ public class TicketServiceImpl implements TicketService {
 
     private final TicketMapper ticketMapper;
     private final TicketRecordMapper ticketRecordMapper;
+    private final NotificationService notificationService;
 
-    public TicketServiceImpl(TicketMapper ticketMapper, TicketRecordMapper ticketRecordMapper) {
+    public TicketServiceImpl(TicketMapper ticketMapper,
+                             TicketRecordMapper ticketRecordMapper,
+                             NotificationService notificationService) {
         this.ticketMapper = ticketMapper;
         this.ticketRecordMapper = ticketRecordMapper;
+        this.notificationService = notificationService;
     }
+
+
 
     @Override
     public PageInfo<Ticket> getTicketList(TicketQueryDTO queryDTO) {
@@ -112,8 +119,17 @@ public class TicketServiceImpl implements TicketService {
             throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED);
         }
 
+        if(ticket.getProcessorId() != null) {
+            notificationService.createAssignNotification(
+                    ticket.getTicketId(),
+                    ticket.getProcessorId(),
+                    String.format("您有新的工单待处理: %s", ticket.getTitle())
+            );
+        }
+
         return ticket.getTicketId();
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -154,6 +170,30 @@ public class TicketServiceImpl implements TicketService {
 
         if(ticketRecordMapper.insertRecord(record) <= 0) {
             throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED);
+        }
+
+        switch(updateDTO.getStatus()) {
+            case PROCESSING -> {
+                notificationService.createAssignNotification(
+                        updateDTO.getTicketId(),
+                        ticket.getCreateBy(),
+                        "您的工单已开始处理"
+                );
+            }
+            case COMPLETED -> {
+                notificationService.createCompleteNotification(
+                        updateDTO.getTicketId(),
+                        ticket.getCreateBy(),
+                        "您的工单已处理完成,请确认"
+                );
+            }
+            case CLOSED -> {
+                notificationService.createCompleteNotification(
+                        updateDTO.getTicketId(),
+                        ticket.getProcessorId(),
+                        "工单已关闭"
+                );
+            }
         }
     }
 
@@ -209,7 +249,10 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
-
+    /**
+     * 工单转交
+     * @param request 转交请求
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void transferTicket(TransferTicketRequest request) {
@@ -243,6 +286,53 @@ public class TicketServiceImpl implements TicketService {
         record.setOperatorId(request.getUpdateBy());
         record.setOperationType(OperationType.TRANSFER);
         record.setOperationContent(request.getNote());
+        record.setCreateTime(LocalDateTime.now());
+        record.setIsDeleted(0);
+
+        ticketRecordMapper.insertRecord(record);
+
+        // 通知新处理人
+        notificationService.createAssignNotification(
+                request.getTicketId(),
+                request.getUpdateBy(),
+                String.format("工单已转交给您处理: %s", ticket.getTitle())
+        );
+
+        // 通知原处理人
+        if(ticket.getProcessorId() != null) {
+            notificationService.createAssignNotification(
+                    request.getTicketId(),
+                    ticket.getProcessorId(),
+                    String.format("工单已转交他人处理: %s", ticket.getTitle())
+            );
+        }
+    }
+
+    /**
+     * 新增工单删除方法
+     * @param ticketId 工单ID
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteTicket(Long ticketId) {
+        // 逻辑删除工单
+        Ticket ticket = ticketMapper.selectTicketById(ticketId);
+        if(ticket == null) {
+            throw new BusinessException(TicketEnum.TICKET_NOT_EXIST);
+        }
+
+        ticket.setIsDeleted(1);
+        ticket.setUpdateTime(LocalDateTime.now());
+        ticketMapper.updateTicket(ticket);
+
+        // 删除相关通知
+        notificationService.deleteByTicketId(ticketId);
+
+        // 记录删除操作
+        TicketRecord record = new TicketRecord();
+        record.setTicketId(ticketId);
+        record.setOperatorId(SecurityUtils.getCurrentUserId());
+        record.setOperationType(OperationType.CLOSE);
+        record.setOperationContent("工单已删除");
         record.setCreateTime(LocalDateTime.now());
         record.setIsDeleted(0);
 
@@ -287,7 +377,15 @@ public class TicketServiceImpl implements TicketService {
                 evaluationDTO.getEvaluatorId(),
                 "评价完成自动关闭"
         ));
+
+        notificationService.createCompleteNotification(
+                evaluationDTO.getTicketId(),
+                ticket.getProcessorId(),
+                String.format("工单已评价完成,评分: %d分", evaluationDTO.getScore())
+        );
     }
+
+
 
     @Override
     public PageInfo<Ticket> getTodoTickets(TicketQueryDTO queryDTO) {
@@ -333,7 +431,38 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public List<TicketExportDTO> exportTickets(TicketQueryDTO queryDTO) {
+        // 调用Mapper查询数据
         return ticketMapper.selectForExport(queryDTO);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importTickets(List<TicketExportDTO> exportDTOs) {
+        for (TicketExportDTO exportDTO : exportDTOs) {
+            // 1. 转换为Ticket实体
+            Ticket ticket = new Ticket();
+            BeanUtils.copyProperties(exportDTO, ticket);
+
+            // 2. 设置默认值
+            ticket.setStatus(TicketStatus.PENDING);
+            ticket.setCreateBy(SecurityUtils.getCurrentUserId());
+            ticket.setCreateTime(LocalDateTime.now());
+            ticket.setIsDeleted(0);
+
+            // 3. 保存数据
+            ticketMapper.insertTicket(ticket);
+
+            // 4. 添加创建记录
+            TicketRecord record = new TicketRecord();
+            record.setTicketId(ticket.getTicketId());
+            record.setOperatorId(SecurityUtils.getCurrentUserId());
+            record.setOperationType(OperationType.CREATE);
+            record.setOperationContent("批量导入创建");
+            record.setCreateTime(LocalDateTime.now());
+            record.setIsDeleted(0);
+
+            ticketRecordMapper.insertRecord(record);
+        }
     }
 
 
