@@ -16,49 +16,41 @@ import org.apache.ibatis.annotations.Param;
  */
 
 public interface TicketRecordMapper {
-    /**
-     * insert record to table
-     *
-     * @param record the record
-     * @return insert count
-     */
-    int insert(TicketRecord record);
 
     /**
-     * insert record to table selective
-     *
-     * @param record the record
-     * @return insert count
+     * 创建处理记录
      */
-    int insertSelective(TicketRecord record);
+    int insertRecord(TicketRecord record);
 
     /**
-     * select by primary key
-     *
-     * @param recordId primary key
-     * @return object by primary key
+     * 查询工单处理记录
      */
-    TicketRecord selectByPrimaryKey(Long recordId);
+    List<TicketRecord> selectRecordsByTicketId(@Param("ticketId") Long ticketId);
 
     /**
-     * update record selective
-     *
-     * @param record the updated record
-     * @return update count
+     * 查询处理记录详情
      */
+    TicketRecord selectRecordById(@Param("recordId") Long recordId);
+
+    /**
+     * 更新处理记录
+     */
+    int updateRecord(TicketRecord record);
+
+
     int updateByPrimaryKeySelective(TicketRecord record);
 
-    /**
-     * update record
-     *
-     * @param record the updated record
-     * @return update count
-     */
+    TicketRecord selectByPrimaryKey(Long recordId);
+
+    int insert(TicketRecord record);
+
+    int insertSelective(TicketRecord record);
+
     int updateByPrimaryKey(TicketRecord record);
 
     List<TicketRecord> selectByAll(TicketRecord ticketRecord);
 
-    int updateBatchSelective(@Param("list") List<TicketRecord> list);
+    int batchInsert(List<TicketRecord> list);
 
-    int batchInsert(@Param("list") List<TicketRecord> list);
+    int updateBatchSelective(List<TicketRecord> list);
 }

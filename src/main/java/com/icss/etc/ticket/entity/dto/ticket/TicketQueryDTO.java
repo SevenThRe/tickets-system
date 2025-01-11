@@ -16,15 +16,14 @@ import java.time.LocalDateTime;
  */
 @Data
 public class TicketQueryDTO {
-    private Long userId;
-    private String keyword;
-    private Long processorId;
-    private Long departmentId;
-    private Priority priority;
-    private TicketStatus status;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
     private Integer pageNum;
     private Integer pageSize;
-
+    private Long userId; // 用户ID(用于查询我的工单)
+    private String keyword; // 关键字搜索
+    private Long processorId; // 处理人ID
+    private Long departmentId; // 部门ID
+    private Priority priority; // 优先级
+    private TicketStatus status; // 状态
+    private LocalDateTime startTime; // 开始时间
+    private LocalDateTime endTime; // 结束时间
 }
