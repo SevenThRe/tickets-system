@@ -14,4 +14,7 @@ public class TransferTicketRequest {
 
     @NotBlank(message = "转交说明不能为空")
     private String note;
+
+    @NotBlank(message = "工单ID不能为空")
+    private Long ticketId;
 }

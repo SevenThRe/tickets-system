@@ -1,10 +1,15 @@
 package com.icss.etc.ticket.service;
 
+import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.entity.TicketRecord;
 import com.icss.etc.ticket.entity.dto.*;
 import com.icss.etc.ticket.entity.dto.ticket.*;
+import com.icss.etc.ticket.entity.vo.TicketDetailVO;
 import com.icss.etc.ticket.entity.vo.TicketVO;
+import com.icss.etc.ticket.entity.vo.ticket.TicketStatisticsVO;
+import com.icss.etc.ticket.enums.OperationType;
+import com.icss.etc.ticket.enums.TicketStatus;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
@@ -20,180 +25,60 @@ import java.util.Map;
  */
 
 public interface TicketService {
-    /**
-     * 创建工单
-     * @param ticket 工单信息
-     * @return 影响行数
-     */
-    int insert(Ticket ticket);
 
     /**
-     * 更新工单
-     * @param ticket 工单信息
-     * @return 影响行数
+     * 获取工单列表
      */
-    int update(Ticket ticket);
-
-    /**
-     * 伪删除工单
-     * @param ticketId 工单ID
-     * @return 影响行数
-     */
-    int deleteById(Long ticketId);
+    PageInfo<Ticket> getTicketList(TicketQueryDTO queryDTO);
 
     /**
      * 获取工单详情
-     * @param ticketId 工单ID
-     * @return 工单信息
      */
-    Ticket getById(Long ticketId);
+    TicketDetailVO getTicketDetail(Long ticketId);
 
     /**
-     * 分页查询工单列表
-     * @param queryDTO 查询条件
-     * @return 工单列表
+     * 创建工单
      */
-    List<TicketVO> pageList(@Param("queryDTO") TicketQueryDTO queryDTO);
-
-    /**
-     * 查询工单总数
-     *
-     * @param queryDTO 查询条件
-     * @return 总数
-     */
-    long count(@Param("queryDTO") TicketQueryDTO queryDTO);
-
-    /**
-     * 查询我的工单
-     * @param userId 用户ID
-     * @param queryDTO 查询条件
-     * @return 工单列表
-     */
-    List<Ticket> getMyTickets(@Param("queryDTO") TicketQueryDTO queryDTO);
-
-    /**
-     * 查询待办工单
-     * @param userId 用户ID
-     * @param queryDTO 查询条件
-     * @return 工单列表
-     */
-    List<Ticket> getTodoTickets( @Param("queryDTO") TicketQueryDTO queryDTO);
-
-    /**
-     * 查询部门工单
-     * @param deptId 部门ID
-     * @param queryDTO 查询条件
-     * @return 工单列表
-     */
-    List<Ticket> getDeptTickets(@Param("deptId") Long deptId, @Param("queryDTO") TicketQueryDTO queryDTO);
+    Long createTicket(CreateTicketDTO createDTO);
 
     /**
      * 更新工单状态
-     * @param ticketId 工单ID
-     * @param status 状态
-     * @param updateBy 更新人
-     * @return 影响行数
      */
-    int updateStatus(@Param("ticketId") Long ticketId, @Param("status") Integer status, @Param("updateBy") Long updateBy);
+    void updateTicketStatus(UpdateTicketStatusDTO updateDTO);
 
     /**
-     * 分配处理人
-     * @param ticketId 工单ID
-     * @param processorId 处理人ID
-     * @return 影响行数
+     * 添加处理记录
      */
-    int assignProcessor(@Param("ticketId") Long ticketId, @Param("processorId") Long processorId);
+    void addTicketRecord(AddTicketRecordDTO recordDTO);
 
     /**
-     * 转交部门
-     * @param ticketId 工单ID
-     * @param deptId 部门ID
-     * @return 影响行数
+     * 工单转交
      */
-    int transferDept(@Param("ticketId") Long ticketId, @Param("deptId") Long deptId, @Param("updateBy") Long updateBy);
+    void transferTicket(TransferTicketRequest request);
 
     /**
-     * 部门工单统计
-     * @param deptId 部门ID
-     * @return 统计结果
+     * 工单评价
      */
-    DeptTicketStatsDTO getDeptStats(Long deptId);
+    void evaluateTicket(TicketEvaluationDTO evaluationDTO);
 
     /**
-     * 处理人工作量统计
-     * @param processorId 处理人ID
-     * @return 统计结果
+     * 获取待办工单
      */
-    ProcessorStatsDTO getProcessorStats(Long processorId);
+    PageInfo<Ticket> getTodoTickets(TicketQueryDTO queryDTO);
 
     /**
-     * 工单类型分布统计
-     * @param deptId 部门ID
-     * @return 统计列表
+     * 获取工单统计
      */
-    List<TicketTypeStatsDTO> getTypesStats(Long deptId);
+    TicketStatisticsVO getTicketStatistics(Long userId);
 
     /**
-     * 工单趋势统计
-     * @param deptId 部门ID
-     * @param days 天数
-     * @return 统计列表
+     * 获取效率分析
      */
-    List<TicketTrendDTO> getTrendStats(@Param("deptId") Long deptId, @Param("days") Integer days);
+    Map<String, Object> getEfficiencyAnalysis();
 
     /**
-     * 工作量统计
-     * @param deptId 部门ID
-     * @return 统计列表
+     * 导出工单数据
      */
-    List<WorkloadStatsDTO> getWorkloadStats(Long deptId);
+    List<TicketExportDTO> exportTickets(TicketQueryDTO queryDTO);
 
-    /**
-     * 处理效率统计
-     * @param deptId 部门ID
-     * @return 统计列表
-     */
-    List<EfficiencyStatsDTO> getEfficiencyStats(Long deptId);
-
-    /**
-     * 导出工单列表
-     * @param queryDTO 查询条件
-     * @return 工单列表
-     */
-    List<TicketExportDTO> selectForExport(TicketQueryDTO queryDTO);
-
-
-    /**
-     * 开始处理工单
-     * @param ticketId 工单ID
-     * @param note 处理说明
-     * @return 影响行数
-     */
-    int processTicket(Long ticketId, String note);
-
-    /**
-     * 完成工单
-     * @param ticketId 工单ID
-     * @param note 完成说明
-     * @return 影响行数
-     */
-    int resolveTicket(Long ticketId, String note);
-
-    /**
-     * 关闭工单
-     * @param ticketId 工单ID
-     * @param note 关闭说明
-     * @return 影响行数
-     */
-    int closeTicket(Long ticketId, String note);
-
-    /**
-     * 添加工单记录
-     * @param record 工单记录
-     * @return 影响行数
-     */
-    int addRecord(TicketRecord record);
-
-    //最近工单
-    List<TicketRecentDTO> selectRecentTickets(TicketQueryDTO queryDTO);
 }

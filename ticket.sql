@@ -1,3 +1,19 @@
+-- we don't know how to generate root <with-no-name> (class Root) :(
+
+grant select on performance_schema.* to 'mysql.session'@localhost;
+
+grant trigger on sys.* to 'mysql.sys'@localhost;
+
+grant audit_abort_exempt, firewall_exempt, select, system_user on *.* to 'mysql.infoschema'@localhost;
+
+grant audit_abort_exempt, authentication_policy_admin, backup_admin, clone_admin, connection_admin, firewall_exempt, persist_ro_variables_admin, session_variables_admin, shutdown, super, system_user, system_variables_admin on *.* to 'mysql.session'@localhost;
+
+grant audit_abort_exempt, firewall_exempt, system_user on *.* to 'mysql.sys'@localhost;
+
+grant alter, alter routine, application_password_admin, audit_abort_exempt, audit_admin, authentication_policy_admin, backup_admin, binlog_admin, binlog_encryption_admin, clone_admin, connection_admin, create, create role, create routine, create tablespace, create temporary tables, create user, create view, delete, drop, drop role, encryption_key_admin, event, execute, file, firewall_exempt, flush_optimizer_costs, flush_status, flush_tables, flush_user_resources, group_replication_admin, group_replication_stream, index, innodb_redo_log_archive, innodb_redo_log_enable, insert, lock tables, passwordless_user_admin, persist_ro_variables_admin, process, references, reload, replication client, replication slave, replication_applier, replication_slave_admin, resource_group_admin, resource_group_user, role_admin, select, sensitive_variables_observer, service_connection_admin, session_variables_admin, set_user_id, show databases, show view, show_routine, shutdown, super, system_user, system_variables_admin, table_encryption_admin, telemetry_log_admin, trigger, update, xa_recover_admin, grant option on *.* to newuser@seven;
+
+grant alter, alter routine, create, create role, create routine, create tablespace, create temporary tables, create user, create view, delete, drop, drop role, event, execute, file, index, insert, lock tables, process, references, reload, replication client, replication slave, select, show databases, show view, shutdown, super, trigger, update, grant option on *.* to root;
+
 create table sys_theme
 (
     theme_id    varchar(32)                        not null comment '主题ID'
@@ -52,18 +68,19 @@ create table t_department
 (
     department_id   bigint auto_increment comment '部门ID'
         primary key,
-    department_name varchar(50)                        not null comment '部门名称',
-    manager_id      bigint                             null comment '部门负责人ID',
-    parent_id       bigint                             null comment '父部门ID',
-    dept_level      tinyint                            not null comment '部门层级',
-    description     varchar(200)                       null comment '部门描述',
-    status          tinyint  default 1                 not null comment '状态：0-禁用，1-启用',
-    is_deleted      tinyint  default 0                 not null comment '是否删除',
-    create_by       bigint                             null comment '创建人',
-    update_by       bigint                             null comment '更新人',
-    create_time     datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    update_time     datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    order_num       int      default 0                 null comment '部门排序号',
+    department_name varchar(50)                            not null comment '部门名称',
+    manager_id      bigint                                 null comment '部门负责人ID',
+    parent_id       bigint                                 null comment '父部门ID',
+    dept_level      tinyint                                not null comment '部门层级',
+    description     varchar(200)                           null comment '部门描述',
+    status          tinyint     default 1                  not null comment '状态：0-禁用，1-启用',
+    is_deleted      tinyint     default 0                  not null comment '是否删除',
+    create_by       bigint                                 null comment '创建人',
+    update_by       bigint                                 null comment '更新人',
+    create_time     datetime    default CURRENT_TIMESTAMP  not null comment '创建时间',
+    update_time     datetime    default CURRENT_TIMESTAMP  not null on update CURRENT_TIMESTAMP comment '更新时间',
+    order_num       int         default 0                  null comment '部门排序号',
+    icon_class      varchar(50) default 'fa-shipping-fast' not null comment '部门图标',
     constraint idx_orderNum_parent
         unique (parent_id, order_num) comment '父部门ID和序号的唯一索引',
     constraint uk_dept_name
@@ -118,22 +135,6 @@ create table t_permission
         unique (permission_code) comment '权限编码唯一索引'
 )
     comment '权限表' charset = utf8mb4;
-
-create table t_position
-(
-    id          bigint auto_increment comment '主键ID'
-        primary key,
-    code        varchar(50)                        not null comment '职位编码',
-    name        varchar(50)                        not null comment '职位名称',
-    dept_id     bigint                             null comment '所属部门ID',
-    status      tinyint  default 1                 null comment '状态(0-禁用 1-启用)',
-    order_num   int      default 0                 null comment '排序号',
-    create_time datetime default CURRENT_TIMESTAMP null comment '创建时间',
-    update_time datetime                           null on update CURRENT_TIMESTAMP comment '更新时间',
-    constraint uk_code
-        unique (code)
-)
-    comment '职位表';
 
 create table t_role
 (
@@ -237,7 +238,7 @@ create table t_user
     username      varchar(50)                        not null comment '用户名',
     password      varchar(100)                       not null comment '密码',
     real_name     varchar(50)                        not null comment '真实姓名',
-    department_id bigint                             not null comment '所属部门ID',
+    department_id bigint   default 0                 not null comment '所属部门ID',
     email         varchar(100)                       null comment '邮箱',
     phone         varchar(20)                        null comment '电话',
     status        tinyint  default 1                 not null comment '状态：0-禁用，1-启用',
@@ -246,7 +247,6 @@ create table t_user
     update_by     bigint                             null comment '更新人',
     create_time   datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     update_time   datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
-    position_id   bigint                             null comment '职位ID',
     constraint uk_username
         unique (username) comment '用户名唯一索引'
 )
