@@ -136,6 +136,10 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    public String[] selectUserPermissions(Long userId) {
+        return userMapper.selectUserPermissions(userId);
+    }
+
     public List<UserViewBackDTO> selectUserInfo1(UserQueryDTO userQueryDTO) {
         return userMapper.selectUserInfo1(userQueryDTO);
     }

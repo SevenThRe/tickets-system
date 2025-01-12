@@ -4,197 +4,376 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.Ticket;
+import com.icss.etc.ticket.entity.TicketRecord;
+import com.icss.etc.ticket.entity.TicketType;
 import com.icss.etc.ticket.entity.dto.ticket.*;
-import com.icss.etc.ticket.entity.vo.TicketVO;
+import com.icss.etc.ticket.entity.vo.TicketDetailVO;
+import com.icss.etc.ticket.entity.vo.ticket.TicketStatisticsVO;
+import com.icss.etc.ticket.enums.CodeEnum;
+import com.icss.etc.ticket.enums.OperationType;
 import com.icss.etc.ticket.enums.TicketEnum;
 import com.icss.etc.ticket.enums.TicketStatus;
+import com.icss.etc.ticket.exceptions.BusinessException;
+import com.icss.etc.ticket.service.FileService;
 import com.icss.etc.ticket.service.TicketService;
+import com.icss.etc.ticket.util.ExcelUtil;
 import com.icss.etc.ticket.util.SecurityUtils;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/tickets")
 @Slf4j
 public class TicketController {
+
     private final TicketService ticketService;
 
-    public TicketController(TicketService ticketService) {
+    private final FileService fileService;
+
+
+    public TicketController(TicketService ticketService , FileService fileService) {
         this.ticketService = ticketService;
-    }
-    /**
-     * 创建工单
-     */
-    @PostMapping("/create")
-    public R<Void> create(@RequestBody @Valid Ticket ticket) {
-        ticket.setCreateBy(SecurityUtils.getCurrentUserId());
-        ticket.setCreateTime(LocalDateTime.now());
-        ticket.setStatus(TicketStatus.PENDING);
-        ticket.setIsDeleted(0);
-        return ticketService.insert(ticket) > 0 ? R.OK() : R.FAIL();
+        this.fileService = fileService;
     }
 
+    /* My-Ticket.HTML 相关代码 */
     /**
      * 获取工单列表
      */
     @GetMapping("/list")
-    public R<Map<String, Object>> list(TicketQueryDTO queryDTO) {
-        PageHelper.startPage(queryDTO.getPageNum(), queryDTO.getPageSize());
-        PageInfo<TicketVO> pageInfo = new PageInfo<>(ticketService.pageList(queryDTO));
-        Map<String, Object> result = new HashMap<>(2);
-        result.put("total", pageInfo.getTotal());
-        result.put("list", pageInfo.getList());
-        return R.OK(result);
+    public R<PageInfo<Ticket>> getTicketList(TicketQueryDTO queryDTO) {
+        try {
+            PageInfo<Ticket> pageInfo = ticketService.getTicketList(queryDTO);
+            return R.OK(pageInfo);
+        } catch (Exception e) {
+            log.error("查询工单列表失败:", e);
+            return R.FAIL();
+        }
     }
 
     /**
+     *  获取工单类型列表
+     * @return 工单类型列表
+     */
+    @GetMapping("/type/list")
+    public R<List<TicketType>> getTicketTypeList() {
+        try {
+            List<TicketType> ticketTypeList = ticketService.getTicketTypeList();
+            return R.OK(ticketTypeList);
+        } catch (Exception e) {
+            log.error("查询工单类型列表失败:", e);
+            return R.FAIL();
+        }
+    }
+    // TEST:OK
+    /**
      * 获取工单详情
      */
-    @GetMapping("/{id}")
-    public R<Ticket> detail(@PathVariable Long id) {
-        return R.OK(ticketService.getById(id));
+    @GetMapping("/{ticketId}")
+    public R<TicketDetailVO> getTicketDetail(@PathVariable Long ticketId) {
+        try {
+            TicketDetailVO detail = ticketService.getTicketDetail(ticketId);
+            return R.OK(detail);
+        } catch (BusinessException e) {
+            log.error("查询工单详情失败: {}", e.getMessage());
+            return R.FAIL(TicketEnum.TICKET_NOT_EXIST);
+        } catch (Exception e) {
+            log.error("查询工单详情失败:", e);
+            return R.FAIL();
+        }
+    }
+
+    /**
+     * 删除工单
+     * @param ticketId 工单ID
+     * @return R<Void>
+     */
+    @DeleteMapping("/{ticketId}")
+    public R<Void> deleteTicket(@PathVariable Long ticketId) {
+        try {
+            ticketService.deleteTicket(ticketId);
+            return R.OK();
+        } catch (BusinessException e) {
+            log.error("删除工单失败: {}", e.getMessage());
+            return R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+        } catch (Exception e) {
+            log.error("删除工单失败:", e);
+            return R.FAIL();
+        }
+    }
+
+    // TEST:OK
+    /**
+     * 创建工单
+     * @param createDTO 创建工单请求
+     *
+     */
+    @PostMapping(value = "/create" ,consumes = "multipart/form-data")
+    public R<Long> createTicket(
+            @RequestParam("attachments") MultipartFile file,
+            @RequestBody @Valid CreateTicketDTO createDTO) {
+        try {
+            Long ticketId = ticketService.createTicket(createDTO);
+            return R.OK(ticketId);
+        } catch (BusinessException e) {
+            log.error("创建工单失败: {}", e.getMessage());
+            return R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+        } catch (Exception e) {
+            log.error("创建工单失败:", e);
+            return R.FAIL();
+        }
+    }
+
+    /**
+     * 更新工单状态
+     */
+    @PutMapping("/status")
+    public R<Void> updateTicketStatus(@RequestBody @Valid UpdateTicketStatusDTO updateDTO) {
+        try {
+            ticketService.updateTicketStatus(updateDTO);
+            return R.OK();
+        } catch (BusinessException e) {
+            log.error("更新工单状态失败: {}", e.getMessage());
+            return R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+        } catch (Exception e) {
+            log.error("更新工单状态失败:", e);
+            return R.FAIL();
+        }
+    }
+
+    /**
+     * 添加处理记录
+     */
+    @PostMapping("/records")
+    public R<Void> addTicketRecord(@RequestBody @Valid AddTicketRecordDTO recordDTO) {
+        try {
+            ticketService.addTicketRecord(recordDTO);
+            return R.OK();
+        } catch (BusinessException e) {
+            log.error("添加处理记录失败: {}", e.getMessage());
+            return R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+        } catch (Exception e) {
+            log.error("添加处理记录失败:", e);
+            return R.FAIL();
+        }
+    }
+
+    /**
+     * 工单转交
+     */
+    @PostMapping("/{ticketId}/transfer")
+    public R<Void> transferTicket(@RequestBody @Valid TransferTicketRequest request) {
+        try {
+            ticketService.transferTicket(request);
+            return R.OK();
+        } catch (BusinessException e) {
+            log.error("工单转交失败: {}", e.getMessage());
+            return R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+        } catch (Exception e) {
+            log.error("工单转交失败:", e);
+            return R.FAIL();
+        }
+    }
+
+    /**
+     * 工单评价
+     */
+    @PostMapping("/{ticketId}/evaluate")
+    public R<Void> evaluateTicket(@RequestBody @Valid TicketEvaluationDTO evaluationDTO) {
+        try {
+            ticketService.evaluateTicket(evaluationDTO);
+            return R.OK();
+        } catch (BusinessException e) {
+            log.error("工单评价失败: {}", e.getMessage());
+            return R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+        } catch (Exception e) {
+            log.error("工单评价失败:", e);
+            return R.FAIL();
+        }
     }
 
     /**
      * 获取我的待办工单
      */
     @GetMapping("/todos")
-    public R<List<Ticket>> getTodos(TicketQueryDTO queryDTO) {
-        return R.OK(ticketService.getTodoTickets( queryDTO));
-    }
-
-    /**
-     * 获取我创建的工单
-     */
-    @GetMapping("/my")
-    public R<List<Ticket>> getMyTickets(TicketQueryDTO queryDTO) {
-        return R.OK(ticketService.getMyTickets(queryDTO));
-    }
-
-    /**
-     * 处理工单
-     */
-    @PutMapping("/{id}/process")
-    public R<Void> processTicket(@PathVariable Long id, @RequestBody @Valid ProcessTicketRequest request) {
+    public R<PageInfo<Ticket>> getTodoTickets(TicketQueryDTO queryDTO) {
         try {
-            int result = ticketService.processTicket(id, request.getNote());
-            return result > 0 ? R.OK() : R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
-        } catch (IllegalArgumentException e) {
-            log.error("工单处理失败", e);
-            return R.FAIL(TicketEnum.TICKET_NOT_EXIST);
-        } catch (IllegalStateException e) {
-            log.error("工单处理失败", e);
-            return R.FAIL(TicketEnum.TICKET_STATUS_EXCEPTION);
+            PageInfo<Ticket> pageInfo = ticketService.getTodoTickets(queryDTO);
+            return R.OK(pageInfo);
+        } catch (Exception e) {
+            log.error("查询待办工单失败:", e);
+            return R.FAIL();
         }
     }
 
     /**
-     * 完成工单
+     * 获取统计数据
      */
-//    @PutMapping("/{id}/resolve")
-//    public R<Void> resolveTicket(@PathVariable Long id, @RequestBody @Valid TicketQueryDTO.ResolveTicketRequest request) {
-//        try {
-//            int result = ticketService.resolveTicket(id, request.getNote());
-//            return result > 0 ? R.OK() : R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
-//        } catch (IllegalArgumentException e) {
-//            log.error("工单完成失败", e);
-//            return R.FAIL(TicketEnum.TICKET_NOT_EXIST);
-//        } catch (IllegalStateException e) {
-//            log.error("工单完成失败", e);
-//            return R.FAIL(TicketEnum.TICKET_STATUS_EXCEPTION);
-//        }
-//    }
+    @GetMapping("/statistics")
+    public R<TicketStatisticsVO> getStatistics(@RequestParam Long userId) {
+        try {
+            TicketStatisticsVO statistics = ticketService.getTicketStatistics(userId);
+            return R.OK(statistics);
+        } catch (Exception e) {
+            log.error("获取统计数据失败:", e);
+            return R.FAIL();
+        }
+    }
 
     /**
-     * 转交工单
+     * 根据用户ID获取我的工单列表
      */
-    @PostMapping("/{id}/transfer")
-    public R<Void> transferTicket(@PathVariable Long id, @RequestBody @Valid TransferTicketRequest request) {
-        request.setUpdateBy(SecurityUtils.getCurrentUserId());
-        return ticketService.transferDept(id, request.getDepartmentId(), request.getUpdateBy()) > 0 ?
-                R.OK() : R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+    @GetMapping("/my")
+    public R<PageInfo<Ticket>> getMyTickets(TicketQueryDTO queryDTO) {
+        try {
+            // 确保只查询当前用户的工单
+            Long userId = SecurityUtils.getCurrentUserId();
+
+            PageInfo<Ticket> pageInfo = ticketService.getTicketList(queryDTO);
+            return R.OK(pageInfo);
+        } catch (Exception e) {
+            log.error("查询我的工单失败:", e);
+            return R.FAIL();
+        }
+    }
+
+    /**
+     * 添加工单备注
+     */
+    @PostMapping("/{ticketId}/note")
+    public R<Void> addTicketNote(@PathVariable Long ticketId, @RequestBody String note) {
+        try {
+            AddTicketRecordDTO recordDTO = new AddTicketRecordDTO();
+            recordDTO.setTicketId(ticketId);
+            recordDTO.setOperatorId(SecurityUtils.getCurrentUserId());
+            recordDTO.setOperationType(OperationType.HANDLE);
+            recordDTO.setContent(note);
+
+            ticketService.addTicketRecord(recordDTO);
+            return R.OK();
+        } catch (BusinessException e) {
+            log.error("添加工单备注失败: {}", e.getMessage());
+            return R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+        } catch (Exception e) {
+            log.error("添加工单备注失败:", e);
+            return R.FAIL();
+        }
     }
 
     /**
      * 关闭工单
      */
-    @PutMapping("/{id}/close")
-    public R<Void> closeTicket(@PathVariable Long id, @RequestBody @Valid CloseTicketRequest request) {
+    @PutMapping("/{ticketId}/close")
+    public R<Void> closeTicket(@PathVariable Long ticketId, @RequestBody CloseTicketRequest request) {
         try {
-            int result = ticketService.closeTicket(id, request.getNote());
-            return result > 0 ? R.OK() : R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
-        } catch (IllegalArgumentException e) {
-            log.error("工单关闭失败", e);
-            return R.FAIL(TicketEnum.TICKET_NOT_EXIST);
-        } catch (IllegalStateException e) {
-            log.error("工单关闭失败", e);
-            return R.FAIL(TicketEnum.TICKET_STATUS_EXCEPTION);
+            UpdateTicketStatusDTO updateDTO = new UpdateTicketStatusDTO();
+            updateDTO.setTicketId(ticketId);
+            updateDTO.setStatus(TicketStatus.CLOSED);
+            updateDTO.setOperatorId(request.getOperatorId());
+            updateDTO.setContent(request.getContent());
+
+            ticketService.updateTicketStatus(updateDTO);
+            return R.OK();
+        } catch (BusinessException e) {
+            log.error("关闭工单失败: {}", e.getMessage());
+            return R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+        } catch (Exception e) {
+            log.error("关闭工单失败:", e);
+            return R.FAIL();
         }
     }
 
     /**
-     * 导出工单列表
+     * 上传工单附件
+     */
+    @PostMapping("/{ticketId}/attachments")
+    public R uploadAttachments(@PathVariable Long ticketId,
+                                             @RequestParam("files") MultipartFile[] files) {
+        try {
+            // 1. 上传文件
+            List<String> fileUrls = fileService.uploadFiles(files, ticketId);
+
+            // 2. 添加附件记录
+            AddTicketRecordDTO recordDTO = new AddTicketRecordDTO();
+            recordDTO.setTicketId(ticketId);
+            recordDTO.setOperatorId(SecurityUtils.getCurrentUserId());
+            recordDTO.setOperationType(OperationType.HANDLE);
+            recordDTO.setContent("上传附件：" + String.join(", ",
+                    Arrays.stream(files)
+                            .map(MultipartFile::getOriginalFilename)
+                            .collect(Collectors.toList())));
+
+            ticketService.addTicketRecord(recordDTO);
+
+            return R.OK(fileUrls);
+        } catch (BusinessException e) {
+            log.error("上传附件失败: {}", e.getMessage());
+            return R.builder().msg(e.getMessage()).code(e.getCode()).build();
+        } catch (Exception e) {
+            log.error("上传附件失败:", e);
+            return R.FAIL();
+        }
+    }
+
+    /**
+     * 获取工单处理进度
+     */
+    @GetMapping("/{ticketId}/progress")
+    public R<List<TicketRecord>> getTicketProgress(@PathVariable Long ticketId) {
+        try {
+            TicketDetailVO detail = ticketService.getTicketDetail(ticketId);
+            return R.OK(detail.getRecords());
+        } catch (Exception e) {
+            log.error("获取工单进度失败:", e);
+            return R.FAIL();
+        }
+    }
+
+    /**
+     * 导出工单数据
+     * @param queryDTO 查询条件
+     * @param response 响应对象
      */
     @GetMapping("/export")
-    public R<List<TicketExportDTO>> exportTickets(TicketQueryDTO queryDTO) {
-        return R.OK(ticketService.selectForExport(queryDTO));
-    }
+    public void exportTickets(TicketQueryDTO queryDTO, HttpServletResponse response) {
+        try {
+            // 1. 获取导出数据
+            List<TicketExportDTO> exportData = ticketService.exportTickets(queryDTO);
 
-    /**
-     * 分配处理人
-     */
-    @PutMapping("/{id}/processor")
-    public R<Void> assignProcessor(@PathVariable Long id, @RequestParam Long processorId) {
-        return ticketService.assignProcessor(id, processorId) > 0 ? R.OK() :
-                R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
-    }
+            // 2. 导出文件
+            String fileName = String.format("工单列表_%s",
+                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 
-    /**
-     * 获取工单统计
-     */
-    @GetMapping("/statistics")
-    public R<Map<String, Object>> getStatistics(@RequestParam Long deptId) {
-        Map<String, Object> result = new HashMap<>(4);
-        result.put("deptStats", ticketService.getDeptStats(deptId));
-        result.put("typeStats", ticketService.getTypesStats(deptId));
-        result.put("workloadStats", ticketService.getWorkloadStats(deptId));
-        result.put("efficiencyStats", ticketService.getEfficiencyStats(deptId));
-        return R.OK(result);
-    }
-
-    /**
-     * 获取工单趋势
-     */
-    @GetMapping("/stats/trend")
-    public R<List<TicketTrendDTO>> getTrendStats(
-            @RequestParam Long deptId,
-            @RequestParam(defaultValue = "7") Integer days
-    ) {
-        return R.OK(ticketService.getTrendStats(deptId, days));
-    }
-
-    @GetMapping("/recent")
-    public R recentTickets(TicketQueryDTO queryDTO) {
-        if(queryDTO.getPageNum()==null){
-            return  R.FAIL(TicketEnum.TICKET_NOT_EXIST);
-        }else {
-            PageHelper.startPage(queryDTO.getPageNum(), queryDTO.getPageSize(), true);
-            List<TicketRecentDTO> list = ticketService.selectRecentTickets(queryDTO);
-            PageInfo<TicketRecentDTO> pageInfo = new PageInfo<>(list);
-
-            Map<String, Object> map1 = new HashMap<>();
-            map1.put("list", list);
-            map1.put("total", pageInfo.getPages());
-            return R.OK(map1);
+            ExcelUtil.export(fileName, exportData, TicketExportDTO.class, response);
+        } catch (Exception e) {
+            log.error("导出工单失败:", e);
+            throw new BusinessException(CodeEnum.INTERNAL_ERROR, "导出失败");
         }
     }
+
+    @PostMapping("/import")
+    public R<Void> importTickets(@RequestParam("file") MultipartFile file) {
+        try {
+            // TODO: 实现导入功能
+            // 1. 验证文件
+            // 2. 解析数据
+            // 3. 批量保存
+            return R.OK();
+        } catch (Exception e) {
+            log.error("导入工单失败:", e);
+            return R.FAIL();
+        }
+    }
+
 
 }

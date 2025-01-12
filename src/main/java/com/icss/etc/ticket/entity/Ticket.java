@@ -9,6 +9,7 @@ import com.icss.etc.ticket.enums.TicketStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Transient;
 
 /**
  * {@code Ticket} 
@@ -99,6 +100,23 @@ public class Ticket implements Serializable {
      * 更新时间
      */
     private LocalDateTime updateTime;
+
+
+    // 标记为非数据库字段，仅用于前端展示
+    @Transient
+    private String typeName;
+
+    @Transient
+    private String departmentName;
+
+    @Transient
+    private String processorName;
+
+    @Transient
+    private String creatorName;
+
+    @Transient
+    private String updaterName;
 
     @Serial
     private static final long serialVersionUID = 1L;

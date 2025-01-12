@@ -39,11 +39,12 @@ public class AuthController {
     public R login(@RequestBody AuthDTO user) {
         UserViewBackDTO u = userService.login(user.username());
         if (u != null && u.getPassword().equals(MD5Util.getMD5(user.password()))) {
-            String token = JWTUtils.generToken(u.getUserId().toString(), "AuthToken", u.getPassword());
+            String token = JWTUtils.generateToken(u.getUserId().toString(), "AuthToken", u.getPassword());
             Map<String, Object> map = new HashMap<>();
             map.put("token", token);
             u.setPassword("");
             map.put("userInfo", u);
+            map.put("permissions", userService.selectUserPermissions(u.getUserId()));
             return R.OK(map);
         } else {
             return R.FAIL(CodeEnum.USERNAME_OR_PASSWORD_ERROR);

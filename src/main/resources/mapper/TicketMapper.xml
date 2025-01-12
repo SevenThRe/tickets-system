@@ -1,147 +1,459 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.etc.ticket.mapper.TicketMapper">
-  <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Ticket">
-    <!--@Table t_ticket-->
-    <id column="ticket_id" jdbcType="BIGINT" property="ticketId" />
-    <result column="type_id" jdbcType="BIGINT" property="typeId" />
-    <result column="title" jdbcType="VARCHAR" property="title" />
-    <result column="content" jdbcType="LONGVARCHAR" property="content" />
-    <result column="processor_id" jdbcType="BIGINT" property="processorId" />
-    <result column="department_id" jdbcType="BIGINT" property="departmentId" />
-    <result column="priority" jdbcType="TINYINT" property="priority" />
-    <result column="status" jdbcType="TINYINT" property="status" />
-    <result column="expect_finish_time" jdbcType="TIMESTAMP" property="expectFinishTime" />
-    <result column="actual_finish_time" jdbcType="TIMESTAMP" property="actualFinishTime" />
-    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
-    <result column="create_by" jdbcType="BIGINT" property="createBy" />
-    <result column="update_by" jdbcType="BIGINT" property="updateBy" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
-    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
-  </resultMap>
-  <sql id="Base_Column_List">
-    <!--@mbg.generated-->
-    ticket_id, type_id, title, content, processor_id, department_id, priority, `status`, 
-    expect_finish_time, actual_finish_time, is_deleted, create_by, update_by, create_time, 
-    update_time
-  </sql>
-  <insert id="insert" keyColumn="ticket_id" keyProperty="ticketId" parameterType="com.icss.etc.ticket.entity.Ticket" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into t_ticket (type_id, title, content, 
-      processor_id, department_id, priority, 
-      `status`, expect_finish_time, actual_finish_time, 
-      is_deleted, create_by, update_by, 
-      create_time, update_time)
-    values (#{typeId,jdbcType=BIGINT}, #{title,jdbcType=VARCHAR}, #{content,jdbcType=LONGVARCHAR}, 
-      #{processorId,jdbcType=BIGINT}, #{departmentId,jdbcType=BIGINT}, #{priority,jdbcType=TINYINT}, 
-      #{status,jdbcType=TINYINT}, #{expectFinishTime,jdbcType=TIMESTAMP}, #{actualFinishTime,jdbcType=TIMESTAMP}, 
-      #{isDeleted,jdbcType=TINYINT}, #{createBy,jdbcType=BIGINT}, #{updateBy,jdbcType=BIGINT}, 
-      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
-  </insert>
-    <select id="getDeptStats" resultType="com.icss.etc.ticket.entity.dto.DeptTicketStatsDTO">
-        SELECT
-        COUNT(*) as totalCount,
-        SUM(IF(status = 0, 1, 0)) as pendingCount,
-        SUM(IF(status = 1, 1, 0)) as processingCount,
-        SUM(IF(status = 2, 1, 0)) as completedCount,
-        SUM(IF(status = 3, 1, 0)) as closedCount,
-        AVG(TIMESTAMPDIFF(HOUR, create_time,
-        IF(status IN (2,3), actual_finish_time, NOW()))) as avgProcessTime,
-        ROUND(SUM(IF(status IN (2,3), 1, 0)) * 100.0 /
-        NULLIF(COUNT(*), 0), 2) as completionRate,
-        (SELECT AVG(evaluation_score)
-        FROM t_ticket_record
-        WHERE operation_type = 'EVALUATE'
-        AND ticket_id IN (SELECT ticket_id FROM t_ticket WHERE department_id = #{deptId})
-        ) as satisfactionRate
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Ticket">
+        <id column="ticket_id" property="ticketId" />
+        <result column="type_id" property="typeId" />
+        <result column="title" property="title" />
+        <result column="content" property="content" />
+        <result column="processor_id" property="processorId" />
+        <result column="department_id" property="departmentId" />
+        <result column="priority" property="priority"
+                typeHandler="org.apache.ibatis.type.EnumOrdinalTypeHandler"/>
+        <result column="status" property="status"
+                typeHandler="org.apache.ibatis.type.EnumOrdinalTypeHandler"/>
+        <result column="expect_finish_time" property="expectFinishTime" />
+        <result column="actual_finish_time" property="actualFinishTime" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="create_by" property="createBy" />
+        <result column="update_by" property="updateBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+
+        <!-- 关联字段 -->
+        <result column="type_name" property="typeName" />
+        <result column="department_name" property="departmentName" />
+        <result column="processor_name" property="processorName" />
+        <result column="creator_name" property="creatorName" />
+        <result column="updater_name" property="updaterName" />
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        ticket_id, type_id, title, content, processor_id,
+        department_id, priority, status, expect_finish_time,
+        actual_finish_time, is_deleted, create_by, update_by,
+        create_time, update_time
+    </sql>
+
+    <!-- 关联查询列 -->
+    <sql id="Join_Column_List">
+        t.ticket_id, t.type_id, t.title, t.content, t.processor_id,
+        t.department_id, t.priority, t.status, t.expect_finish_time,
+        t.actual_finish_time, t.is_deleted, t.create_by, t.update_by,
+        t.create_time, t.update_time,
+        tt.type_name,
+        d.department_name,
+        pu.real_name as processor_name,
+        cu.real_name as creator_name,
+        uu.real_name as updater_name
+    </sql>
+
+    <!-- 关联表 -->
+    <sql id="Join_Tables">
+        t_ticket t
+            LEFT JOIN t_ticket_type tt ON t.type_id = tt.type_id
+                                           LEFT JOIN t_department d ON t.department_id = d.department_id
+                                           LEFT JOIN t_user pu ON t.processor_id = pu.user_id
+                                           LEFT JOIN t_user cu ON t.create_by = cu.user_id
+                                           LEFT JOIN t_user uu ON t.update_by = uu.user_id
+    </sql>
+
+    <!-- 查询条件 -->
+    <sql id="queryCondition">
+        <where>
+            t.is_deleted = 0
+            <if test="query != null">
+                <if test="query.keyword != null and query.keyword != ''">
+                    AND (
+                    t.title LIKE CONCAT('%', #{query.keyword}, '%')
+                    OR t.content LIKE CONCAT('%', #{query.keyword}, '%')
+                    OR t.ticket_id LIKE CONCAT('%', #{query.keyword}, '%')
+                    )
+                </if>
+                <if test="query.status != null">
+                    AND t.status = #{query.status}
+                </if>
+                <if test="query.priority != null">
+                    AND t.priority = #{query.priority}
+                </if>
+                <if test="query.departmentId != null">
+                    AND t.department_id = #{query.departmentId}
+                </if>
+                <if test="query.processorId != null">
+                    AND t.processor_id = #{query.processorId}
+                </if>
+                <if test="query.userId != null">
+                    AND (t.create_by = #{query.userId} OR t.processor_id = #{query.userId})
+                </if>
+                <if test="query.startTime != null">
+                    AND t.create_time >= #{query.startTime}
+                </if>
+                <if test="query.endTime != null">
+                    AND t.create_time &lt;= #{query.endTime}
+                </if>
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectTicketList" resultType="com.icss.etc.ticket.entity.Ticket">
+        SELECT t.*, tt.type_name as typeName,
+        d.department_name as departmentName,
+        u.real_name as processorName
+        FROM t_ticket t
+        LEFT JOIN t_ticket_type tt ON t.type_id = tt.type_id
+        LEFT JOIN t_department d ON t.department_id = d.department_id
+        LEFT JOIN t_user u ON t.processor_id = u.user_id
+        WHERE t.is_deleted = 0
+        <if test="query.userId != null">
+            AND (t.create_by = #{query.userId} OR t.processor_id = #{query.userId})
+        </if>
+        <if test="query.keyword != null and query.keyword != ''">
+            AND (
+            t.title LIKE CONCAT('%', #{query.keyword}, '%')
+            OR t.content LIKE CONCAT('%', #{query.keyword}, '%')
+            OR t.ticket_id LIKE CONCAT('%', #{query.keyword}, '%'))
+        </if>
+        <if test="query.status != null">
+            AND t.status = #{query.status}
+        </if>
+        <if test="query.priority != null">
+            AND t.priority = #{query.priority}
+        </if>
+        <if test="query.startTime != null">
+            AND t.create_time >= #{query.startTime}
+        </if>
+        <if test="query.endTime != null">
+            AND t.create_time &lt;= #{query.endTime}
+        </if>
+        <if test="query.departmentId != null">
+            AND t.department_id = #{query.departmentId}
+        </if>
+        ORDER BY t.create_time DESC
+    </select>
+
+    <select id="selectTicketById" resultType="com.icss.etc.ticket.entity.Ticket">
+        SELECT *
         FROM t_ticket
-        WHERE department_id = #{deptId}
+        WHERE ticket_id = #{ticketId}
         AND is_deleted = 0
     </select>
 
-  <update id="update">
-      update t_ticket
-      <set>
-        <if test="typeId!= null">type_id = #{typeId,jdbcType=BIGINT},</if>
-        <if test="title != null">title = #{title,jdbcType=VARCHAR},</if>
-        <if test="content!= null">content = #{content,jdbcType=LONGVARCHAR},</if>
-        <if test="processorId != null">processor_id = #{processorId,jdbcType=BIGINT},</if>
-        <if test="departmentId != null">department_id = #{departmentId,jdbcType=BIGINT},</if>
-        <if test="priority != null">priority = #{priority,jdbcType=TINYINT},</if>
-        <if test="status != null">`status` = #{status,jdbcType=TINYINT},</if>
-        <if test="expectFinishTime != null">expect_finish_time = #{expectFinishTime,jdbcType=TIMESTAMP},</if>
-        <if test="actualFinishTime != null">actual_finish_time = #{actualFinishTime,jdbcType=TIMESTAMP},</if>
-        <if test="isDeleted != null">is_deleted = #{isDeleted,jdbcType=TINYINT},</if>
-          update_by = #{updateBy,jdbcType=BIGINT},
-          update_time = default
-      </set>
-      where ticket_id = #{ticketId,jdbcType=BIGINT}
+    <select id="selectTicketDetail" resultType="com.icss.etc.ticket.entity.vo.TicketDetailVO">
+        SELECT
+        t.*,
+        tt.type_name,
+        d.department_name,
+        u.real_name as processor_name,
+        cu.real_name as creator_name,
+        uu.real_name as updater_name
+        FROM t_ticket t
+        LEFT JOIN t_ticket_type tt ON t.type_id = tt.type_id
+        LEFT JOIN t_department d ON t.department_id = d.department_id
+        LEFT JOIN t_user u ON t.processor_id = u.user_id
+        LEFT JOIN t_user cu ON t.create_by = cu.user_id
+        LEFT JOIN t_user uu ON t.update_by = uu.user_id
+        WHERE t.ticket_id = #{ticketId}
+        AND t.is_deleted = 0
+    </select>
+
+    <insert id="insertTicket" useGeneratedKeys="true" keyProperty="ticketId">
+        INSERT INTO t_ticket (
+        type_id, title, content, processor_id, department_id,
+        priority, status, expect_finish_time, create_by,
+        create_time, is_deleted
+        ) VALUES (
+        #{typeId}, #{title}, #{content}, #{processorId}, #{departmentId},
+        #{priority}, #{status}, #{expectFinishTime}, #{createBy},
+        #{createTime}, #{isDeleted}
+        )
+    </insert>
+
+    <update id="updateTicket">
+        UPDATE t_ticket
+        <set>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="processorId != null">
+                processor_id = #{processorId},
+            </if>
+            <if test="departmentId != null">
+                department_id = #{departmentId},
+            </if>
+            <if test="priority != null">
+                priority = #{priority},
+            </if>
+            <if test="actualFinishTime != null">
+                actual_finish_time = #{actualFinishTime},
+            </if>
+            <if test="updateBy != null">
+                update_by = #{updateBy},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE ticket_id = #{ticketId}
+        AND is_deleted = 0
     </update>
 
-  <update id="deleteById">
-      update t_ticket set is_deleted = 1
-      where ticket_id = #{ticketId,jdbcType=BIGINT}
+    <!-- 统计用户相关工单数量 -->
+    <select id="countUserTickets" resultType="integer">
+        SELECT COUNT(1)
+        FROM t_ticket
+        WHERE is_deleted = 0
+        AND (create_by = #{userId} OR processor_id = #{userId})
+    </select>
+
+    <!-- 统计各状态工单数量 -->
+    <select id="countByStatus" resultType="java.util.Map">
+        SELECT
+        status,
+        COUNT(1) as count
+        FROM t_ticket
+        WHERE is_deleted = 0
+        AND (create_by = #{userId} OR processor_id = #{userId})
+        GROUP BY status
+    </select>
+
+    <!-- 计算平均处理时间 -->
+    <select id="calculateAvgProcessTime" resultType="double">
+        SELECT
+        AVG(TIMESTAMPDIFF(HOUR, create_time,
+        CASE
+        WHEN status IN (2,3) THEN actual_finish_time
+        ELSE NOW()
+        END)) as avg_time
+        FROM t_ticket
+        WHERE is_deleted = 0
+        AND processor_id = #{userId}
+        AND status IN (2,3) -- 已完成或已关闭
+    </select>
+
+    <!-- 计算平均满意度 -->
+    <select id="calculateAvgSatisfaction" resultType="double">
+        SELECT AVG(r.evaluation_score)
+        FROM t_ticket t
+        JOIN t_ticket_record r ON t.ticket_id = r.ticket_id
+        WHERE t.is_deleted = 0
+        AND t.processor_id = #{userId}
+        AND r.operation_type = 3 -- FINISH
+        AND r.evaluation_score IS NOT NULL
+    </select>
+
+    <!-- 获取月度统计数据 -->
+    <select id="getMonthlyStatistics" resultType="com.icss.etc.ticket.entity.vo.ticket.MonthlyStatisticsVO">
+        SELECT
+        DATE_FORMAT(create_time, '%Y-%m') as month,
+        COUNT(1) as totalCount,
+        SUM(CASE WHEN status IN (2,3) THEN 1 ELSE 0 END) as completedCount,
+        ROUND(SUM(CASE WHEN status IN (2,3) THEN 1 ELSE 0 END) * 100.0 / COUNT(1), 2) as completionRate,
+        AVG(CASE
+        WHEN status IN (2,3)
+        THEN TIMESTAMPDIFF(HOUR, create_time, actual_finish_time)
+        ELSE NULL
+        END) as avgProcessTime
+        FROM t_ticket
+        WHERE is_deleted = 0
+        AND (create_by = #{userId} OR processor_id = #{userId})
+        AND create_time >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+        GROUP BY DATE_FORMAT(create_time, '%Y-%m')
+        ORDER BY month DESC
+    </select>
+
+    <!-- 获取部门统计数据 -->
+    <select id="getDepartmentStatistics" resultType="com.icss.etc.ticket.entity.vo.ticket.DepartmentStatisticsVO">
+        SELECT
+            d.department_id,
+            d.department_name,
+            COUNT(t.ticket_id) as totalCount,
+            SUM(CASE WHEN t.status = 0 THEN 1 ELSE 0 END) as pendingCount,
+            SUM(CASE WHEN t.status = 1 THEN 1 ELSE 0 END) as processingCount,
+            SUM(CASE WHEN t.status IN (2,3) THEN 1 ELSE 0 END) as completedCount,
+            AVG(CASE
+                    WHEN t.status IN (2,3)
+                        THEN TIMESTAMPDIFF(HOUR, t.create_time, t.actual_finish_time)
+                    ELSE NULL
+                END) as avgProcessTime,
+            AVG(r.evaluation_score) as satisfaction
+        FROM t_department d
+                 LEFT JOIN t_ticket t ON d.department_id = t.department_id AND t.is_deleted = 0
+                 LEFT JOIN t_ticket_record r ON t.ticket_id = r.ticket_id
+            AND r.operation_type = 3
+            AND r.evaluation_score IS NOT NULL
+        GROUP BY d.department_id, d.department_name
+        ORDER BY totalCount DESC
+    </select>
+
+    <!-- 获取工单处理效率排名 -->
+    <select id="getEfficiencyRanking" resultType="java.util.Map">
+        SELECT
+            u.user_id,
+            u.real_name,
+            COUNT(t.ticket_id) as totalCount,
+            AVG(TIMESTAMPDIFF(HOUR, t.create_time, t.actual_finish_time)) as avgProcessTime,
+            AVG(r.evaluation_score) as satisfaction
+        FROM t_user u
+                 LEFT JOIN t_ticket t ON u.user_id = t.processor_id
+            AND t.is_deleted = 0
+            AND t.status IN (2,3)
+                 LEFT JOIN t_ticket_record r ON t.ticket_id = r.ticket_id
+            AND r.operation_type = 3
+            AND r.evaluation_score IS NOT NULL
+        WHERE t.create_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY u.user_id, u.real_name
+        HAVING totalCount > 0
+        ORDER BY avgProcessTime ASC
+        LIMIT 10
+    </select>
+
+    <!-- 获取部门工作量统计 -->
+    <select id="getDepartmentWorkload" resultType="java.util.Map">
+        SELECT
+            d.department_id,
+            d.department_name,
+            COUNT(t.ticket_id) as totalCount,
+            COUNT(DISTINCT t.processor_id) as processorCount,
+            ROUND(COUNT(t.ticket_id) * 1.0 /
+                  NULLIF(COUNT(DISTINCT t.processor_id), 0), 2) as avgWorkload
+        FROM t_department d
+                 LEFT JOIN t_ticket t ON d.department_id = t.department_id
+            AND t.is_deleted = 0
+            AND t.create_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY d.department_id, d.department_name
+        ORDER BY avgWorkload DESC
+    </select>
+
+    <!-- 获取待处理工单列表 -->
+    <select id="selectTodoList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM t_ticket
+        WHERE processor_id = #{processorId}
+        AND status IN (0, 1) <!-- 待处理或处理中 -->
+        AND is_deleted = 0
+        ORDER BY priority DESC, create_time ASC
+    </select>
+
+    <!-- 按条件统计工单数量 -->
+    <select id="countTickets" resultType="integer">
+        SELECT COUNT(1)
+        FROM t_ticket t
+        WHERE t.is_deleted = 0
+        <if test="query.keyword != null and query.keyword != ''">
+            AND (
+            t.title LIKE CONCAT('%', #{query.keyword}, '%')
+            OR t.content LIKE CONCAT('%', #{query.keyword}, '%')
+            )
+        </if>
+        <if test="query.status != null">
+            AND t.status = #{query.status}
+        </if>
+        <if test="query.priority != null">
+            AND t.priority = #{query.priority}
+        </if>
+        <if test="query.departmentId != null">
+            AND t.department_id = #{query.departmentId}
+        </if>
+        <if test="query.processorId != null">
+            AND t.processor_id = #{query.processorId}
+        </if>
+        <if test="query.startTime != null">
+            AND t.create_time >= #{query.startTime}
+        </if>
+        <if test="query.endTime != null">
+            AND t.create_time &lt;= #{query.endTime}
+        </if>
+    </select>
+
+    <!-- 更新工单处理人 -->
+    <update id="updateProcessor">
+        UPDATE t_ticket
+        SET processor_id = #{processorId},
+        update_by = #{updateBy},
+        update_time = NOW()
+        WHERE ticket_id = #{ticketId}
+        AND is_deleted = 0
     </update>
 
-  <select id="getById" resultMap="BaseResultMap">
-      select
-          <include refid="Base_Column_List" />
-      from t_ticket
-        where ticket_id = #{ticketId,jdbcType=BIGINT}
-      and is_deleted = 0
+    <!-- 更新工单状态 -->
+    <update id="updateStatus">
+        UPDATE t_ticket
+        SET status = #{status},
+        update_by = #{updateBy},
+        update_time = NOW(),
+        actual_finish_time = CASE
+        WHEN #{status} IN (2,3) THEN NOW()
+        ELSE actual_finish_time
+        END
+        WHERE ticket_id = #{ticketId}
+        AND is_deleted = 0
+    </update>
+
+    <!-- 批量更新工单状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE t_ticket
+        SET status = #{status},
+        update_by = #{updateBy},
+        update_time = NOW(),
+        actual_finish_time = CASE
+        WHEN #{status} IN (2,3) THEN NOW()
+        ELSE actual_finish_time
+        END
+        WHERE ticket_id IN
+        <foreach collection="ticketIds" item="ticketId" open="(" separator="," close=")">
+            #{ticketId}
+        </foreach>
+        AND is_deleted = 0
+    </update>
+
+    <!-- 获取个人工单统计 -->
+    <select id="selectPersonalStatistics" resultType="java.util.Map">
+        SELECT
+        COUNT(1) as totalCount,
+        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as pendingCount,
+        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as processingCount,
+        SUM(CASE WHEN status IN (2,3) THEN 1 ELSE 0 END) as completedCount,
+        AVG(CASE
+        WHEN status IN (2,3)
+        THEN TIMESTAMPDIFF(HOUR, create_time, actual_finish_time)
+        ELSE NULL
+        END) as avgProcessTime
+        FROM t_ticket
+        WHERE processor_id = #{userId}
+        AND is_deleted = 0
     </select>
 
-  <select id="pageList" resultType="com.icss.etc.ticket.entity.Ticket">
-      select
-          <include refid="Base_Column_List" />
-      from t_ticket
-        where is_deleted = 0
-      <if test="queryDTO.keyword != null and queryDTO.keyword != ''">
-          and (title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')
-          or content like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')
-          or (select username from t_user where username like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%'))
-          or ticket_id like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%'))
-      </if>
-        <if test="queryDTO.processorId != null">and processor_id = #{queryDTO.processorId,jdbcType=BIGINT}</if>
-        <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>
-        <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
-        <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
-      <choose>
-          <when test="queryDTO.startTime != null and queryDTO.endTime != null">
-              and create_time between #{queryDTO.startTime,jdbcType=TIMESTAMP} and #{queryDTO.endTime,jdbcType=TIMESTAMP}
-          </when>
-          <when test="queryDTO.startTime != null and queryDTO.endTime == null">
-              and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}
-          </when>
-          <when test="queryDTO.startTime == null and queryDTO.endTime != null">
-              and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}
-          </when>
-      </choose>
-      order by create_time, ticket_id
+    <!-- 获取部门工单明细 -->
+    <select id="selectDeptTickets" resultMap="BaseResultMap">
+        SELECT
+        t.*,
+        u.real_name as processor_name,
+        tt.type_name
+        FROM t_ticket t
+        LEFT JOIN t_user u ON t.processor_id = u.user_id
+        LEFT JOIN t_ticket_type tt ON t.type_id = tt.type_id
+        WHERE t.department_id = #{deptId}
+        AND t.is_deleted = 0
+        <include refid="queryCondition"/>
+        ORDER BY t.create_time DESC
     </select>
 
-  <select id="count" resultType="long">
-      select count(1)
-      from t_ticket
-        where is_deleted = 0
-        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
-        <if test="queryDTO.processorId != null">and processor_id = #{queryDTO.processorId,jdbcType=BIGINT}</if>
-        <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>
-        <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
-        <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
-      <choose>
-          <when test="queryDTO.startTime != null and queryDTO.endTime != null">
-              and create_time between #{queryDTO.startTime,jdbcType=TIMESTAMP} and #{queryDTO.endTime,jdbcType=TIMESTAMP}
-          </when>
-          <when test="queryDTO.startTime != null and queryDTO.endTime == null">
-              and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}
-          </when>
-          <when test="queryDTO.startTime == null and queryDTO.endTime != null">
-              and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}
-          </when>
-      </choose>
+    <!-- 获取工单处理历史记录 -->
+    <select id="selectTicketHistory" resultType="com.icss.etc.ticket.entity.TicketRecord">
+        SELECT
+        r.*,
+        u.real_name as operator_name
+        FROM t_ticket_record r
+        LEFT JOIN t_user u ON r.operator_id = u.user_id
+        WHERE r.ticket_id = #{ticketId}
+        AND r.is_deleted = 0
+        ORDER BY r.create_time ASC
     </select>
 
+
+    <!-- 导出工单数据 -->
     <select id="selectForExport" resultType="com.icss.etc.ticket.entity.dto.ticket.TicketExportDTO">
         SELECT
         t.ticket_id as ticketCode,
@@ -162,188 +474,15 @@
         END as priorityName,
         t.create_time as createTime,
         t.expect_finish_time as expectFinishTime,
-        t.actual_finish_time as actualFinishTime
+        t.actual_finish_time as actualFinishTime,
+        cu.real_name as creatorName,
+        t.create_time as createTime
         FROM t_ticket t
         LEFT JOIN t_department d ON t.department_id = d.department_id
         LEFT JOIN t_user u ON t.processor_id = u.user_id
-        <where>
-            t.is_deleted = 0
-            <if test="keyword != null and keyword != ''">
-                AND (t.title LIKE CONCAT('%',#{keyword},'%')
-                OR t.content LIKE CONCAT('%',#{keyword},'%'))
-            </if>
-            <if test="status != null">
-                AND t.status = #{status}
-            </if>
-            <if test="priority != null">
-                AND t.priority = #{priority}
-            </if>
-            <if test="departmentId != null">
-                AND t.department_id = #{departmentId}
-            </if>
-            <if test="processorId != null">
-                AND t.processor_id = #{processorId}
-            </if>
-            <if test="startTime != null">
-                AND t.create_time >= #{startTime}
-            </if>
-            <if test="endTime != null">
-                AND t.create_time &lt;= #{endTime}
-            </if>
-        </where>
+        LEFT JOIN t_user cu ON t.create_by = cu.user_id
+        WHERE t.is_deleted = 0
+        <include refid="queryCondition"/>
         ORDER BY t.create_time DESC
-    </select>
-
-  <select id="getMyTickets" resultMap="BaseResultMap">
-      select
-          <include refid="Base_Column_List" />
-      from t_ticket
-        where create_by = #{queryDTO.userId,jdbcType=BIGINT}
-        and is_deleted = 0
-        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">
-            and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
-        <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>
-        <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
-        <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
-        <if test="queryDTO.startTime != null">and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}</if>
-        <if test="queryDTO.endTime != null">and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}</if>
-      order by create_time desc
-    </select>
-
-  <select id="getTodoTickets" resultMap="BaseResultMap">
-      select
-            <include refid="Base_Column_List" />
-      from t_ticket
-        where processor_id = #{queryDTO.userId,jdbcType=BIGINT}
-        and is_deleted = 0
-        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
-        <if test="queryDTO.departmentId != null">and department_id = #{queryDTO.departmentId,jdbcType=BIGINT}</if>
-        <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
-        <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
-        <if test="queryDTO.startTime != null">and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}</if>
-        <if test="queryDTO.endTime != null">and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}</if>
-      order by create_time
-    </select>
-
-  <select id="getDeptTickets" resultMap="BaseResultMap">
-        select
-            <include refid="Base_Column_List" />
-        from t_ticket
-            where department_id = #{deptId,jdbcType=BIGINT}
-            and is_deleted = 0
-            <if test="queryDTO.keyword != null and queryDTO.keyword != ''">and title like concat('%', #{queryDTO.keyword,jdbcType=VARCHAR}, '%')</if>
-            <if test="queryDTO.processorId != null">and processor_id = #{queryDTO.processorId,jdbcType=BIGINT}</if>
-            <if test="queryDTO.priority != null">and priority = #{queryDTO.priority,jdbcType=TINYINT}</if>
-            <if test="queryDTO.status != null">and `status` = #{queryDTO.status,jdbcType=TINYINT}</if>
-            <if test="queryDTO.startTime != null">and create_time &gt;= #{queryDTO.startTime,jdbcType=TIMESTAMP}</if>
-            <if test="queryDTO.endTime != null">and create_time &lt;= #{queryDTO.endTime,jdbcType=TIMESTAMP}</if>
-        order by create_time desc
-    </select>
-
-  <update id="updateStatus">
-      update t_ticket set `status` = #{status,jdbcType=TINYINT}, update_time = NOW()
-      , update_by = #{updateBy,jdbcType=BIGINT}
-      where ticket_id = #{ticketId,jdbcType=BIGINT} and is_deleted = 0
-    </update>
-
-  <update id="transferDept">
-        update t_ticket set department_id = #{deptId,jdbcType=BIGINT}, update_time = NOW()
-        , update_by = #{updateBy,jdbcType=BIGINT}
-        where ticket_id = #{ticketId,jdbcType=BIGINT} and is_deleted = 0
-    </update>
-
-    <select id="getTypesStats" resultType="com.icss.etc.ticket.entity.dto.ticket.TicketTypeStatsDTO">
-        SELECT
-            type_id,
-            type_name,
-            count,
-            ROUND(count * 100.0 / totalTickets, 2) AS proportion
-        FROM (
-                 SELECT
-                     t.type_id,
-                     t.type_name,
-                     COUNT(*) AS count
-                 FROM
-                     t_ticket_type t
-                         JOIN
-                     t_ticket tt ON t.type_id = tt.type_id
-                 WHERE
-                     tt.is_deleted = 0
-                 GROUP BY
-                     t.type_id, t.type_name
-             ) AS typeStats,
-             (SELECT COUNT(*) AS totalTickets FROM t_ticket WHERE is_deleted = 0) AS total
-    </select>
-
-  <select id="getWorkloadStats" resultType="com.icss.etc.ticket.entity.dto.WorkloadStatsDTO">
-      SELECT u.user_id                                                                  AS userId,
-             u.username                                                                 AS userName,
-             SUM(CASE WHEN t.status = 1 THEN 1 ELSE 0 END)                              AS processingCount,
-             SUM(CASE WHEN t.status = 2 THEN 1 ELSE 0 END)                              AS completedCount,
-             (SUM(CASE WHEN t.status = 2 THEN 1 ELSE 0 END) * 1.0 / COUNT(t.ticket_id)) AS workloadRate
-      FROM t_ticket t
-               JOIN
-           t_user u ON t.processor_id = u.user_id
-      WHERE t.department_id = #{deptId}
-        AND t.is_deleted = 0
-      GROUP BY u.user_id, u.username
-  </select>
-
-  <select id="getEfficiencyStats" resultType="com.icss.etc.ticket.entity.dto.EfficiencyStatsDTO">
-      SELECT u.user_id AS userId,
-             u.username AS userName,
-             AVG(TIMESTAMPDIFF(HOUR, t.create_time, t.actual_finish_time)) AS avgProcessTime
-      FROM t_ticket t
-               JOIN
-           t_user u ON t.processor_id = u.user_id
-      WHERE t.department_id = #{deptId}
-        AND t.is_deleted = 0
-      GROUP BY u.user_id, u.username
-    </select>
-
-    <select id="getProcessorStats" resultType="com.icss.etc.ticket.entity.dto.ProcessorStatsDTO">
-        SELECT
-            SUM(CASE WHEN t.status = 1 THEN 1 ELSE 0 END) AS processingCount,
-            SUM(CASE WHEN t.status = 2 THEN 1 ELSE 0 END) AS completedCount,
-            AVG(TIMESTAMPDIFF(SECOND, t.create_time, t.actual_finish_time)) AS avgProcessTime,
-            SUM(CASE WHEN t.actual_finish_time &lt;= t.expect_finish_time THEN 1 ELSE 0 END) * 1.0 / SUM(CASE WHEN t.status = 2 THEN 1 ELSE 0 END) AS onTimeRate,
-        AVG(tr.evaluation_score) AS satisfactionRate
-        FROM
-        t_ticket t
-        LEFT JOIN
-        t_ticket_record tr ON t.ticket_id = tr.ticket_id AND tr.operation_type = 3
-        WHERE
-        t.processor_id = #{processorId}
-        AND t.is_deleted = 0
-    </select>
-
-    <select id="getTrendStats" parameterType="map" resultType="com.icss.etc.ticket.entity.dto.ticket.TicketTrendDTO">
-        SELECT DATE(t.create_time)                                AS date,
-               COUNT(CASE WHEN t.status = 0 THEN 1 ELSE NULL END) AS newCount,
-               COUNT(CASE WHEN t.status = 2 THEN 1 ELSE NULL END) AS completedCount,
-               CASE
-                   WHEN COUNT(*) = 0 THEN 0
-                   ELSE COUNT(CASE WHEN t.status = 2 THEN 1 ELSE NULL END) * 1.0 / COUNT(*)
-                   END                                            AS completionRate
-        FROM t_ticket t
-        WHERE t.department_id = #{deptId}
-          AND t.create_time >= DATE_SUB(CURRENT_DATE, INTERVAL #{days} DAY)
-          AND t.is_deleted = 0
-        GROUP BY DATE(t.create_time)
-        ORDER BY DATE(t.create_time)
-    </select>
-
-    <update id="assignProcessor">
-        update t_ticket
-        set processor_id = #{processorId,jdbcType=BIGINT},
-        update_time = NOW()
-        where ticket_id = #{ticketId,jdbcType=BIGINT}
-        and is_deleted = 0
-    </update>
-
-    <select id="selectRecentTickets" parameterType="com.icss.etc.ticket.entity.dto.ticket.TicketQueryDTO" resultType="com.icss.etc.ticket.entity.dto.ticket.TicketRecentDTO">
-        select ticket_id,title,create_by,status,priority,create_time from t_ticket
-                                                                     where is_deleted = 0
-        order by create_time desc
     </select>
 </mapper>

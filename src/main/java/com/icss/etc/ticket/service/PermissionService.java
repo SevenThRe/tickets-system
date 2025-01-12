@@ -2,6 +2,7 @@ package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.Permission;
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.enums.Logical;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -24,4 +25,22 @@ public interface PermissionService {
     List<Permission> selectAllPermission();
     //删除权限
     int deletePermission(@Param("permissionId") Long permissionId);
+
+    /**
+     * 检查权限
+     * @param permissions 权限列表
+     * @param userId     用户ID
+     * @param logical  逻辑运算符
+     * @return 是否有权限
+     */
+    boolean checkPermissions(String[] permissions, Long userId, Logical logical);
+
+    /**
+     * 查询所有角色
+     * @param roles     角色列表
+     * @param userId    用户ID
+     * @param logical  逻辑运算符
+     * @return 是否有权限
+     */
+    boolean checkRoles(String[] roles, Long userId, Logical logical);
 }

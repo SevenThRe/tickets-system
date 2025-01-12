@@ -16,49 +16,76 @@ import org.apache.ibatis.annotations.Param;
  */
 
 public interface NotificationMapper {
-    /**
-     * insert record to table
-     *
-     * @param record the record
-     * @return insert count
-     */
-    int insert(Notification record);
 
     /**
-     * insert record to table selective
+     * 插入通知
      *
-     * @param record the record
-     * @return insert count
+     * @param notification 通知对象
+     * @return 影响行数
      */
-    int insertSelective(Notification record);
+    int insert(Notification notification);
 
     /**
-     * select by primary key
-     *
-     * @param notificationId primary key
-     * @return object by primary key
+     * 更新通知
+     * @param notification 通知对象
+     * @return 影响行数
      */
-    Notification selectByPrimaryKey(Long notificationId);
+    int update(Notification notification);
 
     /**
-     * update record selective
-     *
-     * @param record the updated record
-     * @return update count
+     * 根据通知ID查询通知
+     * @param notificationId 通知ID
+     * @return 通知对象
      */
-    int updateByPrimaryKeySelective(Notification record);
+    Notification selectById(Long notificationId);
 
     /**
-     * update record
-     *
-     * @param record the updated record
-     * @return update count
+     * 根据用户ID查询通知
+     * @param userId 用户ID
+     * @return 通知列表
      */
-    int updateByPrimaryKey(Notification record);
+    List<Notification> selectByUserId(Long userId);
 
-    List<Notification> selectByAll(Notification notification);
+    /**
+     * 根据用户ID 查询未读通知
+     * @param userId 用户ID
+     * @return 通知列表
+     */
+    List<Notification> selectUnreadByUserId(Long userId);
 
-    int updateBatchSelective(@Param("list") List<Notification> list);
+    /**
+     * 根据通知ID标记为已读
+     * @param notificationId 通知ID
+     * @return 影响行数
+     */
+    int markAsRead(Long notificationId);
 
-    int batchInsert(@Param("list") List<Notification> list);
+    /**
+     * 根据用户ID标记为全部已读
+     * @param userId 用户ID
+     * @return 影响行数
+     */
+    int markAllAsRead(Long userId);
+
+    /**
+     * 根据通知ID标记为已删除
+     * @param notificationId 通知ID
+     * @return 影响行数
+     */
+    int markAsDeleted(Long notificationId);
+
+
+    /**
+     * 根据用户ID标记为已删除
+     * @param userId 用户ID
+     * @return 影响行数
+     */
+    int deleteById(Long notificationId);
+
+    /**
+     * 根据工单ID删除通知
+     * @param ticketId 工单ID
+     * @return 影响行数
+     */
+    int deleteByTicketId(Long ticketId);
 }

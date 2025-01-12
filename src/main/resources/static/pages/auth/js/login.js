@@ -134,8 +134,13 @@ class LoginPage {
             // 保存认证令牌
             localStorage.setItem('token', token);
 
+
             // 保存用户信息
-            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+            localStorage.setItem('userInfo', JSON.stringify({
+                ...userInfo,
+                permissions: permissions || [],
+                }
+            ));
 
             // 处理记住用户名功能
             if (this.state.rememberUsername) {
@@ -143,13 +148,13 @@ class LoginPage {
             } else {
                 localStorage.removeItem('rememberedUsername');
             }
-
-            // 设置Authorization请求头
-            $.ajaxSetup({
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            });
+            //
+            // // 设置Authorization请求头
+            // $.ajaxSetup({
+            //     headers: {
+            //         'Authorization': 'Bearer ' + token
+            //     }
+            // });
 
             // 触发登录成功事件
             $(document).trigger('loginSuccess', [userInfo]);

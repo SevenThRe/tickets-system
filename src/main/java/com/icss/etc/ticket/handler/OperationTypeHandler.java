@@ -17,10 +17,10 @@ import java.sql.SQLException;
  * @since 1.0
  */
 @Component
-public class OperationTypeHandler extends BaseTypeHandler {
+public class OperationTypeHandler extends BaseTypeHandler<OperationType> {
     @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType) throws SQLException {
-        ps.setInt(i, (Integer) parameter);
+    public void setNonNullParameter(PreparedStatement ps, int i, OperationType parameter, JdbcType jdbcType) throws SQLException {
+        ps.setInt(i, parameter.getValue());
     }
 
     @Override

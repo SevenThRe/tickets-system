@@ -65,6 +65,14 @@ public interface UserService {
 
     User selectByUsername(String username);
 
+
+    /**
+     * 查询用户权限
+     * @param userId 用户ID
+     * @return 用户权限
+     */
+    String[] selectUserPermissions(Long userId);
+
     List<UserViewBackDTO> selectUserInfo1(@Param("userQueryDTO") UserQueryDTO userQueryDTO);
 
 

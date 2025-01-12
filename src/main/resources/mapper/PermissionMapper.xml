@@ -296,4 +296,20 @@
 <!--        #{item.updateTime,jdbcType=TIMESTAMP})-->
 <!--    </foreach>-->
 <!--  </insert>-->
+
+
+    <select id="selectUserPermissions" resultType="string">
+        SELECT DISTINCT p.permission_code
+        FROM t_permission p
+        INNER JOIN t_role_permission rp ON p.permission_id = rp.permission_id
+        INNER JOIN t_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+    </select>
+
+    <select id="selectUserRoles" resultType="string">
+        SELECT r.role_code
+        FROM t_role r
+        INNER JOIN t_user_role ur ON r.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+    </select>
 </mapper>

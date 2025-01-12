@@ -106,4 +106,6 @@ public interface UserMapper {
     List<UserViewBackDTO> selectUserInfo1(UserQueryDTO userQueryDTO);
 
     User selectByUsername(String username);
+
+    String[] selectUserPermissions(Long userId);
 }

@@ -16,26 +16,79 @@
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
-    record_id, ticket_id, operator_id, operation_type, operation_content, evaluation_score, 
+    record_id, ticket_id, operator_id, operation_type, operation_content, evaluation_score,
     evaluation_content, is_deleted, create_time
   </sql>
+
+  <insert id="insertRecord" useGeneratedKeys="true" keyProperty="recordId">
+    INSERT INTO t_ticket_record (
+    ticket_id, operator_id, operation_type,
+    operation_content, evaluation_score,
+    evaluation_content, is_deleted, create_time
+    ) VALUES (
+    #{ticketId}, #{operatorId}, #{operationType},
+    #{operationContent}, #{evaluationScore},
+    #{evaluationContent}, #{isDeleted}, #{createTime}
+    )
+  </insert>
+
+  <select id="selectRecordsByTicketId" resultType="com.icss.etc.ticket.entity.TicketRecord">
+    SELECT r.*, u.real_name as operator_name
+    FROM t_ticket_record r
+    LEFT JOIN t_user u ON r.operator_id = u.user_id
+    WHERE r.ticket_id = #{ticketId}
+    AND r.is_deleted = 0
+    ORDER BY r.create_time ASC
+  </select>
+
+  <select id="selectRecordById" resultType="com.icss.etc.ticket.entity.TicketRecord">
+    SELECT r.*, u.real_name as operator_name
+    FROM t_ticket_record r
+    LEFT JOIN t_user u ON r.operator_id = u.user_id
+    WHERE r.record_id = #{recordId}
+    AND r.is_deleted = 0
+  </select>
+
+  <update id="updateRecord">
+    UPDATE t_ticket_record
+    <set>
+      <if test="operationType != null">
+        operation_type = #{operationType},
+      </if>
+      <if test="operationContent != null">
+        operation_content = #{operationContent},
+      </if>
+      <if test="evaluationScore != null">
+        evaluation_score = #{evaluationScore},
+      </if>
+      <if test="evaluationContent != null">
+        evaluation_content = #{evaluationContent},
+      </if>
+      <if test="isDeleted != null">
+        is_deleted = #{isDeleted},
+      </if>
+    </set>
+    WHERE record_id = #{recordId}
+  </update>
+
+
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     <!--@mbg.generated-->
-    select 
+    select
     <include refid="Base_Column_List" />
     from t_ticket_record
     where record_id = #{recordId,jdbcType=BIGINT}
   </select>
   <insert id="insert" keyColumn="record_id" keyProperty="recordId" parameterType="com.icss.etc.ticket.entity.TicketRecord" useGeneratedKeys="true">
     <!--@mbg.generated-->
-    insert into t_ticket_record (ticket_id, operator_id, operation_type, 
-      operation_content, evaluation_score, 
-      evaluation_content, is_deleted, create_time
-      )
-    values (#{ticketId,jdbcType=BIGINT}, #{operatorId,jdbcType=BIGINT}, #{operationType,jdbcType=TINYINT}, 
-      #{operationContent,jdbcType=LONGVARCHAR}, #{evaluationScore,jdbcType=TINYINT}, 
-      #{evaluationContent,jdbcType=LONGVARCHAR}, #{isDeleted,jdbcType=TINYINT}, #{createTime,jdbcType=TIMESTAMP}
-      )
+    insert into t_ticket_record (ticket_id, operator_id, operation_type,
+    operation_content, evaluation_score,
+    evaluation_content, is_deleted, create_time
+    )
+    values (#{ticketId,jdbcType=BIGINT}, #{operatorId,jdbcType=BIGINT}, #{operationType,jdbcType=TINYINT},
+    #{operationContent,jdbcType=LONGVARCHAR}, #{evaluationScore,jdbcType=TINYINT},
+    #{evaluationContent,jdbcType=LONGVARCHAR}, #{isDeleted,jdbcType=TINYINT}, #{createTime,jdbcType=TIMESTAMP}
+    )
   </insert>
   <insert id="insertSelective" keyColumn="record_id" keyProperty="recordId" parameterType="com.icss.etc.ticket.entity.TicketRecord" useGeneratedKeys="true">
     <!--@mbg.generated-->
@@ -128,50 +181,50 @@
     <!--@mbg.generated-->
     update t_ticket_record
     set ticket_id = #{ticketId,jdbcType=BIGINT},
-      operator_id = #{operatorId,jdbcType=BIGINT},
-      operation_type = #{operationType,jdbcType=TINYINT},
-      operation_content = #{operationContent,jdbcType=LONGVARCHAR},
-      evaluation_score = #{evaluationScore,jdbcType=TINYINT},
-      evaluation_content = #{evaluationContent,jdbcType=LONGVARCHAR},
-      is_deleted = #{isDeleted,jdbcType=TINYINT},
-      create_time = #{createTime,jdbcType=TIMESTAMP}
+    operator_id = #{operatorId,jdbcType=BIGINT},
+    operation_type = #{operationType,jdbcType=TINYINT},
+    operation_content = #{operationContent,jdbcType=LONGVARCHAR},
+    evaluation_score = #{evaluationScore,jdbcType=TINYINT},
+    evaluation_content = #{evaluationContent,jdbcType=LONGVARCHAR},
+    is_deleted = #{isDeleted,jdbcType=TINYINT},
+    create_time = #{createTime,jdbcType=TIMESTAMP}
     where record_id = #{recordId,jdbcType=BIGINT}
   </update>
   <select id="selectByAll" resultMap="BaseResultMap">
-        <!--@mbg.generated-->
-        select
-        <include refid="Base_Column_List" />
-        from t_ticket_record
-        <where>
-            <if test="recordId != null">
-                and record_id=#{recordId,jdbcType=BIGINT}
-            </if>
-            <if test="ticketId != null">
-                and ticket_id=#{ticketId,jdbcType=BIGINT}
-            </if>
-            <if test="operatorId != null">
-                and operator_id=#{operatorId,jdbcType=BIGINT}
-            </if>
-            <if test="operationType != null">
-                and operation_type=#{operationType,jdbcType=TINYINT}
-            </if>
-            <if test="operationContent != null">
-                and operation_content=#{operationContent,jdbcType=LONGVARCHAR}
-            </if>
-            <if test="evaluationScore != null">
-                and evaluation_score=#{evaluationScore,jdbcType=TINYINT}
-            </if>
-            <if test="evaluationContent != null">
-                and evaluation_content=#{evaluationContent,jdbcType=LONGVARCHAR}
-            </if>
-            <if test="isDeleted != null">
-                and is_deleted=#{isDeleted,jdbcType=TINYINT}
-            </if>
-            <if test="createTime != null">
-                and create_time=#{createTime,jdbcType=TIMESTAMP}
-            </if>
-        </where>
-    </select>
+    <!--@mbg.generated-->
+    select
+    <include refid="Base_Column_List"/>
+    from t_ticket_record
+    <where>
+      <if test="recordId != null">
+        and record_id=#{recordId,jdbcType=BIGINT}
+      </if>
+      <if test="ticketId != null">
+        and ticket_id=#{ticketId,jdbcType=BIGINT}
+      </if>
+      <if test="operatorId != null">
+        and operator_id=#{operatorId,jdbcType=BIGINT}
+      </if>
+      <if test="operationType != null">
+        and operation_type=#{operationType,jdbcType=TINYINT}
+      </if>
+      <if test="operationContent != null">
+        and operation_content=#{operationContent,jdbcType=LONGVARCHAR}
+      </if>
+      <if test="evaluationScore != null">
+        and evaluation_score=#{evaluationScore,jdbcType=TINYINT}
+      </if>
+      <if test="evaluationContent != null">
+        and evaluation_content=#{evaluationContent,jdbcType=LONGVARCHAR}
+      </if>
+      <if test="isDeleted != null">
+        and is_deleted=#{isDeleted,jdbcType=TINYINT}
+      </if>
+      <if test="createTime != null">
+        and create_time=#{createTime,jdbcType=TIMESTAMP}
+      </if>
+    </where>
+  </select>
   <update id="updateBatchSelective" parameterType="java.util.List">
     <!--@mbg.generated-->
     update t_ticket_record
@@ -241,14 +294,14 @@
   <insert id="batchInsert" keyColumn="record_id" keyProperty="recordId" parameterType="map" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_ticket_record
-    (ticket_id, operator_id, operation_type, operation_content, evaluation_score, evaluation_content, 
-      is_deleted, create_time)
+    (ticket_id, operator_id, operation_type, operation_content, evaluation_score, evaluation_content,
+    is_deleted, create_time)
     values
     <foreach collection="list" item="item" separator=",">
-      (#{item.ticketId,jdbcType=BIGINT}, #{item.operatorId,jdbcType=BIGINT}, #{item.operationType,jdbcType=TINYINT}, 
-        #{item.operationContent,jdbcType=LONGVARCHAR}, #{item.evaluationScore,jdbcType=TINYINT}, 
-        #{item.evaluationContent,jdbcType=LONGVARCHAR}, #{item.isDeleted,jdbcType=TINYINT}, 
-        #{item.createTime,jdbcType=TIMESTAMP})
+      (#{item.ticketId,jdbcType=BIGINT}, #{item.operatorId,jdbcType=BIGINT}, #{item.operationType,jdbcType=TINYINT},
+      #{item.operationContent,jdbcType=LONGVARCHAR}, #{item.evaluationScore,jdbcType=TINYINT},
+      #{item.evaluationContent,jdbcType=LONGVARCHAR}, #{item.isDeleted,jdbcType=TINYINT},
+      #{item.createTime,jdbcType=TIMESTAMP})
     </foreach>
   </insert>
 </mapper>

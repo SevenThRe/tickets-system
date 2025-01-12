@@ -1,228 +1,128 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.etc.ticket.mapper.NotificationMapper">
-  <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Notification">
-    <!--@mbg.generated-->
-    <!--@Table t_notification-->
-    <id column="notification_id" jdbcType="BIGINT" property="notificationId" />
-    <result column="user_id" jdbcType="BIGINT" property="userId" />
-    <result column="ticket_id" jdbcType="BIGINT" property="ticketId" />
-    <result column="notify_type" jdbcType="TINYINT" property="notifyType" />
-    <result column="content" jdbcType="LONGVARCHAR" property="content" />
-    <result column="is_read" jdbcType="TINYINT" property="isRead" />
-    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
-  </resultMap>
+
+  <!-- 基础列 -->
   <sql id="Base_Column_List">
-    <!--@mbg.generated-->
     notification_id, user_id, ticket_id, notify_type, content, is_read, is_deleted, create_time
   </sql>
-  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    <!--@mbg.generated-->
-    select 
-    <include refid="Base_Column_List" />
-    from t_notification
-    where notification_id = #{notificationId,jdbcType=BIGINT}
-  </select>
-  <insert id="insert" keyColumn="notification_id" keyProperty="notificationId" parameterType="com.icss.etc.ticket.entity.Notification" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into t_notification (user_id, ticket_id, notify_type, 
-      content, is_read, is_deleted, 
-      create_time)
-    values (#{userId,jdbcType=BIGINT}, #{ticketId,jdbcType=BIGINT}, #{notifyType,jdbcType=TINYINT}, 
-      #{content,jdbcType=LONGVARCHAR}, #{isRead,jdbcType=TINYINT}, #{isDeleted,jdbcType=TINYINT}, 
-      #{createTime,jdbcType=TIMESTAMP})
+
+  <!-- 插入通知 -->
+  <insert id="insert" parameterType="com.icss.etc.ticket.entity.Notification" useGeneratedKeys="true" keyProperty="notificationId">
+    INSERT INTO t_notification (
+    user_id,
+    ticket_id,
+    notify_type,
+    content,
+    is_read,
+    is_deleted,
+    create_time
+    ) VALUES (
+    #{userId},
+    #{ticketId},
+    #{notifyType},
+    #{content},
+    #{isRead},
+    #{isDeleted},
+    #{createTime}
+    )
   </insert>
-  <insert id="insertSelective" keyColumn="notification_id" keyProperty="notificationId" parameterType="com.icss.etc.ticket.entity.Notification" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into t_notification
-    <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="userId != null">
-        user_id,
-      </if>
-      <if test="ticketId != null">
-        ticket_id,
-      </if>
-      <if test="notifyType != null">
-        notify_type,
-      </if>
-      <if test="content != null">
-        content,
-      </if>
-      <if test="isRead != null">
-        is_read,
-      </if>
-      <if test="isDeleted != null">
-        is_deleted,
-      </if>
-      <if test="createTime != null">
-        create_time,
-      </if>
-    </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="userId != null">
-        #{userId,jdbcType=BIGINT},
-      </if>
-      <if test="ticketId != null">
-        #{ticketId,jdbcType=BIGINT},
-      </if>
-      <if test="notifyType != null">
-        #{notifyType,jdbcType=TINYINT},
-      </if>
-      <if test="content != null">
-        #{content,jdbcType=LONGVARCHAR},
-      </if>
-      <if test="isRead != null">
-        #{isRead,jdbcType=TINYINT},
-      </if>
-      <if test="isDeleted != null">
-        #{isDeleted,jdbcType=TINYINT},
-      </if>
-      <if test="createTime != null">
-        #{createTime,jdbcType=TIMESTAMP},
-      </if>
-    </trim>
-  </insert>
-  <update id="updateByPrimaryKeySelective" parameterType="com.icss.etc.ticket.entity.Notification">
-    <!--@mbg.generated-->
-    update t_notification
+
+  <!-- 更新通知 -->
+  <update id="update" parameterType="com.icss.etc.ticket.entity.Notification">
+    UPDATE t_notification
     <set>
       <if test="userId != null">
-        user_id = #{userId,jdbcType=BIGINT},
+        user_id = #{userId},
       </if>
       <if test="ticketId != null">
-        ticket_id = #{ticketId,jdbcType=BIGINT},
+        ticket_id = #{ticketId},
       </if>
       <if test="notifyType != null">
-        notify_type = #{notifyType,jdbcType=TINYINT},
+        notify_type = #{notifyType},
       </if>
-      <if test="content != null">
-        content = #{content,jdbcType=LONGVARCHAR},
+      <if test="content != null and content != ''">
+        content = #{content},
       </if>
       <if test="isRead != null">
-        is_read = #{isRead,jdbcType=TINYINT},
+        is_read = #{isRead},
       </if>
       <if test="isDeleted != null">
-        is_deleted = #{isDeleted,jdbcType=TINYINT},
-      </if>
-      <if test="createTime != null">
-        create_time = #{createTime,jdbcType=TIMESTAMP},
+        is_deleted = #{isDeleted},
       </if>
     </set>
-    where notification_id = #{notificationId,jdbcType=BIGINT}
+    WHERE notification_id = #{notificationId}
   </update>
-  <update id="updateByPrimaryKey" parameterType="com.icss.etc.ticket.entity.Notification">
-    <!--@mbg.generated-->
-    update t_notification
-    set user_id = #{userId,jdbcType=BIGINT},
-      ticket_id = #{ticketId,jdbcType=BIGINT},
-      notify_type = #{notifyType,jdbcType=TINYINT},
-      content = #{content,jdbcType=LONGVARCHAR},
-      is_read = #{isRead,jdbcType=TINYINT},
-      is_deleted = #{isDeleted,jdbcType=TINYINT},
-      create_time = #{createTime,jdbcType=TIMESTAMP}
-    where notification_id = #{notificationId,jdbcType=BIGINT}
+
+  <!-- 根据ID查询通知 -->
+  <select id="selectById" resultType="com.icss.etc.ticket.entity.Notification">
+    SELECT
+    <include refid="Base_Column_List"/>
+    FROM t_notification
+    WHERE notification_id = #{notificationId}
+    AND is_deleted = 0
+  </select>
+
+  <!-- 根据用户ID查询通知列表 -->
+  <select id="selectByUserId" resultType="com.icss.etc.ticket.entity.Notification">
+    SELECT
+    <include refid="Base_Column_List"/>
+    FROM t_notification
+    WHERE user_id = #{userId}
+    AND is_deleted = 0
+    ORDER BY create_time DESC
+  </select>
+
+  <!-- 查询未读通知 -->
+  <select id="selectUnreadByUserId" resultType="com.icss.etc.ticket.entity.Notification">
+    SELECT
+    <include refid="Base_Column_List"/>
+    FROM t_notification
+    WHERE user_id = #{userId}
+    AND is_read = 0
+    AND is_deleted = 0
+    ORDER BY create_time DESC
+  </select>
+
+  <!-- 标记为已读 -->
+  <update id="markAsRead">
+    UPDATE t_notification
+    SET is_read = 1
+    WHERE notification_id = #{notificationId}
+    AND is_deleted = 0
   </update>
-  <select id="selectByAll" resultMap="BaseResultMap">
-        <!--@mbg.generated-->
-        select
-        <include refid="Base_Column_List" />
-        from t_notification
-        <where>
-            <if test="notificationId != null">
-                and notification_id=#{notificationId,jdbcType=BIGINT}
-            </if>
-            <if test="userId != null">
-                and user_id=#{userId,jdbcType=BIGINT}
-            </if>
-            <if test="ticketId != null">
-                and ticket_id=#{ticketId,jdbcType=BIGINT}
-            </if>
-            <if test="notifyType != null">
-                and notify_type=#{notifyType,jdbcType=TINYINT}
-            </if>
-            <if test="content != null">
-                and content=#{content,jdbcType=LONGVARCHAR}
-            </if>
-            <if test="isRead != null">
-                and is_read=#{isRead,jdbcType=TINYINT}
-            </if>
-            <if test="isDeleted != null">
-                and is_deleted=#{isDeleted,jdbcType=TINYINT}
-            </if>
-            <if test="createTime != null">
-                and create_time=#{createTime,jdbcType=TIMESTAMP}
-            </if>
-        </where>
-    </select>
-  <update id="updateBatchSelective" parameterType="java.util.List">
-    <!--@mbg.generated-->
-    update t_notification
-    <trim prefix="set" suffixOverrides=",">
-      <trim prefix="user_id = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.userId != null">
-            when notification_id = #{item.notificationId,jdbcType=BIGINT} then #{item.userId,jdbcType=BIGINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="ticket_id = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.ticketId != null">
-            when notification_id = #{item.notificationId,jdbcType=BIGINT} then #{item.ticketId,jdbcType=BIGINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="notify_type = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.notifyType != null">
-            when notification_id = #{item.notificationId,jdbcType=BIGINT} then #{item.notifyType,jdbcType=TINYINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="content = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.content != null">
-            when notification_id = #{item.notificationId,jdbcType=BIGINT} then #{item.content,jdbcType=LONGVARCHAR}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="is_read = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.isRead != null">
-            when notification_id = #{item.notificationId,jdbcType=BIGINT} then #{item.isRead,jdbcType=TINYINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="is_deleted = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.isDeleted != null">
-            when notification_id = #{item.notificationId,jdbcType=BIGINT} then #{item.isDeleted,jdbcType=TINYINT}
-          </if>
-        </foreach>
-      </trim>
-      <trim prefix="create_time = case" suffix="end,">
-        <foreach collection="list" index="index" item="item">
-          <if test="item.createTime != null">
-            when notification_id = #{item.notificationId,jdbcType=BIGINT} then #{item.createTime,jdbcType=TIMESTAMP}
-          </if>
-        </foreach>
-      </trim>
-    </trim>
-    where notification_id in
-    <foreach close=")" collection="list" item="item" open="(" separator=", ">
-      #{item.notificationId,jdbcType=BIGINT}
-    </foreach>
+
+  <!-- 标记全部已读 -->
+  <update id="markAllAsRead">
+    UPDATE t_notification
+    SET is_read = 1
+    WHERE user_id = #{userId}
+    AND is_read = 0
+    AND is_deleted = 0
   </update>
-  <insert id="batchInsert" keyColumn="notification_id" keyProperty="notificationId" parameterType="map" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into t_notification
-    (user_id, ticket_id, notify_type, content, is_read, is_deleted, create_time)
-    values
-    <foreach collection="list" item="item" separator=",">
-      (#{item.userId,jdbcType=BIGINT}, #{item.ticketId,jdbcType=BIGINT}, #{item.notifyType,jdbcType=TINYINT}, 
-        #{item.content,jdbcType=LONGVARCHAR}, #{item.isRead,jdbcType=TINYINT}, #{item.isDeleted,jdbcType=TINYINT}, 
-        #{item.createTime,jdbcType=TIMESTAMP})
-    </foreach>
-  </insert>
+
+  <!-- 逻辑删除单条通知 -->
+  <update id="markAsDeleted">
+    UPDATE t_notification
+    SET is_deleted = 1
+    WHERE notification_id = #{notificationId}
+    AND is_deleted = 0
+  </update>
+
+  <!-- 逻辑删除多条通知 -->
+  <update id="deleteById">
+    UPDATE t_notification
+    SET is_deleted = 1
+    WHERE notification_id = #{notificationId}
+    AND is_deleted = 0
+  </update>
+
+  <!-- 根据工单ID逻辑删除通知 -->
+  <update id="deleteByTicketId">
+    UPDATE t_notification
+    SET is_deleted = 1
+    WHERE ticket_id = #{ticketId}
+    AND is_deleted = 0
+  </update>
+
 </mapper>
