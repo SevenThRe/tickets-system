@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -25,21 +27,21 @@ public class UserViewBackDTO {
      */
     private String phone;
     /**
-     *  邮箱
+     *  部门Name
      */
     private String departmentName;
     /**
-     *  部门ID
+     *  邮箱
      */
+    private String email;
+    private Integer status;
+    private LocalDateTime createTime;
     private String roleName;
     /**
      *  密码
      */
     private String password;
-    /**
-     *  邮箱
-     */
-    private String email;
+
     /**
      * 角色编码
      */
