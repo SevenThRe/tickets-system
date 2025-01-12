@@ -2,6 +2,8 @@ package com.icss.etc.ticket.controller;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.icss.etc.ticket.annotation.RequirePermissions;
+import com.icss.etc.ticket.annotation.RequireRoles;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.Role;
 import com.icss.etc.ticket.entity.Role2;
@@ -26,6 +28,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/roles")
+@RequireRoles("ADMIN")
 public class RoleController {
     @Autowired
     private RoleService roleService;
@@ -35,6 +38,7 @@ public class RoleController {
      * @param role 角色信息
      * @return  成功或失败
      */
+    @RequirePermissions("role:create")
     @RequestMapping("/insert")
     public R insert(Role role){
         int result=roleService.insert(role);
@@ -46,6 +50,7 @@ public class RoleController {
      * @param roleId 角色id
      * @return  角色信息
      */
+    @RequirePermissions("role:view")
     @RequestMapping("/selectByByRoleId/{roleId}")
     public R selectDeptById(@PathVariable("roleId")Long roleId){
         return R.OK(roleService.selectByByRoleId(roleId));
@@ -56,6 +61,7 @@ public class RoleController {
      * @param role 角色信息
      * @return  成功或失败
      */
+    @RequirePermissions("role:update")
     @RequestMapping("/updateRole")
     public R updateRole(Role role){
         int result=roleService.updateRole(role);
@@ -67,6 +73,7 @@ public class RoleController {
      * @param roleId  角色id
      * @return   角色信息
      */
+    @RequirePermissions("role:delete")
     @RequestMapping("/deleteByRoleId/{roleId}")
     public R deleteByRoleId(@PathVariable("roleId")Long roleId){
         int result = roleService.deleteByRoleId(roleId);

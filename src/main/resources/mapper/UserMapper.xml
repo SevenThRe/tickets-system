@@ -435,4 +435,15 @@
   <select id="selectByUsername" resultMap="BaseResultMap">
     select * from t_user where username = #{username}
   </select>
+
+  <select id="selectUserPermissions" resultType="java.lang.String">
+    select p.permission_code from t_user u
+    left join t_user_role ur on u.user_id = ur.user_id
+    left join t_role r on ur.role_id = r.role_id
+    left join t_role_permission rp on r.role_id = rp.role_id
+    left join t_permission p on rp.permission_id = p.permission_id
+    where u.user_id = #{userId} and u.is_deleted = 0 and u.status = 1
+    and r.is_deleted = 0 and r.status = 1
+    and p.is_deleted = 0
+    </select>
 </mapper>

@@ -63,10 +63,6 @@ public class DepartmentController {
         return R.OK(departmentService.selectSubDepartments(department_id));
     }
 
-    @GetMapping("/selectAll")
-    public R selectAll() {
-        return R.OK(departmentService.selectAll());
-    }
 
     @GetMapping("/selectByAll")
     public R selectByAll(Department department) {
@@ -124,6 +120,15 @@ public class DepartmentController {
     @DeleteMapping("/deleteUser")
     public R deleteUser(DeptMemberDTO deptMemberDTO) {
         return R.OK(userService.deleteUser(deptMemberDTO));
+    }
+
+    /**
+     * 部门列表
+     * @return R 部门列表
+     */
+    @GetMapping("/list")
+    public R selectAll() {
+        return R.OK(departmentService.selectAll());
     }
 
 

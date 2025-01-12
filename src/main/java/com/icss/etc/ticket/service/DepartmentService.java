@@ -96,4 +96,5 @@ public interface DepartmentService {
     DepartmentDetailVO getDepartmentDetail(Long departmentId);
 
     List<Map<String, Object>> getDepartmentTree();
+
 }

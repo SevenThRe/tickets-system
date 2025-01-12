@@ -44,6 +44,7 @@ public class AuthController {
             map.put("token", token);
             u.setPassword("");
             map.put("userInfo", u);
+            map.put("permissions", userService.selectUserPermissions(u.getUserId()));
             return R.OK(map);
         } else {
             return R.FAIL(CodeEnum.USERNAME_OR_PASSWORD_ERROR);

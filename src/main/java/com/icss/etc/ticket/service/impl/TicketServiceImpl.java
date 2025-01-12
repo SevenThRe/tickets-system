@@ -2,10 +2,7 @@ package com.icss.etc.ticket.service.impl;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.icss.etc.ticket.entity.Department;
-import com.icss.etc.ticket.entity.Ticket;
-import com.icss.etc.ticket.entity.TicketRecord;
-import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.entity.*;
 import com.icss.etc.ticket.entity.dto.*;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
@@ -17,10 +14,7 @@ import com.icss.etc.ticket.enums.OperationType;
 import com.icss.etc.ticket.enums.TicketEnum;
 import com.icss.etc.ticket.enums.TicketStatus;
 import com.icss.etc.ticket.exceptions.BusinessException;
-import com.icss.etc.ticket.mapper.DepartmentMapper;
-import com.icss.etc.ticket.mapper.TicketMapper;
-import com.icss.etc.ticket.mapper.TicketRecordMapper;
-import com.icss.etc.ticket.mapper.UserMapper;
+import com.icss.etc.ticket.mapper.*;
 import com.icss.etc.ticket.service.NotificationService;
 import com.icss.etc.ticket.service.TicketService;
 import com.icss.etc.ticket.util.SecurityUtils;
@@ -45,15 +39,19 @@ import java.util.*;
 public class TicketServiceImpl implements TicketService {
 
     private final TicketMapper ticketMapper;
+    private final TicketTypeMapper ticketTypeMapper;
     private final TicketRecordMapper ticketRecordMapper;
     private final NotificationService notificationService;
 
     public TicketServiceImpl(TicketMapper ticketMapper,
                              TicketRecordMapper ticketRecordMapper,
-                             NotificationService notificationService) {
+                             TicketTypeMapper ticketTypeMapper,
+                             NotificationService notificationService
+    ) {
         this.ticketMapper = ticketMapper;
         this.ticketRecordMapper = ticketRecordMapper;
         this.notificationService = notificationService;
+        this.ticketTypeMapper = ticketTypeMapper;
     }
 
 
@@ -463,6 +461,11 @@ public class TicketServiceImpl implements TicketService {
 
             ticketRecordMapper.insertRecord(record);
         }
+    }
+
+    @Override
+    public List<TicketType> getTicketTypeList() {
+        return ticketTypeMapper.selectByAll(TicketType.builder().isDeleted(0).status(1).build());
     }
 
 

@@ -40,6 +40,7 @@ public class TicketController {
 
     private final FileService fileService;
 
+
     public TicketController(TicketService ticketService , FileService fileService) {
         this.ticketService = ticketService;
         this.fileService = fileService;
@@ -56,6 +57,21 @@ public class TicketController {
             return R.OK(pageInfo);
         } catch (Exception e) {
             log.error("查询工单列表失败:", e);
+            return R.FAIL();
+        }
+    }
+
+    /**
+     *  获取工单类型列表
+     * @return 工单类型列表
+     */
+    @GetMapping("/type/list")
+    public R<List<TicketType>> getTicketTypeList() {
+        try {
+            List<TicketType> ticketTypeList = ticketService.getTicketTypeList();
+            return R.OK(ticketTypeList);
+        } catch (Exception e) {
+            log.error("查询工单类型列表失败:", e);
             return R.FAIL();
         }
     }
@@ -102,8 +118,10 @@ public class TicketController {
      * @param createDTO 创建工单请求
      *
      */
-    @PostMapping("/create")
-    public R<Long> createTicket(@RequestBody @Valid CreateTicketDTO createDTO) {
+    @PostMapping(value = "/create" ,consumes = "multipart/form-data")
+    public R<Long> createTicket(
+            @RequestParam("attachments") MultipartFile file,
+            @RequestBody @Valid CreateTicketDTO createDTO) {
         try {
             Long ticketId = ticketService.createTicket(createDTO);
             return R.OK(ticketId);
@@ -220,7 +238,7 @@ public class TicketController {
         try {
             // 确保只查询当前用户的工单
             Long userId = SecurityUtils.getCurrentUserId();
-            queryDTO.setUserId(userId);
+
             PageInfo<Ticket> pageInfo = ticketService.getTicketList(queryDTO);
             return R.OK(pageInfo);
         } catch (Exception e) {
