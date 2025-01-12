@@ -5,6 +5,7 @@ import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.entity.vo.UserQueryDTO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,10 +65,15 @@ public interface UserService {
 
     User selectByUsername(String username);
 
+
     /**
      * 查询用户权限
      * @param userId 用户ID
      * @return 用户权限
      */
     String[] selectUserPermissions(Long userId);
+
+    List<UserViewBackDTO> selectUserInfo1(@Param("userQueryDTO") UserQueryDTO userQueryDTO);
+
+
 }

@@ -31,6 +31,8 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (!(handler instanceof HandlerMethod)) {
             return true;
         }
+        // 从请求头中获取名为 "Authorization" 的 token 值
+        String token = request.getHeader("token");
 
         // 2. 获取并验证token
         String token = request.getHeader("Authorization");
@@ -70,7 +72,10 @@ public class AuthInterceptor implements HandlerInterceptor {
             if (!newToken.equals(token)) {
                 response.setHeader("Authorization", newToken);
             }
-
+            // 将新 token 放入响应头
+            response.setHeader("token", newToken);
+            log.info("用户已登录, 请求路径: {}", request.getRequestURI());
+            // 放行请求
             return true;
         } catch (UnauthorizedException e) {
             log.warn("权限校验失败! 请求路径: {}, 原因: {}", request.getRequestURI(), e.getMessage());

@@ -1,16 +1,23 @@
 package com.icss.etc.ticket.controller;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.User;
 import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
+import com.icss.etc.ticket.entity.vo.TicketVO;
+import com.icss.etc.ticket.entity.vo.UserQueryDTO;
+import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.service.UserService;
 import com.icss.etc.ticket.util.MD5Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * {@code UserController}
@@ -46,12 +53,17 @@ public class UserController {
 
     /**
      * 获取用户信息
-     * @param userId 用户ID
+     * @param
      * @return 用户信息
      */
-    @GetMapping("/{userId}/info")
-    public R getUserInfo(@PathVariable("userId") Long userId) {
-        return R.OK(userService.selectUserInfo(userId));
+    @RequestMapping("/selectUserInfo1")
+    public R<Map<String, Object>> selectUserInfo1(UserQueryDTO userQueryDTO) {
+        PageHelper.startPage(userQueryDTO.getPageNum(), userQueryDTO.getPageSize());
+        PageInfo<UserViewBackDTO> pageInfo = new PageInfo<>(userService.selectUserInfo1(userQueryDTO));
+        Map<String, Object> result = new HashMap<>(2);
+        result.put("list", pageInfo.getList());
+        result.put("total", pageInfo.getPages()); //总页数
+        return R.OK(result); //将list集合转换为json数组
     }
 
 
