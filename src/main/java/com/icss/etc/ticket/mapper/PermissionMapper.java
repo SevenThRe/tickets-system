@@ -4,6 +4,7 @@ import com.icss.etc.ticket.entity.Permission;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import com.icss.etc.ticket.entity.Role2;
 import org.apache.ibatis.annotations.Param;
@@ -26,4 +27,8 @@ public interface PermissionMapper {
     List<Permission> selectAllPermission();
     //删除权限
     int deletePermission(@Param("permissionId") Long permissionId);
+
+    Set<String> selectUserPermissions(Long userId);
+
+    Set<String> selectUserRoles(Long userId);
 }

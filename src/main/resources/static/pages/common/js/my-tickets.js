@@ -1,1133 +1,1069 @@
 /**
- * MyTickets.js
- * 我的工单页面控制器类
- * 实现工单的查看、创建、处理等核心功能
+ * 工单管理类 MyTickets
  */
-class MyTickets {
-
-    constructor() {
-        // 从localStorage获取用户信息
-        this.userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-
-        /**
-         * @type {Object} state - 状态管理对象
-         * @property {boolean} loading - 加载状态标识
-         * @property {Array<Object>} tickets - 工单列表数据,初始化为空数组
-         * @property {Object|null} currentTicket - 当前查看的工单
-         * @property {number} selectedRating - 选中的评分值
-         * @property {Object} pagination - 分页信息
-         * @property {Object} filters - 筛选条件
-         */
-        this.state = {
-            loading: false,
-            tickets: [], // 明确初始化为空数组
-            currentTicket: null,
-            selectedRating: 0,
-            pagination: {
-                current: 1,
-                pageSize: 10,
-                total: 0
-            },
-            filters: {
-                keyword: '',               // 搜索关键词
-                status: '',               // 工单状态
-                priority: '',             // 优先级
-                departmentId: '',         // 部门ID
-                processorId: '',          // 处理人ID
-                startTime: '',            // 开始时间
-                endTime: '',              // 结束时间
-                userId: this.userInfo.userId  // 当前用户ID
-            }
-        };
-
-        // DOM元素缓存
-        this.elements = {
-            container: $('#main'),
-            ticketList: $('#ticketList'),
-            searchForm: $('#searchForm'),
-            ticketDetail: $('.ticket-detail-panel'),
-            pagination: $('#pagination'),
-            totalCount: $('#totalCount')
-        };
-
-        // 初始化loading遮罩
-        this.$loading = $(`
-            <div class="loading-overlay" style="display:none;">
-                <div class="spinner-border text-primary"></div>
-                <div class="loading-text">加载中...</div>
-            </div>
-        `).appendTo('body');
-
-
-        this.debounce = (func, wait) => {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        };
-
-        this._bindCreateTicketEvents();
-        this._initSearchForm();
-        // 绑定事件
-        this._bindEvents();
-
-        // 初始化数据
-        this.init();
-    }
-
-
-
-    /**
-     * 工具方法 - HTML转义
-     * 防止XSS攻击
-     * @param {string} str - 需要转义的字符串
-     * @returns {string} 转义后的字符串
-     * @private
-     */
-    _escapeHtml(str) {
-        if (!str) return '';
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    /**
-     * 工具方法 - 获取状态样式类
-     * @param {number} status - 状态码
-     * @returns {string} CSS类名
-     * @private
-     */
-    _getStatusClass(status) {
-        const classMap = {
-            0: 'pending',
-            1: 'processing',
-            2: 'completed',
-            3: 'closed'
-        };
-        return classMap[status] || 'unknown';
-    }
-
-    /**
-     * 工具方法 - 获取优先级样式类
-     * @param {number} priority - 优先级(0:普通,1:紧急,2:非常紧急)
-     * @returns {string} CSS类名
-     * @private
-     */
-    _getPriorityClass(priority) {
-        const classMap = {
-            0: 'low',
-            1: 'medium',
-            2: 'high'
-        };
-        return classMap[priority] || 'low';
-    }
-
-
-    /**
-     * 工具方法 - 格式化日期
-     * @param {string} dateString - 日期字符串
-     * @returns {string} 格式化后的日期字符串
-     * @private
-     */
-    _formatDate(dateString) {
-        if (!dateString) return '-';
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch (error) {
-            console.error('日期格式化失败:', error);
-            return '-';
-        }
-    }
-
-    /**
-     * 初始化组件
-     * 加载工单列表等初始化操作
-     */
-    async init() {
-        try {
-            await this._loadTickets();
-        } catch(error) {
-            console.error('初始化失败:', error);
-            NotifyUtil.error('加载失败，请刷新重试');
-        }
-    }
-
-
-
-    /**
-     * 获取状态文本
-     * @param {string} status - 状态码
-     * @returns {string} 状态描述文本
-     * @private
-     */
-    _getStatusText(status) {
-        const statusMap = {
-            'PENDING': '待处理',
-            'PROCESSING': '处理中',
-            'COMPLETED': '已完成',
-            'CLOSED': '已关闭'
-        };
-        return statusMap[status] || '未知状态';
-    }
-
-    /**
-     * 获取优先级文本
-     * @param {number} priority - 优先级
-     * @returns {string} 优先级描述文本
-     * @private
-     */
-    _getPriorityText(priority) {
-        const textMap = {
-            0: '普通',
-            1: '紧急',
-            2: '非常紧急'
-        };
-        return textMap[priority] || '普通';
-    }
-
-
-    /**
-     * 渲染工单列表
-     * @private
-     */
-    _renderTicketList() {
-        // 确保tickets是数组且有数据
-        if (!Array.isArray(this.state.tickets) || this.state.tickets.length === 0) {
-            this.elements.ticketList.html('<tr><td colspan="8" class="text-center">暂无工单</td></tr>');
-            this.elements.totalCount.text('0');
-            return;
-        }
-
-        try {
-            const html = this.state.tickets.map(ticket => {
-                // 确保每个属性都有默认值
-                return `
-                    <tr>
-                        <td>${ticket.ticketId || '-'}</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="priority-indicator priority-${this._getPriorityClass(ticket.priority)}"></span>
-                                ${this._escapeHtml(ticket.title) || ''}
-                            </div>
-                        </td>
-                        <td>${this._escapeHtml(ticket.departmentName) || '-'}</td>
-                        <td>${this._escapeHtml(ticket.processorName) || '-'}</td>
-                        <td>
-                            <span class="ticket-status status-${this._getStatusClass(ticket.status)}">
-                                ${this._getStatusText(ticket.status)}
-                            </span>
-                        </td>
-                        <td>${this._getPriorityText(ticket.priority)}</td>
-                        <td>${this._formatDate(ticket.createTime)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary view-ticket" 
-                                    data-id="${ticket.ticketId}">
-                                <i class="bi bi-eye"></i> 查看
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            this.elements.ticketList.html(html);
-            this.elements.totalCount.text(this.state.pagination.total);
-        } catch (error) {
-            console.error('渲染工单列表失败:', error);
-            this.elements.ticketList.html('<tr><td colspan="8" class="text-center text-danger">渲染失败</td></tr>');
-            this.elements.totalCount.text('0');
-        }
-    }
-
-    /**
-     * 格式化文件大小
-     * @param {number} bytes - 文件字节大小
-     * @returns {string} 格式化后的大小
-     * @private
-     */
-    _formatFileSize(bytes) {
-        if(bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
-    }
-
-
-    /**
-     * 绑定事件处理
-     * 处理搜索、重置、查看详情等事件
-     * @private
-     */
-    _bindEvents() {
-        // 搜索表单提交处理
-        this.elements.searchForm.on('submit', (e) => this._handleSearch(e));
-
-        // 重置按钮点击处理
-        $('#resetBtn').on('click', () => this._handleReset());
-
-        // 查看工单详情
-        this.elements.ticketList.on('click', '.view-ticket', (e) => {
-            const ticketId = $(e.currentTarget).data('id');
-            this._loadTicketDetail(ticketId);
-        });
-
-        // 评分点击事件
-        $('.rating-star').on('click', (e) => {
-            const rating = $(e.currentTarget).data('rating');
-            this._handleRating(rating);
-        });
-
-        // 添加备注按钮点击
-        $('#addNoteBtn').on('click', () => this._handleAddNote());
-
-        // 关闭工单按钮点击
-        $('#closeTicketBtn').on('click', () => this._handleCloseTicket());
-
-        // 提交评价按钮点击
-        $('#submitEvaluationBtn').on('click', () => this._handleSubmitEvaluation());
-
-        // 关闭详情面板
-        $('#closeDetailBtn').on('click', () => {
-            this.elements.ticketDetail.removeClass('show');
-            this.state.currentTicket = null;
-        });
-    }
-
-    /**
-     * 处理搜索事件
-     * 收集表单数据并触发工单列表刷新
-     * @param {Event} e - 表单提交事件对象
-     * @private
-     */
-    _handleSearch(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-
-        // 更新筛选条件
-        Object.assign(this.state.filters, {
-            keyword: formData.get('keyword'),
-            status: formData.get('status'),
-            priority: formData.get('priority'),
-            startTime: formData.get('startTime'),
-            endTime: formData.get('endTime')
-        });
-
-        // 重置分页并加载数据
-        this.state.pagination.current = 1;
-        this._loadTickets();
-    }
-    /**
-     * 加载工单详情信息
-     * @param {number} ticketId - 工单ID
-     * @private
-     */
-    async _loadTicketDetail(ticketId) {
-        try {
-            // 发起工单详情请求
-            const response = await $.ajax({
-                url: `/api/tickets/${ticketId}`,
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if(response.code === 200) {
-                this.state.currentTicket = response.data;
-                this._renderTicketDetail();
-                this.elements.ticketDetail.addClass('show');
-
-                // 加载处理记录
-                await this._loadTicketRecords(ticketId);
-            }
-        } catch(error) {
-            console.error('加载工单详情失败:', error);
-            NotifyUtil.error('加载详情失败');
-        }
-    }
-
-
-
-    /**
-     * 初始化搜索表单功能
-     * @private
-     */
-    _initSearchForm() {
-        // 状态筛选变化事件
-        $('#statusFilter').on('change', (e) => {
-            this.state.filters.status = e.target.value;
-        });
-
-        // 优先级筛选变化事件
-        $('#priorityFilter').on('change', (e) => {
-            this.state.filters.priority = e.target.value;
-        });
-
-        // 日期范围选择变化事件
-        $('#startDate, #endDate').on('change', (e) => {
-            const field = e.target.id === 'startDate' ? 'startTime' : 'endTime';
-            this.state.filters[field] = e.target.value;
-        });
-
-        // 关键词搜索输入事件（使用自定义防抖函数）
-        $('#keyword').on('input', this.debounce((e) => {
-            this.state.filters.keyword = e.target.value.trim();
-        }, 300));
-    }
-
-
-    _bindCreateTicketEvents() {
-        // 新建工单按钮点击事件
-        $('#createTicketBtn').on('click', () => this._showCreateModal());
-
-        // 保存工单按钮点击事件
-        $('#saveTicketBtn').on('click', () => this._handleSaveTicket());
-
-        // 附件上传变化事件
-        $('#attachments').on('change', (e) => this._handleFileChange(e));
-
-        // 部门选择变化事件
-        $('#departmentId').on('change', (e) => {
-            const departmentId = e.target.value;
-            if(departmentId) {
-                this._loadTicketTypes(departmentId);
-            }
-        });
-    }
-
-    /**
-     * 显示创建工单模态框
-     * @private
-     */
-    async _showCreateModal() {
-        try {
-            // 重置表单
-            $('#ticketForm')[0].reset();
-            $('#fileList').empty();
-
-            // 加载部门列表
-            await this._loadDepartments();
-
-            // 显示模态框
-            this.ticketModal.show();
-        } catch(error) {
-            console.error('初始化创建表单失败:', error);
-            NotifyUtil.error('初始化表单失败');
-        }
-    }
-
-    /**
-     * 加载部门列表
-     * @private
-     */
-    async _loadDepartments() {
-        try {
-            const response = await $.ajax({
-                url: '/api/departments/list',
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if(response.code === 200) {
-                const options = response.data.map(dept =>
-                    `<option value="${dept.departmentId}">${dept.departmentName}</option>`
-                ).join('');
-
-                $('#departmentId').html('<option value="">请选择处理部门</option>' + options);
-            }
-        } catch(error) {
-            console.error('加载部门列表失败:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 加载工单类型
-     * @param {string} departmentId - 部门ID
-     * @private
-     */
-    async _loadTicketTypes(departmentId) {
-        try {
-            const response = await $.ajax({
-                url: '/api/tickets/types',
-                method: 'GET',
-                data: { departmentId },
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if(response.code === 200) {
-                const options = response.data.map(type =>
-                    `<option value="${type.typeId}">${type.typeName}</option>`
-                ).join('');
-
-                $('#typeId').html('<option value="">请选择工单类型</option>' + options);
-            }
-        } catch(error) {
-            console.error('加载工单类型失败:', error);
-            NotifyUtil.error('加载工单类型失败');
-        }
-    }
-
-    /**
-     * 处理文件选择变化
-     * @param {Event} e - 文件输入变化事件
-     * @private
-     */
-    _handleFileChange(e) {
-        const files = e.target.files;
-        const $fileList = $('#fileList');
-        $fileList.empty();
-
-        Array.from(files).forEach(file => {
-            const $item = $(`
-                <div class="file-item d-flex align-items-center p-2 border rounded mb-2">
-                    <i class="bi bi-file-earmark me-2"></i>
-                    <span class="flex-grow-1">${file.name}</span>
-                    <small class="text-muted me-2">${this._formatFileSize(file.size)}</small>
-                    <button type="button" class="btn btn-sm btn-link text-danger remove-file">
-                        <i class="bi bi-x"></i>
-                    </button>
-                </div>
-            `).appendTo($fileList);
-
-            // 删除文件
-            $item.find('.remove-file').on('click', () => {
-                $item.remove();
-                // 从文件输入中移除文件
-                const dt = new DataTransfer();
-                const remainingFiles = Array.from(files).filter(f => f !== file);
-                remainingFiles.forEach(f => dt.items.add(f));
-                e.target.files = dt.files;
-            });
-        });
-    }
-
-    /**
-     * 处理工单保存
-     * @private
-     */
-    async _handleSaveTicket() {
-        try {
-            const formData = new FormData($('#ticketForm')[0]);
-            formData.append('createBy', this.userInfo.userId);
-            formData.append('status', 'PENDING');
-
-            // 表单验证
-            if(!this._validateTicketForm(formData)) {
-                return;
-            }
-
-            const response = await $.ajax({
-                url: '/api/tickets',
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if(response.code === 200) {
-                NotifyUtil.success('工单创建成功');
-                this.ticketModal.hide();
-                await this._loadTickets();
-            }
-        } catch(error) {
-            console.error('创建工单失败:', error);
-            NotifyUtil.error('创建工单失败');
-        }
-    }
-
-    /**
-     * 验证工单表单
-     * @param {FormData} formData - 表单数据
-     * @returns {boolean} 验证结果
-     * @private
-     */
-    _validateTicketForm(formData) {
-        const requiredFields = {
-            typeId: '工单类型',
-            title: '标题',
-            content: '内容描述',
-            departmentId: '处理部门',
-            priority: '优先级'
-        };
-
-        for(const [field, label] of Object.entries(requiredFields)) {
-            if(!formData.get(field)) {
-                NotifyUtil.warning(`请选择${label}`);
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-
-
-
-
-    /**
-     * 处理重置事件
-     * 清空所有筛选条件并刷新数据
-     * @private
-     */
-    _handleReset() {
-        // 重置表单元素
-        this.elements.searchForm[0].reset();
-
-        // 重置日期选择
-        $('#startDate, #endDate').val('');
-
-        // 重置过滤条件到初始状态
-        this.state.filters = {
+function MyTickets() {
+    // 状态定义
+    this.state = {
+        loading: false,
+        tickets: [],
+        currentTicket: null,
+        selectedRating: 0,
+        pagination: {
+            current: 1,
+            pageSize: 10,
+            total: 0
+        },
+        filters: {
             keyword: '',
             status: '',
             priority: '',
+            departmentId: '',
             startTime: '',
             endTime: '',
-            userId: this.userInfo.userId  // 保持用户ID不变
-        };
-
-        // 重置分页
-        this.state.pagination.current = 1;
-
-        // 重新加载数据
-        this._loadTickets();
-    }
-
-    /**
-     * 加载工单列表
-     * 根据筛选条件获取数据
-     * @private
-     */
-    async _loadTickets() {
-        if (this.state.loading) return;
-
-        try {
-            this.state.loading = true;
-            this._showLoading();
-
-            // 构建查询参数
-            const params = {
-                pageNum: this.state.pagination.current,
-                pageSize: this.state.pagination.pageSize,
-                ...this.state.filters
-            };
-
-            // 移除空值参数
-            Object.keys(params).forEach(key => {
-                if (params[key] === '' || params[key] === null || params[key] === undefined) {
-                    delete params[key];
-                }
-            });
-
-            const response = await $.ajax({
-                url: '/api/tickets/my',
-                method: 'GET',
-                data: params,
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (response.code === 200) {
-                this.state.tickets = response.data || [];
-                this.state.pagination.total = response.data?.length || 0;
-                this._renderTicketList();
-            }
-
-        } catch (error) {
-            console.error('加载工单列表失败:', error);
-            NotifyUtil.error('加载工单列表失败');
-        } finally {
-            this.state.loading = false;
-            this._hideLoading();
+            userId: JSON.parse(localStorage.getItem('userInfo') || '{}').userId
         }
-    }
+    };
 
-    /**
-     * 加载工单处理记录
-     * @param {number} ticketId - 工单ID
-     * @private
-     */
-    async _loadTicketRecords(ticketId) {
-        try {
-            const response = await $.ajax({
-                url: `/api/records/detail/${ticketId}`,
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
+    // 常量定义
+    this.STATUS_MAP = {
+        'PENDING': '待处理',
+        'PROCESSING': '处理中',
+        'COMPLETED': '已完成',
+        'CLOSED': '已关闭'
+    };
 
-            if(response.code === 200) {
-                this._renderTicketRecords(response.data);
-            }
-        } catch(error) {
-            console.error('加载处理记录失败:', error);
-            NotifyUtil.error('加载处理记录失败');
+    this.PRIORITY_MAP = {
+         0 : {text: '普通', class: 'low'},
+         1 : {text: '紧急', class: 'medium'},
+         2 : {text: '高', class: 'high'}
+    };
+
+    // DOM元素缓存
+    this.elements = {
+        container: $('#main'),
+        ticketList: $('#ticketList'),
+        searchForm: $('#searchForm'),
+        ticketDetail: $('.ticket-detail-panel'),
+        pagination: $('#pagination'),
+        totalCount: $('#totalCount')
+    };
+
+    // 初始化加载中遮罩
+    this.$loading = $('<div class="loading-overlay"><div class="spinner-border text-primary"></div><div class="loading-text">加载中...</div></div>').appendTo('body');
+
+    // 初始化方法
+    this.init();
+}
+
+/**
+ * 初始化
+ */
+MyTickets.prototype.init = function() {
+    this._bindCreateTicketEvents();
+    this._initSearchForm();
+    this._bindEvents();
+    this._loadTickets();
+    this._loadTicketTypes();
+};
+
+/**
+ * 绑定事件
+ */
+MyTickets.prototype._bindEvents = function() {
+    let self = this;
+
+    // 搜索表单提交
+    this.elements.searchForm.on('submit', function(e) {
+        e.preventDefault();
+        self._handleSearch(e);
+    });
+
+    // 重置按钮
+    $('#resetBtn').on('click', function() {
+        self._handleReset();
+    });
+
+    // 查看工单详情
+    this.elements.ticketList.on('click', '.view-ticket', function(e) {
+        let ticketId = $(this).data('id');
+        self._loadTicketDetail(ticketId);
+    });
+
+    // 评分点击
+    $('.rating-star').on('click', function(e) {
+        let rating = $(this).data('rating');
+        self._handleRating(rating);
+    });
+
+    // 添加备注
+    $('#addNoteBtn').on('click', function() {
+        self._handleAddNote();
+    });
+
+    // 关闭工单
+    $('#closeTicketBtn').on('click', function() {
+        self._handleCloseTicket();
+    });
+
+    // 提交评价
+    $('#submitEvaluationBtn').on('click', function() {
+        self._handleSubmitEvaluation();
+    });
+
+    // 关闭详情面板
+    $('#closeDetailBtn').on('click', function() {
+        self.elements.ticketDetail.removeClass('show');
+        self.state.currentTicket = null;
+    });
+
+    // 导出按钮
+    $('#exportBtn').on('click', function() {
+        self.exportTickets();
+    });
+};
+
+
+/**
+ * 加载工单列表
+ */
+MyTickets.prototype._loadTickets = function() {
+    let self = this;
+    if (this.state.loading) return;
+
+    this.state.loading = true;
+    this._showLoading();
+
+    let params = {
+        pageNum: this.state.pagination.current,
+        pageSize: this.state.pagination.pageSize
+    };
+
+    // 合并筛选条件
+    Object.keys(this.state.filters).forEach(function(key) {
+        if (self.state.filters[key]) {
+            params[key] = self.state.filters[key];
         }
-    }
+    });
 
-    /**
-     * 渲染工单详情
-     * @private
-     */
-    _renderTicketDetail() {
-        const ticket = this.state.currentTicket;
-        if(!ticket) return;
-
-        // 渲染基本信息
-        $('#ticketCode').text(ticket.ticketId);
-        $('#ticketTitle').text(ticket.title);
-        $('#ticketContent').text(ticket.content);
-        $('#createTime').text(this._formatDate(ticket.createTime));
-
-        // 渲染状态标签
-        $('#ticketStatus').html(`
-            <span class="ticket-status status-${ticket.status}">
-                ${this._getStatusText(ticket.status)}
-            </span>
-        `);
-
-        // 控制评价表单显示
-        const canEvaluate = ticket.status === 2 && // 已完成
-            ticket.createBy === this.userInfo.userId && // 是创建人
-            !this._hasEvaluation(ticket.records); // 未评价
-        $('#evaluationForm').toggle(canEvaluate);
-
-        // 控制按钮状态
-        const canClose = ticket.status !== 3 && // 非关闭状态
-            (ticket.createBy === this.userInfo.userId || // 是创建人
-                ticket.processorId === this.userInfo.userId); // 或处理人
-        $('#closeTicketBtn').prop('disabled', !canClose);
-    }
-
-    /**
-     * 渲染工单处理记录
-     * @param {Array} records - 处理记录列表
-     * @private
-     */
-    _renderTicketRecords(records) {
-        if(!records?.length) {
-            $('#ticketTimeline').html('<div class="text-muted">暂无处理记录</div>');
-            return;
+    $.ajax({
+        url: '/api/tickets/my',
+        method: 'GET',
+        data: params,
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
         }
+    }).done(function(response) {
+        if (response.code === 200) {
+            self.state.tickets = response.data.list || [];
+            self.state.pagination.total = response.data.total || 0;
+            self._renderTicketList();
+        }
+    }).fail(function(error) {
+        console.error('加载工单列表失败:', error);
+        NotifyUtil.error('加载工单列表失败');
+    }).always(function() {
+        self.state.loading = false;
+        self._hideLoading();
+    });
+};
 
-        const html = records.map(record => `
-            <div class="timeline-item">
-                <div class="timeline-content">
-                    <div class="timeline-time">
-                        ${this._formatDate(record.createTime)}
+/**
+ * 渲染工单列表
+ */
+MyTickets.prototype._renderTicketList = function() {
+    let self = this;
+
+    if (!Array.isArray(this.state.tickets) || this.state.tickets.length === 0) {
+        this.elements.ticketList.html('<tr><td colspan="8" class="text-center">暂无工单</td></tr>');
+        this.elements.totalCount.text('0');
+        return;
+    }
+
+    const html = this.state.tickets.map(ticket => {
+        const priorityInfo = this.PRIORITY_MAP[ticket.priority] || this.PRIORITY_MAP[0];
+        return `
+            <tr>
+                <td>${ticket.ticketId || '-'}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <span class="priority-indicator priority-${priorityInfo.class}"></span>
+                        ${this._escapeHtml(ticket.title) || ''}
                     </div>
-                    <div class="timeline-title">
-                        <strong>${record.operatorName}</strong>
-                        ${this._getOperationText(record.operationType)}
-                    </div>
-                    ${record.operationContent ? `
-                        <div class="timeline-body">
-                            ${record.operationContent}
-                        </div>
-                    ` : ''}
-                    ${record.evaluationScore ? `
-                        <div class="evaluation-content">
-                            <div class="rating-display">
-                                ${this._renderStars(record.evaluationScore)}
-                            </div>
-                            <div class="evaluation-text">
-                                ${record.evaluationContent}
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `).join('');
+                </td>
+                <td>${this._escapeHtml(ticket.departmentName) || '-'}</td>
+                <td>${this._escapeHtml(ticket.processorName) || '-'}</td>
+                <td>
+                    <span class="ticket-status status-${this._getStatusClass(ticket.status)}">
+                        ${this.STATUS_MAP[ticket.status]}
+                    </span>
+                </td>
+                <td>
+                    <span class="priority-badge priority-${priorityInfo.class}">
+                        ${priorityInfo.text}
+                    </span>
+                </td>
+                <td>${this._formatDate(ticket.createTime)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary view-ticket" data-id="${ticket.ticketId}">
+                        <i class="bi bi-eye"></i> 查看
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 
-        $('#ticketTimeline').html(html);
+    this.elements.ticketList.html(html);
+    this.elements.totalCount.text(this.state.pagination.total);
+};
+
+/**
+ * 加载工单详情
+ */
+MyTickets.prototype._loadTicketDetail = function(ticketId) {
+    let self = this;
+
+    $.ajax({
+        url: '/api/tickets/' + ticketId,
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        }
+    }).done(function(response) {
+        if (response.code === 200) {
+            self.state.currentTicket = response.data;
+            self._renderTicketDetail();
+            self.elements.ticketDetail.addClass('show');
+        }
+    }).fail(function(error) {
+        console.error('加载工单详情失败:', error);
+        NotifyUtil.error('加载详情失败');
+    });
+};
+
+/**
+ * 渲染工单详情
+ */
+MyTickets.prototype._renderTicketDetail = function() {
+    let ticket = this.state.currentTicket;
+    if (!ticket) return;
+
+    $('#ticketCode').text(ticket.ticketId);
+    $('#ticketTitle').text(ticket.title);
+    $('#ticketContent').text(ticket.content);
+    $('#createTime').text(this._formatDate(ticket.createTime));
+
+    // 渲染状态
+    $('#ticketStatus').html([
+        '<span class="ticket-status status-', ticket.status.toLowerCase(), '">',
+        this.STATUS_MAP[ticket.status],
+        '</span>'
+    ].join(''));
+
+    // 评价表单显示控制
+    let canEvaluate = ticket.status === 'COMPLETED' &&
+        ticket.createBy === this.state.filters.userId &&
+        !this._hasEvaluation(ticket.records);
+    $('#evaluationForm').toggle(canEvaluate);
+
+    // 按钮状态控制
+    let canClose = ticket.status !== 'CLOSED' &&
+        (ticket.createBy === this.state.filters.userId ||
+            ticket.processorId === this.state.filters.userId);
+    $('#closeTicketBtn').prop('disabled', !canClose);
+
+    // 渲染处理记录
+    this._renderTicketRecords(ticket.records);
+};
+
+/**
+ * 渲染处理记录
+ */
+MyTickets.prototype._renderTicketRecords = function(records) {
+    if (!records || !records.length) {
+        $('#ticketTimeline').html('<div class="text-muted">暂无处理记录</div>');
+        return;
     }
 
-    /**
-     * 处理工单评分
-     * @param {number} rating - 评分值(1-5)
-     * @private
-     */
-    _handleRating(rating) {
-        this.state.selectedRating = rating;
-        $('.rating-star').each((index, star) => {
-            $(star).toggleClass('bi-star-fill', index < rating)
-                .toggleClass('bi-star', index >= rating);
-        });
-    }
+    let self = this;
+    let html = records.map(function(record) {
+        let html = [
+            '<div class="timeline-item">',
+            '<div class="timeline-content">',
+            '<div class="timeline-time">',
+            self._formatDate(record.createTime),
+            '</div>',
+            '<div class="timeline-title">',
+            '<strong>', record.operatorName, '</strong> ',
+            self._getOperationText(record.operationType),
+            '</div>'
+        ];
 
-    /**
-     * 提交工单评价
-     * @private
-     */
-    async _handleSubmitEvaluation() {
-        if(!this.state.selectedRating) {
-            NotifyUtil.warning('请选择评分');
-            return;
+        if (record.operationContent) {
+            html.push(
+                '<div class="timeline-body">',
+                record.operationContent,
+                '</div>'
+            );
         }
 
-        const content = $('#evaluationContent').val().trim();
-        if(!content) {
-            NotifyUtil.warning('请输入评价内容');
-            return;
+        if (record.evaluationScore) {
+            html.push(
+                '<div class="evaluation-content">',
+                '<div class="rating-display">',
+                self._renderStars(record.evaluationScore),
+                '</div>',
+                '<div class="evaluation-text">',
+                record.evaluationContent,
+                '</div>',
+                '</div>'
+            );
         }
 
-        try {
-            await $.ajax({
-                url: `/api/records`,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    ticketId: this.state.currentTicket.ticketId,
-                    operationType: 5, // 评价类型
-                    operationContent: content,
-                    evaluationScore: this.state.selectedRating,
-                    evaluationContent: content
-                }),
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            NotifyUtil.success('评价提交成功');
-            $('#evaluationForm').hide();
-            await this._loadTicketDetail(this.state.currentTicket.ticketId);
-        } catch(error) {
-            console.error('提交评价失败:', error);
-            NotifyUtil.error('评价提交失败');
-        }
-    }
-
-    /**
-     * 工具方法 - 检查是否已评价
-     * @param {Array} records - 处理记录列表
-     * @returns {boolean} 是否已评价
-     * @private
-     */
-    _hasEvaluation(records) {
-        return records?.some(record =>
-            record.operationType === 5 && record.evaluationScore > 0
+        html.push(
+            '</div>',
+            '</div>'
         );
-    }
 
-    /**
-     * 工具方法 - 渲染星级评分
-     * @param {number} score - 评分值
-     * @returns {string} 星级HTML
-     * @private
-     */
-    _renderStars(score) {
-        return Array(5).fill(0).map((_, i) =>
-            `<i class="bi bi-star${i < score ? '-fill' : ''} text-warning"></i>`
-        ).join('');
-    }
+        return html.join('');
+    }).join('');
 
+    $('#ticketTimeline').html(html);
+};
+/**
+ * 绑定创建工单相关的事件
+ * @private
+ */
+MyTickets.prototype._bindCreateTicketEvents = function() {
+    const self = this;
 
+    // 新建工单按钮点击
+    $('#createTicketBtn').on('click', function() {
+        // 初始化模态框
+        $('#ticketModal').modal({
+            backdrop: 'static',
+            keyboard: false
+        });
 
-    /**
-     * 处理工单关闭
-     * 需要填写关闭说明
-     * @private
-     */
-    async _handleCloseTicket() {
-        const content = $('#noteContent').val().trim();
-        if(!content) {
-            NotifyUtil.warning('请输入关闭说明');
+        // 重置表单
+        $('#ticketForm')[0].reset();
+        $('#fileList').empty();
+
+        // 初始化加载部门数据
+        self._loadDepartments();
+
+        // 显示模态框
+        $('#ticketModal').modal('show');
+    });
+
+    // 保存工单按钮点击
+    $('#saveTicketBtn').on('click', function() {
+        const $form = $('#ticketForm');
+        const $submitBtn = $(this);
+
+        // 表单验证
+        if (!$form[0].checkValidity()) {
+            $form[0].reportValidity();
             return;
         }
 
-        if(!confirm('确定要关闭此工单吗？')) {
+        // 禁用提交按钮防止重复提交
+        $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 保存中...');
+
+        // 收集表单数据
+        const formData = new FormData($form[0]);
+        formData.append('createBy', self.state.filters.userId);
+
+        // 发起创建请求
+        $.ajax({
+            url: '/api/tickets/create',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        }).done(function(response) {
+            if (response.code === 200) {
+                NotifyUtil.success('工单创建成功');
+                $('#ticketModal').modal('hide');
+                self._loadTickets(); // 刷新列表
+            } else {
+                NotifyUtil.error(response.msg || '创建失败');
+            }
+        }).fail(function(error) {
+            console.error('创建工单失败:', error);
+            NotifyUtil.error('创建工单失败，请重试');
+        }).always(function() {
+            // 恢复提交按钮状态
+            $submitBtn.prop('disabled', false).text('保存');
+        });
+    });
+
+    // 部门选择变化时加载对应的工单类型
+    $('#departmentId').on('change', function() {
+        const departmentId = $(this).val();
+        const $typeSelect = $('#typeId');
+
+        if (!departmentId) {
+            $typeSelect.html('<option value="">请选择工单类型</option>').prop('disabled', true);
             return;
         }
 
-        try {
-            await $.ajax({
-                url: `/api/tickets/${this.state.currentTicket.ticketId}/close`,
-                method: 'PUT',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    content,
-                    operatorId: this.userInfo.userId
-                }),
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+        // 加载工单类型
+        $.ajax({
+            url: '/api/tickets/types',
+            method: 'GET',
+            data: { departmentId: departmentId },
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        }).done(function(response) {
+            if (response.code === 200) {
+                const options = response.data.map(function(type) {
+                    return `<option value="${type.typeId}">${type.typeName}</option>`;
+                });
+                $typeSelect
+                    .html('<option value="">请选择工单类型</option>' + options.join(''))
+                    .prop('disabled', false);
+            } else {
+                $typeSelect.html('<option value="">加载失败</option>').prop('disabled', true);
+            }
+        }).fail(function() {
+            $typeSelect.html('<option value="">加载失败</option>').prop('disabled', true);
+            NotifyUtil.error('加载工单类型失败');
+        });
+    });
+
+    // 附件上传相关事件
+    const $attachments = $('#attachments');
+    const $fileList = $('#fileList');
+
+    $attachments.on('change', function(e) {
+        const files = e.target.files;
+        self._updateFileList(files, $fileList);
+    });
+
+    // 重置按钮事件
+    $('#ticketModal').find('button[type="reset"]').on('click', function() {
+        $('#fileList').empty();
+        $('#typeId').html('<option value="">请选择工单类型</option>').prop('disabled', true);
+    });
+
+    // 模态框关闭时清理
+    $('#ticketModal').on('hidden.bs.modal', function() {
+        $('#ticketForm')[0].reset();
+        $('#fileList').empty();
+        $('#typeId').html('<option value="">请选择工单类型</option>').prop('disabled', true);
+        $('.is-invalid').removeClass('is-invalid');
+    });
+};
+/**
+ * 文件上传相关
+ */
+MyTickets.prototype._initFileUpload = function() {
+    let self = this;
+    let $fileInput = $('#attachments');
+    let $fileList = $('<div class="file-list mt-2"></div>').insertAfter($fileInput);
+
+    $fileInput.on('change', function(e) {
+        self._updateFileList(e.target.files, $fileList);
+    });
+
+    // 拖拽上传区域
+    let $dropZone = $('<div class="upload-dropzone">拖拽文件到此处上传</div>')
+        .insertAfter($fileInput);
+
+    $dropZone.on({
+        dragover: function(e) {
+            e.preventDefault();
+            $dropZone.addClass('dragover');
+        },
+        dragleave: function() {
+            $dropZone.removeClass('dragover');
+        },
+        drop: function(e) {
+            e.preventDefault();
+            $dropZone.removeClass('dragover');
+            let files = e.originalEvent.dataTransfer.files;
+            $fileInput[0].files = files;
+            self._updateFileList(files, $fileList);
+        }
+    });
+};
+
+/**
+ * 更新文件列表显示
+ */
+MyTickets.prototype._updateFileList = function(files, $fileList) {
+    let self = this;
+    $fileList.empty();
+
+    Array.prototype.forEach.call(files, function(file) {
+        let $item = $([
+            '<div class="file-item">',
+            '<i class="bi bi-file-earmark"></i>',
+            '<span class="file-name">', file.name, '</span>',
+            '<span class="file-size">(', self._formatFileSize(file.size), ')</span>',
+            '<button type="button" class="btn btn-sm btn-link text-danger remove-file">',
+            '<i class="bi bi-x"></i>',
+            '</button>',
+            '</div>'
+        ].join('')).appendTo($fileList);
+
+        $item.find('.remove-file').on('click', function() {
+            $item.remove();
+            // 更新文件列表
+            let dt = new DataTransfer();
+            Array.prototype.forEach.call(files, function(f) {
+                if (f !== file) {
+                    dt.items.add(f);
                 }
             });
+            $('#attachments')[0].files = dt.files;
+        });
+    });
+};
 
+/**
+ * 处理关闭工单
+ */
+MyTickets.prototype._handleCloseTicket = function() {
+    let self = this;
+    let content = $('#noteContent').val().trim();
+
+    if (!content) {
+        NotifyUtil.warning('请输入关闭说明');
+        return;
+    }
+
+    if(!confirm('确定要关闭此工单吗？')) {
+        return;
+    }
+
+    $.ajax({
+        url: `/api/tickets/${this.state.currentTicket.ticketId}/close`,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            content: content,
+            operatorId: this.state.filters.userId
+        }),
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    }).done((response) => {
+        if (response.success) {
+            $('#ticketModal').modal('hide');
             NotifyUtil.success('工单已关闭');
-            await this._loadTicketDetail(this.state.currentTicket.ticketId);
-            await this._loadTickets(); // 刷新列表
-        } catch(error) {
-            console.error('关闭工单失败:', error);
-            NotifyUtil.error('关闭工单失败');
+            self._loadTicketDetail(self.state.currentTicket.ticketId);
+            self._loadTickets();
+        } else {
+            NotifyUtil.error(response.msg || '关闭工单失败');
         }
+    }).fail((error) => {
+        console.error('关闭工单失败:', error);
+        NotifyUtil.error('关闭工单失败');
+    });
+};
+
+/**
+ * 处理工单评分
+ */
+MyTickets.prototype._handleRating = function(rating) {
+    this.state.selectedRating = rating;
+    $('.rating-star').each((index, star) => {
+        $(star).toggleClass('bi-star-fill', index < rating)
+            .toggleClass('bi-star', index >= rating);
+    });
+};
+
+/**
+ * 处理提交评价
+ */
+MyTickets.prototype._handleSubmitEvaluation = function() {
+    if(!this.state.selectedRating) {
+        NotifyUtil.warning('请选择评分');
+        return;
     }
 
-    /**
-     * 处理添加备注
-     * @private
-     */
-    async _handleAddNote() {
-        const content = $('#noteContent').val().trim();
-        if(!content) {
-            NotifyUtil.warning('请输入备注内容');
-            return;
-        }
-
-        try {
-            await $.ajax({
-                url: '/api/records',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    ticketId: this.state.currentTicket.ticketId,
-                    operatorId: this.userInfo.userId,
-                    operationType: 2, // 处理类型
-                    operationContent: content
-                }),
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            NotifyUtil.success('添加备注成功');
-            $('#noteContent').val('');
-            await this._loadTicketDetail(this.state.currentTicket.ticketId);
-        } catch(error) {
-            console.error('添加备注失败:', error);
-            NotifyUtil.error('添加备注失败');
-        }
+    const content = $('#evaluationContent').val().trim();
+    if(!content) {
+        NotifyUtil.warning('请输入评价内容');
+        return;
     }
 
-
-
-    /**
-     * 显示加载状态
-     * 在异步操作开始时调用
-     * @private
-     */
-    _showLoading() {
-        if(!this.$loading) {
-            this.$loading = $(`
-                <div class="loading-overlay">
-                    <div class="spinner-border text-primary"></div>
-                    <div class="loading-text">加载中...</div>
-                </div>
-            `).appendTo('body');
+    $.ajax({
+        url: '/api/records',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            ticketId: this.state.currentTicket.ticketId,
+            operationType: 5, // 评价类型
+            operationContent: content,
+            evaluationScore: this.state.selectedRating,
+            evaluationContent: content
+        }),
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
+    }).done(() => {
+        NotifyUtil.success('评价提交成功');
+        $('#evaluationForm').hide();
+        this._loadTicketDetail(this.state.currentTicket.ticketId);
+    }).fail((error) => {
+        console.error('提交评价失败:', error);
+        NotifyUtil.error('评价提交失败');
+    });
+};
+
+/**
+ * 处理添加备注
+ */
+MyTickets.prototype._handleAddNote = function() {
+    const content = $('#noteContent').val().trim();
+    if(!content) {
+        NotifyUtil.warning('请输入备注内容');
+        return;
+    }
+
+    $.ajax({
+        url: '/api/records',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            ticketId: this.state.currentTicket.ticketId,
+            operatorId: this.state.filters.userId,
+            operationType: 2,
+            operationContent: content
+        }),
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    }).done(() => {
+        NotifyUtil.success('添加备注成功');
+        $('#noteContent').val('');
+        this._loadTicketDetail(this.state.currentTicket.ticketId);
+    }).fail((error) => {
+        console.error('添加备注失败:', error);
+        NotifyUtil.error('添加备注失败');
+    });
+};
+
+/**
+ * 导出工单列表
+ */
+MyTickets.prototype.exportTickets = function() {
+    const params = new URLSearchParams({
+        ...this.state.filters,
+        pageSize: 1000
+    });
+
+    window.location.href = `/api/tickets/export?${params.toString()}`;
+};
+
+// 工具方法
+MyTickets.prototype._escapeHtml = function(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+};
+
+MyTickets.prototype._formatDate = function(dateString) {
+    if (!dateString) return '-';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        console.error('日期格式化失败:', error);
+        return '-';
+    }
+};
+
+MyTickets.prototype._formatFileSize = function(bytes) {
+    if(bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+};
+
+MyTickets.prototype._hasEvaluation = function(records) {
+    return records?.some(record =>
+        record.operationType === 5 && record.evaluationScore > 0
+    );
+};
+
+MyTickets.prototype._renderStars = function(score) {
+    return Array(5).fill(0).map((_, i) =>
+        `<i class="bi bi-star${i < score ? '-fill' : ''} text-warning"></i>`
+    ).join('');
+};
+
+MyTickets.prototype._showLoading = function() {
+    if(this.$loading) {
         this.$loading.show();
         this.elements.container.addClass('loading');
     }
+};
 
-    /**
-     * 隐藏加载状态
-     * 在异步操作完成时调用
-     * @private
-     */
-    _hideLoading() {
-        if(this.$loading) {
-            this.$loading.hide();
-            this.elements.container.removeClass('loading');
+MyTickets.prototype._hideLoading = function() {
+    if(this.$loading) {
+        this.$loading.hide();
+        this.elements.container.removeClass('loading');
+    }
+};
+
+/**
+ * 初始化表单验证
+ */
+MyTickets.prototype._initFormValidation = function() {
+    const self = this;
+
+    // 工单表单验证规则
+    $('#ticketForm').validate({
+        rules: {
+            title: {
+                required: true,
+                minlength: 5,
+                maxlength: 100
+            },
+            content: {
+                required: true,
+                minlength: 10
+            },
+            departmentId: "required",
+            priority: "required",
+            typeId: "required"
+        },
+        messages: {
+            title: {
+                required: "请输入工单标题",
+                minlength: "标题至少5个字符",
+                maxlength: "标题最多100个字符"
+            },
+            content: {
+                required: "请输入工单内容",
+                minlength: "内容至少10个字符"
+            },
+            departmentId: "请选择处理部门",
+            priority: "请选择优先级",
+            typeId: "请选择工单类型"
+        },
+        errorElement: "div",
+        errorPlacement: function(error, element) {
+            error.addClass("invalid-feedback");
+            element.closest(".form-group").append(error);
+        },
+        highlight: function(element) {
+            $(element).addClass("is-invalid");
+        },
+        unhighlight: function(element) {
+            $(element).removeClass("is-invalid");
         }
+    });
+};
+
+/**
+ * 显示创建工单模态框
+ */
+MyTickets.prototype._showCreateModal = function() {
+    // 重置表单
+    $('#ticketForm')[0].reset();
+    $('#fileList').empty();
+    $('.is-invalid').removeClass('is-invalid');
+
+    // 加载部门列表
+    this._loadDepartments();
+
+    // 显示模态框
+    $('#ticketModal').modal('show');
+};
+
+/**
+ * 处理搜索表单提交
+ * @private
+ */
+MyTickets.prototype._handleSearch = function(e) {
+    e.preventDefault();
+
+    // 更新过滤条件
+    this.state.filters = {
+        ...this.state.filters,
+        keyword: $('#keyword').val() || '',
+        status: $('#statusFilter').val() || '',
+        priority: $('#priorityFilter').val() || '',
+        startTime: $('#startDate').val() || '',
+        endTime: $('#endDate').val() || '',
+    };
+
+    // 重置分页到第一页
+    this.state.pagination.current = 1;
+
+    // 重新加载数据
+    this._loadTickets();
+};
+/**
+ * 处理重置事件
+ * @private
+ */
+MyTickets.prototype._handleReset = function() {
+    // 重置表单元素
+    this.elements.searchForm[0].reset();
+
+    // 重置过滤条件到初始状态
+    this.state.filters = {
+        keyword: '',
+        status: '',
+        priority: '',
+        startTime: '',
+        endTime: '',
+        userId: this.state.filters.userId  // 保持用户ID不变
+    };
+
+    // 重置分页
+    this.state.pagination.current = 1;
+
+    // 重新加载数据
+    this._loadTickets();
+};
+
+/**
+ * 初始化搜索表单
+ */
+MyTickets.prototype._initSearchForm = function() {
+    const self = this;
+
+    // 优先级筛选初始化
+    const $priorityFilter = $('#priorityFilter');
+    $priorityFilter.html(`
+        <option value="">所有优先级</option>
+        <option value="NORMAL">普通</option>
+        <option value="URGENT">紧急</option>
+        <option value="EXTREMELY_URGENT">非常紧急</option>
+    `);
+
+    // 日期格式化辅助函数
+    const formatToDateTime = function(dateStr) {
+        if (!dateStr) return '';
+        // 如果只有日期，添加时间部分
+        if (dateStr.length <= 10) {
+            return dateStr + (dateStr.length === 10 ? 'T00:00:00' : '');
+        }
+        return dateStr;
+    };
+
+    // 状态筛选变化事件
+    $('#statusFilter').on('change', function() {
+        self.state.filters.status = $(this).val();
+        self._loadTickets();
+    });
+
+    // 优先级筛选变化事件
+    $priorityFilter.on('change', function() {
+        self.state.filters.priority = $(this).val();
+        self._loadTickets();
+    });
+
+    // 日期范围选择变化事件
+    $('#startDate, #endDate').on('change', function() {
+        const field = this.id === 'startDate' ? 'startTime' : 'endTime';
+        // 转换日期格式为LocalDateTime字符串
+        self.state.filters[field] = formatToDateTime($(this).val());
+        self._loadTickets();
+    });
+
+    // 关键词搜索输入事件（使用防抖）
+    let searchTimeout;
+    $('#keyword').on('input', function() {
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        searchTimeout = setTimeout(function() {
+            self.state.filters.keyword = $('#keyword').val().trim();
+            self._loadTickets();
+        }, 300);
+    });
+};
+
+
+/**
+ * 加载部门列表
+ */
+MyTickets.prototype._loadDepartments = function() {
+    const self = this;
+
+    $.ajax({
+        url: '/api/departments/list',
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    }).done(function(response) {
+        if(response.code === 200) {
+            const options = response.data.map(function(dept) {
+                return `<option value="${dept.departmentId}">${dept.departmentName}</option>`;
+            }).join('');
+
+            $('#departmentId')
+                .html('<option value="">请选择处理部门</option>' + options)
+                .prop('disabled', false);
+        }
+    }).fail(function() {
+        NotifyUtil.error('加载部门列表失败');
+        $('#departmentId').prop('disabled', true);
+    });
+};
+
+/**
+ * 加载工单类型
+ */
+MyTickets.prototype._loadTicketTypes = function(departmentId) {
+    const self = this;
+
+    $.ajax({
+        url: '/api/tickets/type/list',
+        method: 'GET',
+        data: { departmentId: departmentId },
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    }).done(function(response) {
+        if(response.code === 200) {
+            const options = response.data.map(function(type) {
+                return `<option value="${type.typeId}">${type.typeName}</option>`;
+            }).join('');
+
+            $('#typeId')
+                .html('<option value="">请选择工单类型</option>' + options)
+                .prop('disabled', false);
+        }
+    }).fail(function() {
+        NotifyUtil.error('加载工单类型失败');
+        $('#typeId').html('<option value="">加载失败</option>').prop('disabled', true);
+    });
+};
+
+/**
+ * 保存工单
+ */
+MyTickets.prototype._handleSaveTicket = function() {
+    const self = this;
+
+    // 表单验证
+    if(!$('#ticketForm').valid()) {
+        return;
     }
 
-    /**
-     * 文件上传相关功能
-     */
+    // 收集表单数据
+    const formData = new FormData($('#ticketForm')[0]);
+    formData.append('createBy', this.state.filters.userId);
 
-    /**
-     * 初始化文件上传功能
-     * @private
-     */
-    _initFileUpload() {
-        const $fileInput = $('#attachments');
-        const $fileList = $('<div class="file-list mt-2"></div>').insertAfter($fileInput);
-
-        // 文件选择变化事件
-        $fileInput.on('change', (e) => {
-            const files = e.target.files;
-            this._updateFileList(files, $fileList);
-        });
-
-        // 拖拽上传
-        const $dropZone = $('<div class="upload-dropzone">拖拽文件到此处上传</div>')
-            .insertAfter($fileInput);
-
-        $dropZone.on('dragover', (e) => {
-            e.preventDefault();
-            $dropZone.addClass('dragover');
-        });
-
-        $dropZone.on('dragleave', () => {
-            $dropZone.removeClass('dragover');
-        });
-
-        $dropZone.on('drop', (e) => {
-            e.preventDefault();
-            $dropZone.removeClass('dragover');
-            const files = e.originalEvent.dataTransfer.files;
-            $fileInput[0].files = files;
-            this._updateFileList(files, $fileList);
-        });
-    }
-
-    /**
-     * 更新文件列表显示
-     * @param {FileList} files - 选择的文件列表
-     * @param {JQuery} $fileList - 文件列表容器元素
-     * @private
-     */
-    _updateFileList(files, $fileList) {
-        $fileList.empty();
-
-        Array.from(files).forEach(file => {
-            const $item = $(`
-                <div class="file-item">
-                    <i class="bi bi-file-earmark"></i>
-                    <span class="file-name">${file.name}</span>
-                    <span class="file-size">(${this._formatFileSize(file.size)})</span>
-                    <button type="button" class="btn btn-sm btn-link text-danger remove-file">
-                        <i class="bi bi-x"></i>
-                    </button>
-                </div>
-            `).appendTo($fileList);
-
-            // 删除文件
-            $item.find('.remove-file').on('click', () => {
-                $item.remove();
-                // 从FileList中移除文件 - 创建新的FileList
-                const dt = new DataTransfer();
-                const remainingFiles = Array.from(files).filter(f => f !== file);
-                remainingFiles.forEach(f => dt.items.add(f));
-                $('#attachments')[0].files = dt.files;
-            });
-        });
-    }
-
-    /**
-     * 上传工单附件
-     * @param {number} ticketId - 工单ID
-     * @param {FileList} files - 附件文件列表
-     * @returns {Promise<void>}
-     * @private
-     */
-    async _uploadAttachments(ticketId, files) {
-        if(!files.length) return;
-
-        const formData = new FormData();
-        formData.append('ticketId', ticketId);
-        Array.from(files).forEach(file => {
+    // 处理附件
+    const files = $('#attachments')[0].files;
+    if(files.length > 0) {
+        Array.from(files).forEach(function(file) {
             formData.append('files', file);
         });
-
-        try {
-            const response = await $.ajax({
-                url: '/api/attachments/upload',
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if(response.code === 200) {
-                return response.data; // 返回上传成功的附件信息
-            }
-            throw new Error('上传失败');
-        } catch(error) {
-            console.error('上传附件失败:', error);
-            throw error;
-        }
     }
 
-
-    /**
-     * 修改创建工单方法,支持文件上传
-     * @private
-     */
-    async _handleCreateTicket() {
-        try {
-            // 1. 先创建工单
-            const ticketResponse = await $.ajax({
-                url: '/api/tickets',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    title,
-                    content,
-                    departmentId,
-                    priority,
-                    createBy: this.userInfo.userId
-                }),
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if(ticketResponse.code === 200) {
-                const ticketId = ticketResponse.data;
-
-                // 2. 上传附件(如果有)
-                const files = $('#attachments')[0].files;
-                if(files.length > 0) {
-                    await this._uploadAttachments(ticketId, files);
-                }
-
-                NotifyUtil.success('工单创建成功');
-                this.ticketModal.hide();
-                await this._loadTickets();
-            }
-        } catch(error) {
-            console.error('创建工单失败:', error);
-            NotifyUtil.error('创建工单失败');
+    $.ajax({
+        url: '/api/tickets',
+        method: 'POST',
+        data: formData,
+        processData: false,  // 不处理数据
+        contentType: false,  // 不设置内容类型
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
-    }
-
-    /**
-     *  导出工单
-     * @returns {Promise<void>}
-     */
-    async exportTickets() {
-        try {
-            const params = new URLSearchParams({
-                ...this.state.filters,
-                pageSize: 1000 // 导出更多数据
-            });
-
-            window.location.href = `/api/tickets/export?${params.toString()}`;
-        } catch(error) {
-            console.error('导出失败:', error);
-            NotifyUtil.error('导出失败');
+    }).done(function(response) {
+        if(response.code === 200) {
+            NotifyUtil.success('工单创建成功');
+            $('#ticketModal').modal('hide');
+            self._loadTickets();
         }
-    }
-}
+    }).fail(function() {
+        NotifyUtil.error('创建工单失败');
+    });
+};
 
-// 页面加载完成后初始化
-$(document).ready(() => {
+/**
+ * 上传附件
+ */
+MyTickets.prototype._uploadAttachments = function(ticketId, files) {
+    if(!files.length) return Promise.resolve();
+
+    const formData = new FormData();
+    formData.append('ticketId', ticketId);
+
+    Array.from(files).forEach(function(file) {
+        formData.append('files', file);
+    });
+
+    return $.ajax({
+        url: '/api/attachments/upload',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    });
+};
+/**
+ * 获取优先级样式类
+ * @param {number} priority - 优先级值(0:低, 1:中, 2:高)
+ * @returns {string} 对应的CSS类名
+ */
+MyTickets.prototype._getPriorityClass = function(priority) {
+    return (this.PRIORITY_MAP[priority] || this.PRIORITY_MAP['NORMAL']).class;
+};
+
+MyTickets.prototype._getPriorityText = function(priority) {
+    return (this.PRIORITY_MAP[priority] || this.PRIORITY_MAP['NORMAL']).text;
+};
+
+/**
+ * 获取操作类型文本
+ * @param {number} operationType - 操作类型编码
+ * @returns {string} 操作类型描述文本
+ */
+MyTickets.prototype._getOperationText = function(operationType) {
+    const operationMap = {
+        0: '创建工单',
+        1: '分配工单',
+        2: '处理工单',
+        3: '完成工单',
+        4: '关闭工单',
+        5: '转交工单'
+    };
+    return operationMap[operationType] || '未知操作';
+};
+
+/**
+ * 获取状态样式类
+ * @param {string} status - 状态值
+ * @returns {string} 对应的CSS类名
+ */
+MyTickets.prototype._getStatusClass = function(status) {
+    const statusMap = {
+        'PENDING': 'pending',
+        'PROCESSING': 'processing',
+        'COMPLETED': 'completed',
+        'CLOSED': 'closed'
+    };
+    return statusMap[status] || 'unknown';
+};
+
+// 初始化
+$(document).ready(function() {
     window.myTickets = new MyTickets();
-    $('#exportBtn').on('click', () => this.exportTickets());
-
 });

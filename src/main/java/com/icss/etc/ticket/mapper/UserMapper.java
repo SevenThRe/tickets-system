@@ -104,4 +104,6 @@ public interface UserMapper {
     User getUserInfo(Long userId);
 
     User selectByUsername(String username);
+
+    String[] selectUserPermissions(Long userId);
 }

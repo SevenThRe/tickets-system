@@ -3,6 +3,7 @@ package com.icss.etc.ticket.service;
 import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.entity.TicketRecord;
+import com.icss.etc.ticket.entity.TicketType;
 import com.icss.etc.ticket.entity.dto.*;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
@@ -90,4 +91,10 @@ public interface TicketService {
      * 批量导入工单
      */
     void importTickets(List<TicketExportDTO> tickets);
+
+    /**
+     * 获取工单类型
+     * @return 工单类型列表
+     */
+    List<TicketType> getTicketTypeList();
 }

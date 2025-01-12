@@ -63,4 +63,11 @@ public interface UserService {
     List<String> getUsernames();
 
     User selectByUsername(String username);
+
+    /**
+     * 查询用户权限
+     * @param userId 用户ID
+     * @return 用户权限
+     */
+    String[] selectUserPermissions(Long userId);
 }

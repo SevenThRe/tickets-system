@@ -171,9 +171,9 @@
 
             <!-- 可以添加备注的表单 -->
             <div class="mb-3">
-                <label class="form-label">添加备注</label>
+                <label class="form-label">添加备注\关闭说明</label>
                 <textarea class="form-control" id="noteContent"
-                          placeholder="请输入备注内容..." rows="3"></textarea>
+                          placeholder="请输入备注内容\关闭说明..." rows="3"></textarea>
             </div>
             <div class="d-flex gap-2">
                 <button class="btn btn-primary" id="addNoteBtn">
@@ -228,9 +228,9 @@
                         <div class="col-md-6">
                             <label class="form-label">优先级</label>
                             <select class="form-select" id="priority" name="priority" required>
-                                <option value="0">普通</option>
-                                <option value="1">紧急</option>
-                                <option value="2">非常紧急</option>
+                                <option value="NORMAL">普通</option>
+                                <option value="URGENT">紧急</option>
+                                <option value="EXTREMELY_URGENT">非常紧急</option>
                             </select>
                         </div>
                     </div>

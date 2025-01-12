@@ -127,5 +127,10 @@ public class UserServiceImpl implements UserService{
         return userMapper.selectByUsername(username);
     }
 
+    @Override
+    public String[] selectUserPermissions(Long userId) {
+        return userMapper.selectUserPermissions(userId);
+    }
+
 
 }
