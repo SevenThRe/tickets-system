@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.etc.ticket.mapper.RoleMapper">
-
-      <sql id="Base_Column_List">
+    <sql id="Base_Column_List">
         <!--@mbg.generated-->
-        role_id, role_name, role_code, base_role_code, description, `status`, is_deleted,
-        create_by, create_time, update_time
-      </sql>
+        role_id,
+        role_name,
+        role_code,
+        base_role_code,
+        description,
+        `status`,
+        is_deleted,
+        create_by,
+        create_time,
+        update_time
+    </sql>
     <!--  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">-->
     <!--    &lt;!&ndash;@mbg.generated&ndash;&gt;-->
     <!--    select -->
@@ -16,25 +23,25 @@
     <!--  </select>-->
 
     <!--  增加角色-->
-<!--    <insert id="insert">-->
-<!--        insert into t_role (role_name, role_code, base_role_code,-->
-<!--                            description, `status`)-->
-<!--        values (#{roleName}, #{roleCode}, #{baseRoleCode},-->
-<!--                #{description}, #{status})-->
-<!--    </insert>-->
+    <!--    <insert id="insert">-->
+    <!--        insert into t_role (role_name, role_code, base_role_code,-->
+    <!--                            description, `status`)-->
+    <!--        values (#{roleName}, #{roleCode}, #{baseRoleCode},-->
+    <!--                #{description}, #{status})-->
+    <!--    </insert>-->
 
     <!--  修改角色-->
 
-<!--    <update id="updateRole">-->
-<!--        &lt;!&ndash;@mbg.generated&ndash;&gt;-->
-<!--        update t_role-->
-<!--        set role_name = #{role_name},-->
-<!--        role_code = #{role_code},-->
-<!--        base_role_code = #{base_role_code},-->
-<!--        description = #{description},-->
-<!--        `status` = #{status}-->
-<!--        where role_id = #{role_id}-->
-<!--    </update>-->
+    <!--    <update id="updateRole">-->
+    <!--        &lt;!&ndash;@mbg.generated&ndash;&gt;-->
+    <!--        update t_role-->
+    <!--        set role_name = #{role_name},-->
+    <!--        role_code = #{role_code},-->
+    <!--        base_role_code = #{base_role_code},-->
+    <!--        description = #{description},-->
+    <!--        `status` = #{status}-->
+    <!--        where role_id = #{role_id}-->
+    <!--    </update>-->
 
     <!--  删除角色-->
     <update id="deleteByRoleId">
@@ -46,132 +53,133 @@
     <!--查询所有角色-->
     <select id="selectAll" resultType="com.icss.etc.ticket.entity.Role">
         select
-        <include refid="Base_Column_List" />
+        <include refid="Base_Column_List"/>
         from t_role
         where is_deleted = 0
-        <if test="keyword !=  null and keyword != ''">
-            and role_name like concat('%',#{keyword},'%')
-        or description like concat('%',#{keyword},'%')
+        <if test="keyword != null and keyword != ''">
+            and role_name like concat('%', #{keyword}, '%')
+               or description like concat('%', #{keyword}, '%')
         </if>
     </select>
 
     <!--根据id查询角色-->
-<!--    <select id="selectByByRoleId" resultType="com.icss.etc.ticket.entity.Role">-->
-<!--        select role_id, role_code, role_name, base_role_code, status, description-->
-<!--        from t_role-->
-<!--        where role_id = #{roleId}-->
-<!--    </select>-->
+    <!--    <select id="selectByByRoleId" resultType="com.icss.etc.ticket.entity.Role">-->
+    <!--        select role_id, role_code, role_name, base_role_code, status, description-->
+    <!--        from t_role-->
+    <!--        where role_id = #{roleId}-->
+    <!--    </select>-->
 
     <!--  增加角色-->
     <insert id="insert"
-            parameterType="com.icss.etc.ticket.entity.Role" >
+            parameterType="com.icss.etc.ticket.entity.Role">
         insert into t_role
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="roleName != null and roleName!=''" >
+            <if test="roleName != null and roleName != ''">
                 role_name,
             </if>
-            <if test="roleCode != null and roleCode!=''">
+            <if test="roleCode != null and roleCode != ''">
                 role_code,
             </if>
-            <if test="baseRoleCode != null and baseRoleCode!=''">
+            <if test="baseRoleCode != null and baseRoleCode != ''">
                 base_role_code,
             </if>
-            <if test="description != null and description!=''">
+            <if test="description != null and description != ''">
                 description,
             </if>
-            <if test="status != null and status!=''">
+            <if test="status != null and status != ''">
                 `status`,
             </if>
-            <if test="isDeleted != null and isDeleted!=''">
+            <if test="isDeleted != null and isDeleted != ''">
                 is_deleted,
             </if>
-            <if test="createBy != null and createBy!=''">
+            <if test="createBy != null and createBy != ''">
                 create_by,
             </if>
-            <if test="createTime != null and createTime!=''">
+            <if test="createTime != null and createTime != ''">
                 create_time,
             </if>
-            <if test="updateTime != null and updateTime!=''">
+            <if test="updateTime != null and updateTime != ''">
                 update_time,
             </if>
         </trim>
 
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="roleName != null and roleName!=''">
+            <if test="roleName != null and roleName != ''">
                 #{roleName,jdbcType=VARCHAR},
             </if>
-            <if test="roleCode != null and roleCode!=''">
+            <if test="roleCode != null and roleCode != ''">
                 #{roleCode,jdbcType=VARCHAR},
             </if>
-            <if test="baseRoleCode != null and baseRoleCode!=''">
+            <if test="baseRoleCode != null and baseRoleCode != ''">
                 #{baseRoleCode,jdbcType=VARCHAR},
             </if>
-            <if test="description != null and description!=''">
+            <if test="description != null and description != ''">
                 #{description,jdbcType=VARCHAR},
             </if>
-            <if test="status != null and status!=''">
+            <if test="status != null and status != ''">
                 #{status,jdbcType=TINYINT},
             </if>
-            <if test="isDeleted != null and isDeleted!=''">
+            <if test="isDeleted != null and isDeleted != ''">
                 #{isDeleted,jdbcType=TINYINT},
             </if>
-            <if test="createBy != null and createBy!=''">
+            <if test="createBy != null and createBy != ''">
                 #{createBy,jdbcType=BIGINT},
             </if>
-            <if test="createTime != null and createTime!=''">
+            <if test="createTime != null and createTime != ''">
                 #{createTime,jdbcType=TIMESTAMP},
             </if>
-            <if test="updateTime != null and updateTime!=''">
+            <if test="updateTime != null and updateTime != ''">
                 #{updateTime,jdbcType=TIMESTAMP},
             </if>
         </trim>
     </insert>
 
     <!--  修改角色-->
-      <update id="updateRole" parameterType="com.icss.etc.ticket.entity.Role">
+    <update id="updateRole" parameterType="com.icss.etc.ticket.entity.Role">
         update t_role
         <set>
-          <if test="roleName != null and roleName!=''">
-            role_name = #{roleName,jdbcType=VARCHAR},
-          </if>
-          <if test="roleCode != null and roleCode!=''">
-            role_code = #{roleCode,jdbcType=VARCHAR},
-          </if>
-          <if test="baseRoleCode != null and baseRoleCode!=''">
-            base_role_code = #{baseRoleCode,jdbcType=VARCHAR},
-          </if>
-          <if test="description != null and description!=''">
-            description = #{description,jdbcType=VARCHAR},
-          </if>
-          <if test="status != null and status!=''">
-            `status` = #{status,jdbcType=TINYINT},
-          </if>
-          <if test="isDeleted != null and isDeleted!=''">
-            is_deleted = #{isDeleted,jdbcType=TINYINT},
-          </if>
-          <if test="createBy != null and createBy!=''">
-            create_by = #{createBy,jdbcType=BIGINT},
-          </if>
-          <if test="createTime != null and createTime!=''">
-            create_time = #{createTime,jdbcType=TIMESTAMP},
-          </if>
-          <if test="updateTime != null and updateTime!=''">
-            update_time = #{updateTime,jdbcType=TIMESTAMP},
-          </if>
+            <if test="roleName != null and roleName != ''">
+                role_name = #{roleName,jdbcType=VARCHAR},
+            </if>
+            <if test="roleCode != null and roleCode != ''">
+                role_code = #{roleCode,jdbcType=VARCHAR},
+            </if>
+            <if test="baseRoleCode != null and baseRoleCode != ''">
+                base_role_code = #{baseRoleCode,jdbcType=VARCHAR},
+            </if>
+            <if test="description != null and description != ''">
+                description = #{description,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null and status != ''">
+                `status` = #{status,jdbcType=TINYINT},
+            </if>
+            <if test="isDeleted != null and isDeleted != ''">
+                is_deleted = #{isDeleted,jdbcType=TINYINT},
+            </if>
+            <if test="createBy != null and createBy != ''">
+                create_by = #{createBy,jdbcType=BIGINT},
+            </if>
+            <if test="createTime != null and createTime != ''">
+                create_time = #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null and updateTime != ''">
+                update_time = #{updateTime,jdbcType=TIMESTAMP},
+            </if>
         </set>
         where role_id = #{roleId,jdbcType=BIGINT}
-      </update>
+    </update>
 
     <!--根据id查询角色-->
-      <select id="selectByByRoleId" resultType="com.icss.etc.ticket.entity.Role">
-            <!--@mbg.generated-->
-            select
-            <include refid="Base_Column_List" />
-            from t_role
-            where role_id = #{roleId} and is_deleted = 0
-        </select>
+    <select id="selectByByRoleId" resultType="com.icss.etc.ticket.entity.Role">
+        <!--@mbg.generated-->
+        select
+        <include refid="Base_Column_List"/>
+        from t_role
+        where role_id = #{roleId}
+          and is_deleted = 0
+    </select>
 
-<!--    一个角色查询所有权限-->
+    <!--    一个角色查询所有权限-->
     <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.Role2">
         <id column="role_id" jdbcType="BIGINT" property="roleId"/>
         <result column="role_name" jdbcType="VARCHAR" property="roleName"/>
@@ -198,20 +206,65 @@
     </resultMap>
 
     <select id="OneRoleMorePermission" resultMap="BaseResultMap">
-        select r.role_id,r.role_name,r.role_code,r.base_role_code,r.description,r.status,r.is_deleted,r.create_by,r.create_time,r.update_time,
-               p.permission_id,p.permission_name,p.permission_code,p.icon,p.sort,p.is_deleted,p.create_by,
-               p.update_by,p.create_time,p.update_time
+        select r.role_id,
+               r.role_name,
+               r.role_code,
+               r.base_role_code,
+               r.description,
+               r.status,
+               r.is_deleted,
+               r.create_by,
+               r.create_time,
+               r.update_time,
+               p.permission_id,
+               p.permission_name,
+               p.permission_code,
+               p.icon,
+               p.sort,
+               p.is_deleted,
+               p.create_by,
+               p.update_by,
+               p.create_time,
+               p.update_time
         from t_role r
-        inner join t_role_permission on r.role_id =t_role_permission.role_id
-        inner join t_permission p on p.permission_id=t_role_permission.permission_id
-        where p.is_deleted=0
+                 inner join t_role_permission on r.role_id = t_role_permission.role_id
+                 inner join t_permission p on p.permission_id = t_role_permission.permission_id
+        where p.is_deleted = 0
     </select>
 
-      <select id="chooseRoles" resultType="com.icss.etc.ticket.entity.vo.ChooseRolesVO">
-          select
-              role_id,role_name
-          from t_role
-          where is_deleted=0
+    <select id="chooseRoles" resultType="com.icss.etc.ticket.entity.vo.ChooseRolesVO">
+        select role_id,
+               role_name
+        from t_role
+        where is_deleted = 0
+    </select>
+
+    <select id="selectByRoleId" resultMap="BaseResultMap">
+        select r.role_id,
+               r.role_name,
+               r.role_code,
+               r.base_role_code,
+               r.description,
+               r.status,
+               r.is_deleted,
+               r.create_by,
+               r.create_time,
+               r.update_time,
+               p.permission_id,
+               p.permission_name,
+               p.permission_code,
+               p.icon,
+               p.sort,
+               p.is_deleted,
+               p.create_by,
+               p.update_by,
+               p.create_time,
+               p.update_time
+        from t_role r
+                 left join t_role_permission on r.role_id = t_role_permission.role_id
+                 left join t_permission p on p.permission_id = t_role_permission.permission_id
+        where p.is_deleted = 0
+          and r.role_id= #{roleId}
     </select>
 
     <!--  <update id="updateBatchSelective" parameterType="java.util.List">-->

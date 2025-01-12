@@ -34,7 +34,7 @@ public interface RoleMapper {
      * @return object by primary key
      */
     Role selectByByRoleId(@Param("roleId") Long roleId);
-
+    Role2 selectByRoleId(@Param("roleId") Long roleId);
     /**
      * update record
      * 修改角色

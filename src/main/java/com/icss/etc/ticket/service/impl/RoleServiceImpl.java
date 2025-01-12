@@ -6,6 +6,7 @@ import com.icss.etc.ticket.entity.vo.ChooseRolesVO;
 import com.icss.etc.ticket.mapper.RoleMapper;
 import com.icss.etc.ticket.service.RoleService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -50,8 +51,12 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public int deleteByRoleId(Long roleId) {
         return roleMapper.deleteByRoleId(roleId);
-    }
 
+    }
+    @Override
+    public Role2 selectByRoleId(Long roleId){
+        return roleMapper.selectByRoleId(roleId);
+    }
 
     @Override
     public List<Role2> OneRoleMorePermission() {

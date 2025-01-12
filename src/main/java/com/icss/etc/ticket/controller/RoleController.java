@@ -115,4 +115,10 @@ public class RoleController {
         List<Role2> list = roleService.OneRoleMorePermission();
         return R.OK(list);
     }
+
+    @RequestMapping("/selectByRoleId/{roleId}")
+    public R selectByRoleId(@PathVariable("roleId")Long roleId){
+        Role2 role2 = roleService.selectByRoleId(roleId);
+        return R.OK(role2);
+    }
 }

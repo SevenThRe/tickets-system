@@ -50,7 +50,38 @@ $(function () {
 
 
 });
+//获取详细角色信息
+function getSomeThing(roleId) {
+    // 使用模板字符串正确插入 roleName
+    let url = `/api/roles/selectByRoleId/${roleId}`;
 
+    $.ajax({
+        url: url,
+        headers: { "token": localStorage.getItem("token") },
+        success: function (result) {
+            let html = `
+                <tr>
+                    <td>${result.data.roleCode}</td>
+                    <td>${result.data.baseRoleCode}</td>
+                    <td>${result.data.status}</td>
+                    <td>${result.data.description}</td>
+                </tr>
+            `;
+            $("#someThingRole").html(html); // 确保 #someThingRole 是表格的 tbody 或整个表格
+        },
+        error: function (xhr, status, error) {
+            if (xhr.status === 401) {
+                alert('请登录！');
+                window.location.href = '/login.html';
+            } else {
+                // 可以添加其他错误处理逻辑，或者只是简单地显示错误信息
+                console.error("AJAX Error:", status, error);
+                alert("发生错误，请稍后再试。");
+            }
+        }
+    });
+}
+//左侧获取角色名字
 function getList() {
     // 确保 pageNumber 和 length 已经被传递进来
     $.ajax({
@@ -71,7 +102,8 @@ function getList() {
             });
             // 先移除之前绑定的事件，防止多次绑定
             $("#roleTable").off("click", ".role-name").on("click", ".role-name", function () {
-                alert($(this).text());
+                // alert($(this).text());
+                getSomeThing($(this).data("id"));
             });
             $("#RoleNameList").html(html); // 确保 #RoleNameList 是表格的容器或者表格本身
         },

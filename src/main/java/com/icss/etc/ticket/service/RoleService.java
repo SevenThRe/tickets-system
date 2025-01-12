@@ -24,7 +24,7 @@ public interface RoleService {
      * @return insert count
      */
     int insert(Role role);
-
+    Role2 selectByRoleId(@Param("roleId") Long roleId);
     /**
      * select by primary key
      * 根据roleId查询角色
