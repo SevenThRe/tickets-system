@@ -7,9 +7,11 @@ import com.icss.etc.ticket.entity.dto.*;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
 import com.icss.etc.ticket.entity.vo.TicketVO;
+import com.icss.etc.ticket.entity.vo.TodoStatsVO;
 import com.icss.etc.ticket.entity.vo.ticket.DepartmentStatisticsVO;
 import com.icss.etc.ticket.entity.vo.ticket.MonthlyStatisticsVO;
 import com.icss.etc.ticket.entity.vo.ticket.TicketStatisticsVO;
+import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.enums.OperationType;
 import com.icss.etc.ticket.enums.TicketEnum;
 import com.icss.etc.ticket.enums.TicketStatus;
@@ -25,7 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName
@@ -42,16 +46,23 @@ public class TicketServiceImpl implements TicketService {
     private final TicketTypeMapper ticketTypeMapper;
     private final TicketRecordMapper ticketRecordMapper;
     private final NotificationService notificationService;
+    private final UserSettingsMapper userSettingsMapper;
+    private final UserMapper userMapper;
+
 
     public TicketServiceImpl(TicketMapper ticketMapper,
                              TicketRecordMapper ticketRecordMapper,
                              TicketTypeMapper ticketTypeMapper,
-                             NotificationService notificationService
+                             NotificationService notificationService,
+                             UserMapper userMapper,
+                             UserSettingsMapper userSettingsMapper
     ) {
         this.ticketMapper = ticketMapper;
         this.ticketRecordMapper = ticketRecordMapper;
         this.notificationService = notificationService;
         this.ticketTypeMapper = ticketTypeMapper;
+        this.userMapper = userMapper;
+        this.userSettingsMapper = userSettingsMapper;
     }
 
 
@@ -385,11 +396,23 @@ public class TicketServiceImpl implements TicketService {
 
 
 
+
     @Override
     public PageInfo<Ticket> getTodoTickets(TicketQueryDTO queryDTO) {
-        // 设置状态为未完成
-        queryDTO.setStatus(TicketStatus.PROCESSING);
-        return this.getTicketList(queryDTO);
+        if (queryDTO.getProcessorId() == null) {
+            throw new BusinessException(CodeEnum.BAD_REQUEST, "处理人ID不能为空");
+        }
+
+        // 默认查询待处理和处理中的工单
+        if (queryDTO.getStatus() == null) {
+            queryDTO.setStatus(TicketStatus.PENDING);
+        }
+
+        // 设置分页
+        PageHelper.startPage(queryDTO.getPageNum(), queryDTO.getPageSize());
+        List<Ticket> tickets = ticketMapper.selectTicketList(queryDTO);
+
+        return new PageInfo<>(tickets);
     }
 
     @Override
@@ -466,6 +489,115 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public List<TicketType> getTicketTypeList() {
         return ticketTypeMapper.selectByAll(TicketType.builder().isDeleted(0).status(1).build());
+    }
+
+    @Override
+    public TodoStatsVO getTodoStats(Long userId) {
+        if (userId == null) {
+            throw new BusinessException(CodeEnum.BAD_REQUEST, "用户ID不能为空");
+        }
+
+        // 获取今天开始和结束时间
+        LocalDateTime todayStart = LocalDateTime.now().with(LocalTime.MIN);
+        LocalDateTime todayEnd = LocalDateTime.now().with(LocalTime.MAX);
+
+        // 获取用户设置
+        UserSettings settings = userSettingsMapper.selectByUserId(userId);
+        boolean enableNotification = settings != null && settings.getTicketNotification();
+
+        try {
+            // 查询统计数据
+            Integer pendingCount = ticketMapper.countTicketsByStatus(userId, TicketStatus.PENDING);
+            Integer processingCount = ticketMapper.countTicketsByStatus(userId, TicketStatus.PROCESSING);
+            Integer todayCompleted = ticketMapper.countCompletedTickets(userId, todayStart, todayEnd);
+
+            // 如果开启了通知，且有待处理工单，发送提醒
+            if (enableNotification && pendingCount > 0) {
+                notificationService.createAssignNotification(
+                        null,
+                        userId,
+                        String.format("您有 %d 个待处理工单", pendingCount)
+                );
+            }
+
+            return TodoStatsVO.builder()
+                    .pendingCount(pendingCount)
+                    .processingCount(processingCount)
+                    .todayCompleted(todayCompleted)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("获取待办统计失败, userId: {}", userId, e);
+            throw new BusinessException(CodeEnum.INTERNAL_ERROR, "获取统计数据失败");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void assignProcessor(Long ticketId, Long processorId) {
+        // 1. 验证工单状态
+        Ticket ticket = ticketMapper.selectTicketById(ticketId);
+        if (ticket == null || ticket.getIsDeleted() == 1) {
+            throw new BusinessException(TicketEnum.TICKET_NOT_EXIST);
+        }
+
+        // 2. 只有PENDING状态的工单可以分配
+        if (ticket.getStatus() != TicketStatus.PENDING) {
+            throw new BusinessException(TicketEnum.TICKET_STATUS_EXCEPTION, "只能给待处理的工单分配处理人");
+        }
+
+        // 3. 更新处理人
+        Ticket update = new Ticket();
+        update.setTicketId(ticketId);
+        update.setProcessorId(processorId);
+        update.setUpdateTime(LocalDateTime.now());
+        ticketMapper.updateTicket(update);
+
+        // 4. 记录分配操作
+        TicketRecord record = new TicketRecord();
+        record.setTicketId(ticketId);
+        record.setOperationType(OperationType.ASSIGN);
+        record.setOperatorId(SecurityUtils.getCurrentUserId());
+        record.setCreateTime(LocalDateTime.now());
+        ticketRecordMapper.insertRecord(record);
+
+        // 5. 发送通知给处理人
+        notificationService.createAssignNotification(ticketId, processorId, "您有新的工单待处理");
+    }
+
+    @Override
+    public boolean autoAssignProcessor(Long ticketId, Long departmentId) {
+        try {
+            // TODO:  获取部门在线处理人
+            List<User> processors = userMapper.selectOnlineProcessorsByDepartment(departmentId);
+            if (processors.isEmpty()) {
+                return false;
+            }
+
+            // TODO:  获取处理人当前工作量
+            Map<Long, Integer> workloads = processors.stream()
+                    .collect(Collectors.toMap(
+                            User::getUserId,
+                            user -> ticketMapper.countActiveTickets(user.getUserId())
+                    ));
+
+            //  选择工作量最少的处理人
+            Long processorId = workloads.entrySet().stream()
+                    .min(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse(null);
+
+            if (processorId != null) {
+                //  分配工单
+                assignProcessor(ticketId, processorId);
+                return true;
+            }
+
+            return false;
+        } catch (Exception e) {
+            log.error("自动分配处理人失败, ticketId: {}, departmentId: {}", ticketId, departmentId, e);
+            return false;
+        }
     }
 
 

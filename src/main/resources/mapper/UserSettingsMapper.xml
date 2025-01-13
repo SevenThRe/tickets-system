@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.etc.ticket.mapper.UserSettingsMapper">
+
+    <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.UserSettings">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="ticket_notification" property="ticketNotification" />
+        <result column="process_notification" property="processNotification" />
+        <result column="system_notification" property="systemNotification" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT * FROM t_user_settings
+        WHERE user_id = #{userId}
+        AND is_deleted = 0
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_user_settings (
+        user_id, ticket_notification, process_notification,
+        system_notification, create_time, update_time
+        ) VALUES (
+        #{userId}, #{ticketNotification}, #{processNotification},
+        #{systemNotification}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <update id="updateByPrimaryKeySelective">
+        UPDATE t_user_settings
+        <set>
+            <if test="ticketNotification != null">
+                ticket_notification = #{ticketNotification},
+            </if>
+            <if test="processNotification != null">
+                process_notification = #{processNotification},
+            </if>
+            <if test="systemNotification != null">
+                system_notification = #{systemNotification},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+</mapper>

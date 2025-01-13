@@ -47,6 +47,32 @@
     color: #666;
     font-size: 14px;
 }
+.todo-badge {
+    width: 80px;
+    text-align: center;
+}
+.priority-high {
+    background-color: #dc3545;
+    color: white;
+}
+.priority-medium {
+    background-color: #ffc107;
+    color: black;
+}
+.priority-low {
+    background-color: #28a745;
+    color: white;
+}
+.deadline-warning {
+    color: #dc3545;
+    font-weight: bold;
+}
+.ticket-title {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 /* 列表样式优化 */
 .priority-indicator {

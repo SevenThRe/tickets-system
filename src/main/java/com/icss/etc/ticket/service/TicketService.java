@@ -8,6 +8,7 @@ import com.icss.etc.ticket.entity.dto.*;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
 import com.icss.etc.ticket.entity.vo.TicketVO;
+import com.icss.etc.ticket.entity.vo.TodoStatsVO;
 import com.icss.etc.ticket.entity.vo.ticket.TicketStatisticsVO;
 import com.icss.etc.ticket.enums.OperationType;
 import com.icss.etc.ticket.enums.TicketStatus;
@@ -97,4 +98,27 @@ public interface TicketService {
      * @return 工单类型列表
      */
     List<TicketType> getTicketTypeList();
+
+
+    /**
+     * 获取待办工单统计
+     * @param userId 用户ID
+     * @return 统计信息
+     */
+    TodoStatsVO getTodoStats(Long userId);
+
+    /**
+     * 分配工单处理人
+     * @param ticketId 工单ID
+     * @param processorId 处理人ID
+     */
+    void assignProcessor(Long ticketId, Long processorId);
+
+    /**
+     * 自动分配工单处理人
+     * @param ticketId 工单ID
+     * @param departmentId 部门ID
+     * @return 是否成功分配
+     */
+    boolean autoAssignProcessor(Long ticketId, Long departmentId);
 }

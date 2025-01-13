@@ -1,115 +1,94 @@
-/**
- * SystemSettings.js
- * TODO: 实现系统设置功能
- */
-class SystemSettings extends BaseComponent {
-    constructor() {
-        // 传递必要的配置给父类BaseComponent
-        super({
-            container: '#main',  // 指定组件容器
-            events: {
-                'click #saveGeneralBtn': '_handleSaveGeneral',
-                'click #saveEmailBtn': '_handleSaveEmail',
-                'click #testEmailBtn': '_handleTestEmail',
-                'click #saveLogBtn': '_handleSaveLog',
-                'change #logoFile': '_handleLogoUpdate'
+$(document).ready(function() {
+    // 加载当前配置
+    loadCurrentConfig();
+
+    // 绑定表单提交事件
+    bindFormSubmitEvents();
+});
+
+// 加载当前配置
+function loadCurrentConfig() {
+    $.ajax({
+        url: '/api/config/system', 
+        type: 'GET',
+        success: function(response) {
+            // 基本设置
+            $('#generalForm [name="systemName"]').val(response.general.systemName);
+            // 缓存设置
+            $('#cacheForm [name="enableCache"]').prop('checked', response.cache.enableCache);
+            $('#cacheForm [name="expireTime"]').val(response.cache.expireTime);
+            $('#cacheForm [name="expireTimeUnit"]').val(response.cache.expireTimeUnit);
+            $('#cacheForm [name="maxSize"]').val(response.cache.maxSize);
+            // 日志设置
+            $('#logForm [name="logPath"]').val(response.log.logPath);
+            $('#logForm [name="logLevel"]').val(response.log.logLevel);
+            $('#logForm [name="logRetentionDays"]').val(response.log.logRetentionDays);
+        },
+        error: function(xhr) {
+            NotifyUtil.error('获取配置失败：' + xhr.responseText);
+        }
+    });
+}
+
+// 绑定表单提交事件
+function bindFormSubmitEvents() {
+    // 基本设置表单提交
+    $('#generalForm').on('submit', function(event) {
+        event.preventDefault();
+        NotifyUtil.loading('正在保存基本设置...');
+        var formData = $(this).serialize();
+        $.ajax({
+            url: '/api/config/update-general',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                NotifyUtil.closeLoading();
+                NotifyUtil.success('基本设置保存成功');
+            },
+            error: function(xhr) {
+                NotifyUtil.closeLoading();
+                NotifyUtil.error('基本设置保存失败：' + xhr.responseText);
             }
         });
-        // 加载配置文件内容
-        this._loadSettings();
-        // 渲染配置项
-        this._renderSettings();
-    }
+    });
 
-    // TODO: 实现以下方法
-
-    /**
-     * 初始化组件
-     */
-    init() {}
-
-    /**
-     * 加载配置文件内容
-     */
-    _loadSettings() {}
-
-    /**
-     * 保存基本设置
-     */
-    _handleSaveGeneral() {}
-
-    /**
-     * 保存缓存设置
-     */
-    _handleSaveCache() {}
-
-    /**
-     * 保存日志设置
-     */
-    _handleSaveLog() {}
-
-    /**
-     * 上传新Logo
-     */
-    _handleLogoUpload() {}
-
-    /**
-     * 切换缓存开关状态
-     */
-    _handleCacheToggle() {}
-
-    /**
-     * 验证表单
-     */
-    _validateForm() {}
-
-    /**
-     * 渲染配置项
-     */
-    _renderSettings() {}
-
-    /**
-     * 处理Logo更新
-     * @private
-     */
-    async _handleLogoUpdate(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        try {
-            const formData = new FormData();
-            formData.append('logo', file);
-
-            const response = await window.requestUtil.upload('/api/system/logo', formData);
-
-            if (response.code === 200) {
-                // 更新系统配置
-                const systemConfig = this._getSystemConfig() || {};
-                systemConfig.logoUrl = response.data.url;
-                localStorage.setItem('system_config', JSON.stringify(systemConfig));
-
-                // 触发全局事件，通知导航栏更新
-                window.eventBus.emit('system:logoUpdated');
-
-                this.showSuccess('Logo更新成功');
+    // 缓存设置表单提交
+    $('#cacheForm').on('submit', function(event) {
+        event.preventDefault();
+        NotifyUtil.loading('正在保存缓存设置...');
+        var formData = $(this).serialize();
+        $.ajax({
+            url: '/api/config/update-cache',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                NotifyUtil.closeLoading();
+                NotifyUtil.success('缓存设置保存成功');
+            },
+            error: function(xhr) {
+                NotifyUtil.closeLoading();
+                NotifyUtil.error('缓存设置保存失败：' + xhr.responseText);
             }
-        } catch (error) {
-            console.error('上传Logo失败:', error);
-            this.showError('Logo更新失败，请重试');
-        }
-    }
+        });
+    });
 
-    /**
-     * 获取系统配置
-     * @private
-     */
-    _getSystemConfig() {
-        try {
-            const config = localStorage.getItem('system_config');
-            return config ? JSON.parse(config) : null;
-        } catch (error) {
-            console.error('获取系统配置失败:', error);
-            return null;
-        }
-    }
+    // 日志设置表单提交
+    $('#logForm').on('submit', function(event) {
+        event.preventDefault();
+        NotifyUtil.loading('正在保存日志设置...');
+        var formData = $(this).serialize();
+        $.ajax({
+            url: '/api/config/update-log',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                NotifyUtil.closeLoading();
+                NotifyUtil.success('日志设置保存成功');
+            },
+            error: function(xhr) {
+                NotifyUtil.closeLoading();
+                NotifyUtil.error('日志设置保存失败：' + xhr.responseText);
+            }
+        });
+    });
 }

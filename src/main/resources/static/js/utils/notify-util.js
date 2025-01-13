@@ -96,6 +96,25 @@ class NotifyUtil {
     }
 
     /**
+     * 显示加载提示
+     * @param {string} message - 提示消息
+     */
+    static loading(message = '正在加载...') {
+        this.show(message, 'info', { duration: 0, closeable: false });
+    }
+
+    /**
+     * 关闭所有通知
+     */
+    static closeLoading() {
+        const notifications = document.querySelectorAll('.notify');
+        notifications.forEach(notification => {
+            this._removeNotification(notification);
+        });
+    }
+
+
+    /**
      * 获取图标类名
      * @private
      */

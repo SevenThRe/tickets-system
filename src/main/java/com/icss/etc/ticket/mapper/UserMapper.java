@@ -108,4 +108,7 @@ public interface UserMapper {
     User selectByUsername(String username);
 
     String[] selectUserPermissions(Long userId);
+
+    List<User> selectOnlineProcessorsByDepartment(Long departmentId);
+
 }

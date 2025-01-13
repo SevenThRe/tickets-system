@@ -59,11 +59,23 @@ function MyTickets() {
  * 初始化
  */
 MyTickets.prototype.init = function() {
-    this._bindCreateTicketEvents();
-    this._initSearchForm();
-    this._bindEvents();
-    this._loadTickets();
-    this._loadTicketTypes();
+    try {
+        this._bindCreateTicketEvents();
+        this._initSearchForm();
+        this._bindEvents();
+        this._loadTickets();
+        this._loadTicketTypes();
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        if (action === 'create') {
+            setTimeout(() => {
+                $('#createTicketBtn').click();
+            }, 30);
+        }
+    }catch(e) {
+        console.error('初始化失败:', error);
+        NotifyUtil.error('页面加载失败，请刷新重试');
+    }
 };
 
 /**

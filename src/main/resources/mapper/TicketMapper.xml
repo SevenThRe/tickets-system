@@ -212,8 +212,9 @@
         status,
         COUNT(1) as count
         FROM t_ticket
-        WHERE is_deleted = 0
-        AND (create_by = #{userId} OR processor_id = #{userId})
+        WHERE processor_id = #{userId}
+        AND status IN ('PENDING', 'PROCESSING')
+        AND is_deleted = 0
         GROUP BY status
     </select>
 
@@ -330,10 +331,16 @@
         SELECT
         <include refid="Base_Column_List" />
         FROM t_ticket
-        WHERE processor_id = #{processorId}
-        AND status IN (0, 1) <!-- 待处理或处理中 -->
+        WHERE processor_id = #{processorId}  <!-- 只查询分配给该处理人的工单 -->
+        AND status IN ('PENDING', 'PROCESSING')  <!-- 待处理或处理中的工单 -->
         AND is_deleted = 0
-        ORDER BY priority DESC, create_time ASC
+        ORDER BY
+        CASE status
+        WHEN 'PENDING' THEN 0
+        WHEN 'PROCESSING' THEN 1
+        END,
+        priority DESC,  <!-- 优先级高的排前面 -->
+        create_time ASC <!-- 创建时间早的排前面 -->
     </select>
 
     <!-- 按条件统计工单数量 -->
@@ -484,5 +491,37 @@
         WHERE t.is_deleted = 0
         <include refid="queryCondition"/>
         ORDER BY t.create_time DESC
+    </select>
+
+    <select id="countTodayCompleted" resultType="integer">
+        SELECT COUNT(1)
+        FROM t_ticket
+        WHERE processor_id = #{userId}
+        AND status = 'COMPLETED'
+        AND actual_finish_time >= #{todayStart}
+        AND is_deleted = 0
+    </select>
+    <select id="countTicketsByStatus" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM t_ticket
+        WHERE processor_id = #{userId}
+        AND status = #{status}
+        AND is_deleted = 0
+    </select>
+
+    <select id="countCompletedTickets" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM t_ticket
+        WHERE processor_id = #{userId}
+        AND status = 'COMPLETED'
+        AND actual_finish_time BETWEEN #{startTime} AND #{endTime}
+        AND is_deleted = 0
+    </select>
+    <select id="countActiveTickets" resultType="java.lang.Integer">
+    SELECT COUNT(1)
+    FROM t_ticket
+    WHERE processor_id = #{userId}
+    AND status IN ('PENDING', 'PROCESSING')
+    AND is_deleted = 0
     </select>
 </mapper>

@@ -2,6 +2,7 @@ package com.icss.etc.ticket.mapper;
 
 import com.icss.etc.ticket.entity.Ticket;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -141,6 +142,32 @@ public interface TicketMapper {
     TicketDetailVO selectTicketDetail(Long ticketId);
 
 
+    /**
+     * 获取用户今日已完成工单数量
+     * @param userId 用户ID
+     * @param todayStart 今日开始时间
+     * @return 今日已完成工单数量
+     */
+    Integer countTodayCompleted(@Param("userId") Long userId, @Param("todayStart") LocalDateTime todayStart);
 
 
+    /**
+     * 获取用户今日待办工单数量
+     * @param userId 用户ID
+     * @param ticketStatus 工单状态
+     * @return 今日待办工单数量
+     */
+    Integer countTicketsByStatus(@Param("userId") Long userId, @Param("status") TicketStatus ticketStatus);
+
+    /**
+     * 获取用户今日已完成工单数量
+     * @param userId     用户ID
+     * @param todayStart     今日开始时间
+     * @param todayEnd     今日结束时间
+     * @return 今日已完成工单数量
+     */
+    Integer countCompletedTickets(@Param("userId") Long userId, @Param("startTime") LocalDateTime todayStart, @Param("endTime") LocalDateTime todayEnd);
+
+
+    Integer countActiveTickets(Long userId);
 }

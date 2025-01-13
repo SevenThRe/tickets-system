@@ -8,7 +8,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link href="/css/navbar.css" rel="stylesheet">
     <link href="/css/notify.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link href="/pages/user/css/todos.css" rel="stylesheet">
 </head>
 <body>
@@ -17,9 +16,14 @@
 
 <!-- 主内容区 -->
 <main id="main" class="main-content">
-    <!-- 页面标题和工具栏 -->
+    <!-- 页面标题和统计信息 -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="page-title">待办工单</h4>
+        <h4 class="page-title">我的待办工单</h4>
+        <div class="todo-stats">
+            <span class="badge bg-primary me-2">待处理: <span id="pendingCount">0</span></span>
+            <span class="badge bg-warning me-2">处理中: <span id="processingCount">0</span></span>
+            <span class="badge bg-success">今日完成: <span id="todayCompletedCount">0</span></span>
+        </div>
     </div>
 
     <!-- 筛选面板 -->
@@ -31,11 +35,18 @@
                            placeholder="搜索工单号/标题/内容">
                 </div>
                 <div class="col-md-2">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">所有状态</option>
+                        <option value="PENDING">待处理</option>
+                        <option value="PROCESSING">处理中</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <select class="form-select" id="priorityFilter">
                         <option value="">所有优先级</option>
-                        <option value="HIGH">高优先级</option>
-                        <option value="MEDIUM">中等优先级</option>
-                        <option value="LOW">低优先级</option>
+                        <option value="NORMAL">普通</option>
+                        <option value="URGENT">紧急</option>
+                        <option value="EXTREMELY_URGENT">非常紧急</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -46,14 +57,14 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search"></i> 搜索
-                    </button>
-                </div>
-                <div class="col-md-2">
-                    <button type="button" id="resetBtn" class="btn btn-outline-secondary w-100">
-                        <i class="bi bi-arrow-counterclockwise"></i> 重置
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-search"></i> 搜索
+                        </button>
+                        <button type="button" id="resetBtn" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -63,20 +74,20 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table">
+                <table class="table table-hover">
                     <thead>
                     <tr>
-                        <th>工单编号</th>
+                        <th style="width: 120px">工单编号</th>
                         <th>标题</th>
-                        <th>所属部门</th>
-                        <th>优先级</th>
-                        <th>截止时间</th>
-                        <th>创建时间</th>
-                        <th>操作</th>
+                        <th style="width: 120px">所属部门</th>
+                        <th style="width: 100px">优先级</th>
+                        <th style="width: 150px">截止时间</th>
+                        <th style="width: 150px">创建时间</th>
+                        <th style="width: 180px">操作</th>
                     </tr>
                     </thead>
                     <tbody id="todoList">
-                    <!-- 通过JS动态填充 -->
+                    <!-- 动态填充 -->
                     </tbody>
                 </table>
             </div>
@@ -90,7 +101,6 @@
             </div>
         </div>
     </div>
-
 </main>
 
 <!-- 工单处理模态框 -->
@@ -107,20 +117,30 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">工单编号</label>
-                            <div id="ticketCode"></div>
+                            <div id="ticketCode" class="fw-bold"></div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">创建时间</label>
-                            <div id="createTime"></div>
+                            <label class="form-label">优先级</label>
+                            <div id="ticketPriority"></div>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">标题</label>
-                        <div id="ticketTitle"></div>
+                        <div id="ticketTitle" class="fw-bold"></div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">内容</label>
                         <div id="ticketContent"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">创建时间</label>
+                            <div id="createTime"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">期望完成时间</label>
+                            <div id="expectFinishTime"></div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">附件</label>
@@ -131,6 +151,13 @@
                 <!-- 处理表单 -->
                 <form id="processForm">
                     <div class="mb-3">
+                        <label class="form-label required">处理进展</label>
+                        <select class="form-select" id="processStatus" required>
+                            <option value="PROCESSING">继续处理</option>
+                            <option value="COMPLETED">完成处理</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label required">处理说明</label>
                         <textarea class="form-control" id="processNote" rows="3" required
                                   placeholder="请输入处理说明..."></textarea>
@@ -138,12 +165,13 @@
                     <div class="mb-3">
                         <label class="form-label">上传附件</label>
                         <input type="file" class="form-control" id="processAttachments" multiple>
+                        <div class="form-text">支持上传多个文件，单个文件大小不超过10MB</div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" id="submitProcessBtn">确认处理</button>
+                <button type="button" class="btn btn-primary" id="submitProcessBtn">提交处理</button>
             </div>
         </div>
     </div>
@@ -154,7 +182,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script src="/js/utils/notify-util.js"></script>
-<script src="/config/constants.js"></script>
 <script src="/js/utils/request-util.js"></script>
 <script src="/js/components/base/base-component.js"></script>
 <script src="/js/components/layout/navbar.js"></script>

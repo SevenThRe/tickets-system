@@ -27,12 +27,10 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        // 1. 非HandlerMethod直接放行(如资源文件请求)
         if (!(handler instanceof HandlerMethod)) {
             return true;
         }
 
-        // 2. 获取并验证token
         String token = request.getHeader("Authorization");
         if (token == null || token.isEmpty()) {
             log.warn("用户未登录,请求被拦截! 请求路径: {}", request.getRequestURI());
@@ -41,18 +39,14 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         try {
-            // 3. 验证token并获取用户信息
             Claims claims = JWTUtils.verifyToken(token);
             Long userId = Long.valueOf(claims.getSubject());
             String username = claims.get("username", String.class);
             String role = claims.get("role", String.class);
 
-            // 4. 将用户信息存入请求属性
             request.setAttribute("userId", userId);
             request.setAttribute("username", username);
             request.setAttribute("role", role);
-
-            // 5. 检查权限注解
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             Method method = handlerMethod.getMethod();
             Class<?> declaringClass = method.getDeclaringClass();

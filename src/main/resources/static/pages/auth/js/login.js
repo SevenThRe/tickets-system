@@ -104,7 +104,7 @@ class LoginPage {
         if (!userInfo) {
             const storedUserInfo = localStorage.getItem('userInfo');
             if (!storedUserInfo) {
-                window.location.href = '/login.html';
+                window.location.href = '/pages/auth/login.html';
                 return;
             }
             userInfo = JSON.parse(storedUserInfo);
@@ -128,38 +128,28 @@ class LoginPage {
      */
     async handleLoginSuccess(data) {
         try {
-            // 获取用户信息和token
-            const { userInfo, token } = data;
+            const { userInfo, token, permissions } = data;
 
-            // 保存认证令牌
-            localStorage.setItem('token', token);
+            // 保存token,需要加Bearer前缀
+            localStorage.setItem('token', `Bearer ${token}`);
 
-
-            // 保存用户信息
+            // 保存完整的用户信息,包括permissions
             localStorage.setItem('userInfo', JSON.stringify({
                 ...userInfo,
-                permissions: permissions || [],
-                }
-            ));
+                permissions: permissions || []
+            }));
 
-            // 处理记住用户名功能
+            // 记住用户名逻辑
             if (this.state.rememberUsername) {
                 localStorage.setItem('rememberedUsername', this.elements.username.val().trim());
             } else {
                 localStorage.removeItem('rememberedUsername');
             }
-            //
-            // // 设置Authorization请求头
-            // $.ajaxSetup({
-            //     headers: {
-            //         'Authorization': 'Bearer ' + token
-            //     }
-            // });
 
-            // 触发登录成功事件
+            // 登录成功事件
             $(document).trigger('loginSuccess', [userInfo]);
 
-            // 根据角色重定向
+            // 重定向
             this.redirectToDashboard(userInfo);
 
         } catch (error) {
@@ -167,6 +157,7 @@ class LoginPage {
             this.showError('登录成功但跳转失败，请刷新重试');
         }
     }
+
 
     /**
      * 处理表单提交
@@ -177,7 +168,7 @@ class LoginPage {
         if (this.state.isSubmitting) return;
 
         try {
-            // 表单验证
+            // 验证表单
             if (!this.validateForm()) return;
 
             this.state.isSubmitting = true;
@@ -190,7 +181,7 @@ class LoginPage {
                 password: this.elements.password.val()
             };
 
-            // 发送登录请求
+            // 发送请求到正确的接口路径
             const response = await $.ajax({
                 url: '/api/auth/login',
                 method: 'POST',

@@ -1,259 +1,338 @@
 /**
- * UserDashboard.js
- * 用户工作台页面控制器
+ * Dashboard.js
+ * 工作台页面控制器
  */
-class UserDashboard {
+class Dashboard {
     constructor() {
         // 缓存DOM引用
-        this.$container = $('#main');
-        this.$todoList = $('#todoList');
-        this.$recentList = $('#recentList');
-        this.$statsCards = {
+        this.elements = {
+            userName: $('#userName'),
+            currentTime: $('#currentTime'),
+            todoList: $('#todoList'),
+            recentList: $('#recentList'),
+            // 统计数字
             todoCount: $('#todoCount'),
-            totalTickets: $('#totalTickets')
+            totalTickets: $('#totalTickets'),
+            // 当日统计
+            todayCreated: $('#todayCreated'),
+            todayCompleted: $('#todayCompleted'),
+            processingCount: $('#processingCount')
         };
 
         // 状态管理
         this.state = {
             loading: false,
-            userInfo: null,
-            todoTickets: [],     // 待办工单列表
-            recentTickets: [],   // 最近工单列表
-            statistics: {        // 统计数据
-                todoCount: 0,    // 待办数量
-                totalTickets: 0  // 总工单数
-            }
+            userInfo: JSON.parse(localStorage.getItem('userInfo') || '{}'),
+            statistics: {
+                todoCount: 0,
+                totalTickets: 0,
+                todayCreated: 0,
+                todayCompleted: 0,
+                processingCount: 0
+            },
+            todoTickets: [],
+            recentTickets: []
         };
-
-        // 绑定事件
-        this._bindEvents();
 
         // 初始化
         this.init();
     }
 
-    // 事件绑定
-    _bindEvents() {
-        const self = this;
-
-        // 查看工单
-        this.$container.on('click', '.view-ticket', function() {
-            const ticketId = $(this).data('id');
-            self._handleViewTicket(ticketId);
-        });
-
-        // 处理工单
-        this.$container.on('click', '.process-ticket', function() {
-            const ticketId = $(this).data('id');
-            self._handleProcessTicket(ticketId);
-        });
-
-        // 快捷操作区点击
-        this.$container.on('click', '.quick-action-card', function() {
-            const action = $(this).data('action');
-            self._handleQuickAction(action);
-        });
-    }
-
-    // 初始化
+    /**
+     * 初始化方法
+     */
     async init() {
         try {
-            // 并行加载数据
+            // 显示用户名
+            this.elements.userName.text(this.state.userInfo.realName || '用户');
+
+            // 加载数据
             await Promise.all([
-                this._loadUserInfo(),
+                this._loadStatistics(),
                 this._loadTodoTickets(),
-                this._loadRecentTickets(),
-                this._loadStatistics()
+                this._loadRecentTickets()
             ]);
 
-            // 更新页面显示
-            this._updateUI();
+            // 更新时间显示
+            this._updateCurrentTime();
+
+            // 移除页面自身的onclick事件
+            // 我没有直接删除页面的onclick，这样哪怕不走js也能跳转
+            $('.quick-action-card').each(function() {
+                $(this).removeAttr('onclick');
+            });
+
+            // 绑定事件
+            this._bindEvents();
 
             // 启动自动刷新
             this._startAutoRefresh();
 
-            // 更新时间显示
-            this._updateCurrentTime();
-        } catch (error) {
+            // 加载未读通知
+            this._loadNotifications();
+
+        } catch(error) {
             console.error('初始化失败:', error);
-            this._showError('页面加载失败，请刷新重试');
+            NotifyUtil.error('加载数据失败，请刷新重试');
         }
     }
 
-    // 加载用户信息
-    async _loadUserInfo() {
+    /**
+     * 绑定事件处理
+     */
+    _bindEvents() {
+        // 快捷操作卡片点击
+        $('.quick-action-card').on('click', (e) => {
+            const action = $(e.currentTarget).data('action');
+            this._handleQuickAction(action);
+        });
+
+        // 工单查看点击
+        $('#todoList, #recentList').on('click', '.view-ticket', (e) => {
+            const ticketId = $(e.currentTarget).data('id');
+            this._viewTicket(ticketId);
+        });
+
+        // 处理按钮点击
+        $('#todoList').on('click', '.process-ticket', (e) => {
+            const ticketId = $(e.currentTarget).data('id');
+            this._processTicket(ticketId);
+        });
+    }
+
+    /**
+     * 加载统计数据
+     */
+    async _loadStatistics() {
         try {
-            const response = await $.ajax({
-                url: '/api/users/current',
+            // 加载总体统计
+            const statsResponse = await $.ajax({
+                url: '/api/tickets/statistics',
                 method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('token')
-                }
+                data: { userId: this.state.userInfo.userId }
             });
 
-            if(response.code === 200) {
-                this.state.userInfo = response.data;
-            } else {
-                throw new Error(response.message || '加载用户信息失败');
+            // 加载待办统计
+            const todoStatsResponse = await $.ajax({
+                url: '/api/tickets/todo/stats',
+                method: 'GET',
+                data: { userId: this.state.userInfo.userId }
+            });
+
+            if (statsResponse.code === 200 && todoStatsResponse.code === 200) {
+                this.state.statistics = {
+                    ...statsResponse.data,
+                    ...todoStatsResponse.data,  // 合并两个接口的数据
+                };
+                this._updateStatistics();
             }
-        } catch(error) {
-            console.error('加载用户信息失败:', error);
+        } catch (error) {
+            console.error('加载统计数据失败:', error);
             throw error;
         }
     }
 
-    // 加载待办工单
+    /**
+     * 加载待办工单
+     */
     async _loadTodoTickets() {
         try {
             const response = await $.ajax({
                 url: '/api/tickets/todos',
                 method: 'GET',
                 data: {
-                    pageSize: 5, // 只加载前5条
-                    sortField: 'createTime',
-                    sortOrder: 'desc'
-                },
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    pageNum: 1,
+                    pageSize: 5,
+                    processorId: this.state.userInfo.userId,
+                    status: ['PENDING', 'PROCESSING']
                 }
             });
 
-            if(response.code === 200) {
-                this.state.todoTickets = response.data;
-            } else {
-                throw new Error(response.message || '加载待办工单失败');
+            if (response.code === 200) {
+                this.state.todoTickets = response.data.list;
+                this._renderTodoList();
             }
-        } catch(error) {
+        } catch (error) {
             console.error('加载待办工单失败:', error);
             throw error;
         }
     }
 
-    // 加载最近工单
+    /**
+     * 加载最近工单
+     */
     async _loadRecentTickets() {
         try {
             const response = await $.ajax({
-                url: '/api/tickets/recent',
+                url: '/api/tickets/my',
                 method: 'GET',
                 data: {
                     pageSize: 5,
+                    userId: this.state.userInfo.userId,
                     sortField: 'updateTime',
                     sortOrder: 'desc'
-                },
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('token')
                 }
             });
 
-            if(response.code === 200) {
-                this.state.recentTickets = response.data;
-            } else {
-                throw new Error(response.message || '加载最近工单失败');
+            if (response.code === 200) {
+                this.state.recentTickets = response.data.list;
+                this._renderRecentList();
             }
-        } catch(error) {
+        } catch (error) {
             console.error('加载最近工单失败:', error);
             throw error;
         }
     }
 
-    // 加载统计数据
-    async _loadStatistics() {
+    /**
+     * 加载未读通知
+     */
+    async _loadNotifications() {
         try {
             const response = await $.ajax({
-                url: '/api/tickets/statistics',
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('token')
-                }
+                url: '/api/notifications/unread',
+                method: 'GET'
             });
 
-            if(response.code === 200) {
-                this.state.statistics = response.data;
-            } else {
-                throw new Error(response.message || '加载统计数据失败');
+            if (response.code === 200 && response.data?.length > 0) {
+                response.data.forEach(notification => {
+                    NotifyUtil.info(notification.content);
+                });
             }
-        } catch(error) {
-            console.error('加载统计数据失败:', error);
-            throw error;
+        } catch (error) {
+            console.error('加载通知失败:', error);
         }
     }
 
-    // 更新页面显示
-    _updateUI() {
-        // 更新用户名显示
-        $('#userName').text(this.state.userInfo?.realName || '');
+    /**
+     * 更新统计数据显示
+     */
+    _updateStatistics() {
+        const { statistics } = this.state;
 
-        // 更新统计数字
-        this.$statsCards.todoCount.text(this.state.statistics.todoCount);
-        this.$statsCards.totalTickets.text(this.state.statistics.totalTickets);
+        // 更新数量显示
+        this.elements.todoCount.text(statistics.pendingCount || 0);
+        this.elements.totalTickets.text(statistics.totalCount || 0);
+        this.elements.processingCount.text(statistics.processingCount || 0);
+        this.elements.todayCompleted.text(statistics.todayCompleted || 0);
 
-        // 渲染待办工单列表
-        this._renderTodoList();
-
-        // 渲染最近工单列表
-        this._renderRecentList();
+        // 添加醒目提示
+        if (statistics.pendingCount > 0) {
+            this.elements.todoCount.parent().addClass('text-danger');
+        }
     }
 
-    // 渲染待办工单列表
+    /**
+     * 渲染待办工单列表
+     */
     _renderTodoList() {
+        if (!this.state.todoTickets.length) {
+            this.elements.todoList.html(
+                '<tr><td colspan="5" class="text-center">暂无待办工单</td></tr>'
+            );
+            return;
+        }
+
         const html = this.state.todoTickets.map(ticket => `
             <tr>
-                <td>${ticket.code}</td>
+                <td>${ticket.ticketId}</td>
                 <td>
                     <div class="d-flex align-items-center">
-                        <span class="priority-indicator priority-${ticket.priority.toLowerCase()}"></span>
+                        <span class="priority-indicator priority-${this._getPriorityClass(ticket.priority)}"></span>
                         ${this._escapeHtml(ticket.title)}
                     </div>
                 </td>
-                <td>${this._getPriorityText(ticket.priority)}</td>
+                <td>
+                    <span class="badge bg-${this._getPriorityClass(ticket.priority)}">
+                        ${this._getPriorityText(ticket.priority)}
+                    </span>
+                </td>
                 <td>${this._formatDate(ticket.createTime)}</td>
                 <td>
-                    <button class="btn btn-sm btn-primary process-ticket" 
-                            data-id="${ticket.id}">
+                    <button class="btn btn-sm btn-primary process-ticket" data-id="${ticket.ticketId}">
                         立即处理
                     </button>
                 </td>
             </tr>
         `).join('');
 
-        this.$todoList.html(html || '<tr><td colspan="5" class="text-center">暂无待办工单</td></tr>');
+        this.elements.todoList.html(html);
     }
 
-    // 渲染最近工单列表
+    /**
+     * 渲染最近工单列表
+     */
     _renderRecentList() {
+        if (!this.state.recentTickets.length) {
+            this.elements.recentList.html(
+                '<tr><td colspan="5" class="text-center">暂无工单记录</td></tr>'
+            );
+            return;
+        }
+
         const html = this.state.recentTickets.map(ticket => `
             <tr>
-                <td>${ticket.code}</td>
+                <td>${ticket.ticketId}</td>
                 <td>${this._escapeHtml(ticket.title)}</td>
                 <td>
-                    <span class="status-badge status-${ticket.status.toLowerCase()}">
+                    <span class="badge bg-${this._getStatusClass(ticket.status)}">
                         ${this._getStatusText(ticket.status)}
                     </span>
                 </td>
                 <td>${this._formatDate(ticket.updateTime)}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary view-ticket" 
-                            data-id="${ticket.id}">
-                        查看
+                    <button class="btn btn-sm btn-outline-primary view-ticket" data-id="${ticket.ticketId}">
+                        查看详情
                     </button>
                 </td>
             </tr>
         `).join('');
 
-        this.$recentList.html(html || '<tr><td colspan="5" class="text-center">暂无工单记录</td></tr>');
+        this.elements.recentList.html(html);
     }
 
-    // 处理查看工单
-    _handleViewTicket(ticketId) {
-        window.location.href = `/pages/user/my-tickets.html?id=${ticketId}`;
+    /**
+     * 更新时间显示
+     */
+    _updateCurrentTime() {
+        const updateTime = () => {
+            const now = new Date();
+            this.elements.currentTime.text(
+                now.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                })
+            );
+        };
+
+        // 立即更新一次
+        updateTime();
+        // 每秒更新
+        this.timeInterval = setInterval(updateTime, 1000);
     }
 
-    // 处理处理工单
-    _handleProcessTicket(ticketId) {
-        window.location.href = `/pages/user/todos.html?id=${ticketId}`;
+    /**
+     * 启动自动刷新
+     */
+    _startAutoRefresh() {
+        // 每5分钟刷新一次数据
+        this.refreshInterval = setInterval(async () => {
+            await Promise.all([
+                this._loadStatistics(),
+                this._loadTodoTickets(),
+                this._loadRecentTickets()
+            ]);
+        }, 5 * 60 * 1000);
     }
 
-    // 处理快捷操作
+    /**
+     * 处理快捷操作
+     */
     _handleQuickAction(action) {
         switch(action) {
             case 'todos':
@@ -263,7 +342,7 @@ class UserDashboard {
                 window.location.href = '/pages/user/my-tickets.html';
                 break;
             case 'create':
-                window.location.href = '/pages/user/create-ticket.html';
+                window.location.href = '/pages/user/my-tickets.html?action=create';
                 break;
             case 'profile':
                 window.location.href = '/pages/user/profile.html';
@@ -271,106 +350,98 @@ class UserDashboard {
         }
     }
 
-    // 更新当前时间显示
-    _updateCurrentTime() {
-        const updateTime = () => {
-            const now = new Date();
-            $('#currentTime').text(this._formatDate(now));
-        };
-
-        // 立即更新一次
-        updateTime();
-
-        // 每秒更新一次
-        this.timeInterval = setInterval(updateTime, 1000);
+    /**
+     * 查看工单详情
+     */
+    _viewTicket(ticketId) {
+        window.location.href = `/pages/user/my-tickets.html?ticketId=${ticketId}`;
     }
 
-    // 启动自动刷新
-    _startAutoRefresh() {
-        // 每5分钟刷新一次数据
-        this.refreshInterval = setInterval(async () => {
-            await Promise.all([
-                this._loadTodoTickets(),
-                this._loadRecentTickets(),
-                this._loadStatistics()
-            ]);
-            this._updateUI();
-        }, 5 * 60 * 1000);
+    /**
+     * 处理工单
+     */
+    _processTicket(ticketId) {
+        window.location.href = `/pages/user/todos.html?ticketId=${ticketId}`;
     }
 
-    // 格式化日期
-    _formatDate(date, format = 'YYYY-MM-DD HH:mm:ss') {
-        const d = new Date(date);
+    /**
+     * 工具方法
+     */
+    _getPriorityClass(priority) {
         const map = {
-            YYYY: d.getFullYear(),
-            MM: String(d.getMonth() + 1).padStart(2, '0'),
-            DD: String(d.getDate()).padStart(2, '0'),
-            HH: String(d.getHours()).padStart(2, '0'),
-            mm: String(d.getMinutes()).padStart(2, '0'),
-            ss: String(d.getSeconds()).padStart(2, '0')
+            'HIGH': 'high',
+            'MEDIUM': 'medium',
+            'LOW': 'low'
         };
-
-        return format.replace(/YYYY|MM|DD|HH|mm|ss/g, matched => map[matched]);
+        return map[priority] || 'low';
     }
 
-    // 获取状态文本
+    _getPriorityText(priority) {
+        const map = {
+            'HIGH': '高优先级',
+            'MEDIUM': '中等优先级',
+            'LOW': '低优先级'
+        };
+        return map[priority] || '普通';
+    }
+
+    _getStatusClass(status) {
+        const map = {
+            'PENDING': 'warning',
+            'PROCESSING': 'info',
+            'COMPLETED': 'success',
+            'CLOSED': 'secondary'
+        };
+        return map[status] || 'secondary';
+    }
+
     _getStatusText(status) {
-        return {
+        const map = {
             'PENDING': '待处理',
             'PROCESSING': '处理中',
             'COMPLETED': '已完成',
             'CLOSED': '已关闭'
-        }[status] || status;
+        };
+        return map[status] || status;
     }
 
-    // 获取优先级文本
-    _getPriorityText(priority) {
-        return {
-            'HIGH': '高',
-            'MEDIUM': '中',
-            'LOW': '低'
-        }[priority] || priority;
+    _formatDate(dateString) {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 
-    // HTML内容转义
     _escapeHtml(str) {
-        if(!str) return '';
+        if (!str) return '';
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
     }
 
-    // 显示错误信息
-    _showError(message) {
-        $.notify({
-            title: '<strong>错误</strong>',
-            message: message
-        },{
-            type: 'danger',
-            placement: {
-                from: "top",
-                align: "center"
-            },
-            delay: 3000
-        });
-    }
-
-    // 销毁组件
+    /**
+     * 销毁实例
+     */
     destroy() {
         // 清理定时器
-        if(this.timeInterval) {
+        if (this.timeInterval) {
             clearInterval(this.timeInterval);
         }
-        if(this.refreshInterval) {
+        if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
         }
 
         // 解绑事件
-        this.$container.off();
+        $('.quick-action-card').off();
+        $('#todoList, #recentList').off();
     }
 }
 
 // 页面加载完成后初始化
-$(document).ready(function() {
-    window.userDashboard = new UserDashboard();
+$(document).ready(() => {
+    window.dashboard = new Dashboard();
 });

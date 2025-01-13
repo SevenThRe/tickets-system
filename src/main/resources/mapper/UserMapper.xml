@@ -446,4 +446,17 @@
     and r.is_deleted = 0 and r.status = 1
     and p.is_deleted = 0
     </select>
+
+  <select id="selectOnlineProcessorsByDepartment" resultType="com.icss.etc.ticket.entity.User">
+    SELECT u.*
+    FROM t_user u
+    LEFT JOIN t_user_settings s ON u.user_id = s.user_id
+    WHERE u.department_id = #{departmentId}
+    AND u.status = 1  -- 正常状态
+    AND u.is_deleted = 0
+<!--    AND (s.online_status = 1 OR s.online_status IS NULL)  &#45;&#45; 在线或未设置状态
+ 还是不加数据表了-->
+    ORDER BY u.create_time DESC
+  </select>
+
 </mapper>

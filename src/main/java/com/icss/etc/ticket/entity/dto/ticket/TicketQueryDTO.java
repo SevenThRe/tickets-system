@@ -1,5 +1,6 @@
 package com.icss.etc.ticket.entity.dto.ticket;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.icss.etc.ticket.enums.Priority;
 import com.icss.etc.ticket.enums.TicketStatus;
 import jakarta.validation.constraints.NotBlank;

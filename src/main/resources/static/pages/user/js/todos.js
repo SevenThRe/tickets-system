@@ -1,703 +1,802 @@
 /**
- * TodoList类 - 待办工单管理
- * 负责工单的展示、搜索和状态处理
+ * TodoList 类 - 待办工单管理
  */
 class TodoList {
-    /**
-     * 构造函数 - 初始化实例属性和状态
-     * @throws {Error} 当用户未登录时抛出异常
-     */
     constructor() {
-        // 验证并获取用户信息
-        this.userInfo = this.validateUserLogin();
-        if (!this.userInfo) {
-            window.location.href = '/login.html';
-            return;
-        }
-
-        // 缓存DOM元素引用
-        this.$todoList = $('#todoList');
-        this.$searchForm = $('#searchForm');
-        this.$pagination = $('#pagination');
-        this.$totalCount = $('#totalCount');
-        this.departmentMap = null;
         // 状态管理
         this.state = {
             loading: false,
-            currentPage: 1,
-            pageSize: 10,
-            total: 0,
+            todos: [],
+            currentTicket: null,
+            pagination: {
+                current: 1,
+                pageSize: 10,
+                total: 0
+            },
             filters: {
-                userId: this.userInfo.userId,  // 始终携带用户ID
                 keyword: '',
                 priority: '',
-                startDate: '',
-                endDate: ''
+                startTime: '',
+                endTime: ''
             }
+
+
         };
 
-        this.initEventHandlers();
-        this.loadTodoList();
-        this.initSearchForm();
+        // DOM 元素缓存
+        this.elements = {
+            todoList: $('#todoList'),
+            searchForm: $('#searchForm'),
+            pagination: $('#pagination'),
+            totalCount: $('#totalCount'),
+            processModal: new bootstrap.Modal($('#processModal')[0])
+        };
+
+        // 用户信息
+        this.userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+
+        // 初始化
+        this.init();
+    }
+
+    PRIORITY = {
+        NORMAL: 'NORMAL',
+        URGENT: 'URGENT',
+        EXTREMELY_URGENT: 'EXTREMELY_URGENT'
+    };
+
+    // 状态常量
+    TICKET_STATUS = {
+        PENDING: 'PENDING',
+        PROCESSING: 'PROCESSING',
+        COMPLETED: 'COMPLETED',
+        CLOSED: 'CLOSED'
+    };
+
+
+    /**
+     * 更新工单状态
+     * @param {number} ticketId - 工单ID
+     * @param {number} status - 目标状态
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _updateTicketStatus(ticketId, status) {
+        try {
+            const response = await $.ajax({
+                url: '/api/tickets/status',
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ticketId: ticketId,
+                    status: status,
+                    operatorId: this.userInfo.userId,
+                    content: '更新工单状态'
+                })
+            });
+
+            if (response.code === 200) {
+                this.showSuccess('状态更新成功');
+                await this._loadTodos();
+                await this._refreshStatistics();
+            } else {
+                this.showError(response.msg || '状态更新失败');
+            }
+        } catch (error) {
+            console.error('更新状态失败:', error);
+            this.showError('更新状态失败，请重试');
+        }
+    }
+
+
+    /**
+     * 初始化方法
+     */
+    async init() {
+        try {
+            this._bindEvents();
+            await Promise.all([
+                this._loadTodos(),     // 加载工单列表
+                this._loadStatistics() // 加载统计数据
+            ]);
+        } catch(error) {
+            console.error('初始化失败:', error);
+            this.showError('加载失败，请刷新重试');
+        }
     }
 
     /**
-     * 验证用户登录状态
-     * @returns {Object|null} 返回用户信息对象，未登录则返回null
+     * 绑定事件处理
+     */
+    _bindEvents() {
+        // 搜索表单提交
+        this.elements.searchForm.on('submit', (e) => this._handleSearch(e));
+
+        // 重置按钮点击
+        $('#resetBtn').on('click', () => this._handleReset());
+
+        // 处理按钮点击
+        this.elements.todoList.on('click', '.process-btn', (e) => {
+            const ticketId = $(e.currentTarget).data('id');
+            this._showProcessModal(ticketId);
+        });
+        // 快速开始处理按钮点击
+        this.elements.todoList.on('click', '.quick-start', (e) => {
+            const ticketId = $(e.currentTarget).data('id');
+            this._handleQuickStart(ticketId);
+        });
+
+        // 查看详情按钮点击
+        this.elements.todoList.on('click', '.view-detail', (e) => {
+            const ticketId = $(e.currentTarget).data('id');
+            this._showTicketDetail(ticketId);
+        });
+
+
+        // 提交处理按钮点击
+        $('#submitProcessBtn').on('click', () => this._handleProcessSubmit());
+        // 优先级筛选变化
+        $('#priorityFilter').on('change', (e) => {
+            const priorityValue = $(e.target).val();
+            // 转换为数字类型
+            this.state.filters.priority = priorityValue ? parseInt(priorityValue) : '';
+            this._loadTodos();
+        });
+
+        // 日期范围选择变化
+        $('#startDate, #endDate').on('change', (e) => {
+            const field = e.target.id === 'startDate' ? 'startTime' : 'endTime';
+            this.state.filters[field] = e.target.value;
+        });
+    }
+    /**
+     * 加载统计数据
      * @private
      */
-    validateUserLogin() {
+    async _loadStatistics() {
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-            if (!userInfo?.userId) {
-                return null;
+            const response = await $.ajax({
+                url: '/api/tickets/todo/stats',
+                method: 'GET',
+                data: { userId: this.userInfo.userId }
+            });
+
+            if(response.code === 200) {
+                const stats = response.data;
+                // 更新统计卡片
+                $('#pendingCount').text(stats.pendingCount || 0);
+                $('#processingCount').text(stats.processingCount || 0);
+                $('#todayCompletedCount').text(stats.todayCompletedCount || 0);
+
+                // 如果有待办数大于0，添加提醒样式
+                if(stats.pendingCount > 0) {
+                    $('#pendingCount').parent().addClass('bg-warning text-dark');
+                }
             }
-            return userInfo;
-        } catch (error) {
-            console.error('解析用户信息失败:', error);
-            return null;
+        } catch(error) {
+            console.error('加载统计数据失败:', error);
         }
+    }
+
+    /**
+     * 在工单状态更新后刷新统计
+     * @private
+     */
+    async _refreshStatistics() {
+        await this._loadStatistics();
+    }
+
+    /**
+     * 快速开始处理
+     * @param {number} ticketId - 工单ID
+     * @private
+     */
+    async _handleQuickStart(ticketId) {
+        try {
+            await this._updateTicketStatus(ticketId, this.TICKET_STATUS.PROCESSING);
+            this.showSuccess('已开始处理');
+        } catch (error) {
+            console.error('快速开始失败:', error);
+            this.showError('操作失败，请重试');
+        }
+    }
+
+
+    /**
+     * 格式化日期
+     * @param {string} dateString - 日期字符串
+     * @returns {string} 格式化后的日期字符串
+     * @private
+     */
+    _formatDate(dateString) {
+        if (!dateString) return '-';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (error) {
+            return '-';
+        }
+    }
+
+    /**
+     * 判断是否临近截止时间(10小时内)
+     * @param {string} deadline - 截止时间
+     * @returns {boolean}
+     * @private
+     */
+    _isDeadlineNear(deadline) {
+        if (!deadline) return false;
+        const deadlineDate = new Date(deadline);
+        const now = new Date();
+        const diffHours = (deadlineDate - now) / (1000 * 60 * 60);
+        return diffHours > 0 && diffHours < 10;
+    }
+
+    /**
+     * 处理搜索事件
+     */
+    _handleSearch(e) {
+        e.preventDefault();
+        this.state.filters = {
+            keyword: $('#keyword').val().trim(),
+            status: $('#statusFilter').val(),
+            priority: $('#priorityFilter').val(),
+            startTime: $('#startDate').val(),
+            endTime: $('#endDate').val()
+        };
+
+        this.state.pagination.current = 1;
+        this._loadTodos();
+    }
+
+    /**
+     * 渲染工单列表
+     */
+    _renderTodoList() {
+        if (!Array.isArray(this.state.todos) || this.state.todos.length === 0) {
+            this.elements.todoList.html('<tr><td colspan="7" class="text-center">暂无待办工单</td></tr>');
+            return;
+        }
+
+        const html = this.state.todos.map(ticket => `
+            <tr>
+                <td>${ticket.ticketId}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <span class="priority-indicator priority-${this._getPriorityClass(ticket.priority)}"></span>
+                        <span class="ticket-title">${this._escapeHtml(ticket.title)}</span>
+                    </div>
+                </td>
+                <td>${this._escapeHtml(ticket.departmentName) || '-'}</td>
+                <td>
+                    <span class="badge todo-badge ${this._getPriorityBadgeClass(ticket.priority)}">
+                        ${this._getPriorityText(parseInt(ticket.priority))}
+                    </span>
+                </td>
+                <td>
+                    <div class="${this._isDeadlineNear(ticket.expectFinishTime) ? 'deadline-warning' : ''}">
+                        ${this._formatDate(ticket.expectFinishTime)}
+                    </div>
+                </td>
+                <td>${this._formatDate(ticket.createTime)}</td>
+                <td>
+                    <div class="btn-group">
+                        ${ticket.status === 'PENDING' ? `
+                            <button class="btn btn-sm btn-outline-success quick-start" data-id="${ticket.ticketId}">
+                                <i class="bi bi-play-fill"></i> 快速开始
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-sm btn-outline-primary process-btn" data-id="${ticket.ticketId}">
+                            <i class="bi bi-tools"></i> 处理
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary view-detail" data-id="${ticket.ticketId}">
+                            <i class="bi bi-eye"></i> 详情
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+
+        this.elements.todoList.html(html);
+        this.elements.totalCount.text(this.state.pagination.total);
+
+        // 更新顶部统计数据
+        this._updateStats();
     }
 
     /**
      * 加载待办工单列表
-     * 请求参数携带用户身份和筛选条件
      */
-    async loadTodoList() {
-        if (this.state.loading) return;
+    async _loadTodos() {
+        if(this.state.loading) return;
 
         try {
             this.state.loading = true;
+            this._showLoading();
 
-            // 构造请求参数，确保携带用户ID
             const params = {
-                userId: this.userInfo.userId,
-                pageNum: this.state.currentPage,
-                pageSize: this.state.pageSize,
+                pageNum: this.state.pagination.current,
+                pageSize: this.state.pagination.pageSize,
+                processorId: this.userInfo.userId,
+                status: ['PENDING', 'PROCESSING'],
                 ...this.state.filters
             };
 
             const response = await $.ajax({
                 url: '/api/tickets/todos',
                 method: 'GET',
-                data: params,
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'X-User-Id': this.userInfo.userId
-                }
+                data: params
             });
 
-            if (response.code === 200) {
-                this.renderTodoList(response.data);
-            } else {
-                throw new Error(response.msg || '加载失败');
+            if(response.code === 200) {
+                this.state.todos = response.data.list;
+                this.state.pagination.total = response.data.total;
+                this._renderTodoList();
+                this._updatePagination();
             }
-        } catch (error) {
+
+        } catch(error) {
             console.error('加载待办工单失败:', error);
-            this.handleError(error);
+            this.showError('加载待办工单失败');
         } finally {
             this.state.loading = false;
+            this._hideLoading();
         }
     }
 
     /**
-     * 处理搜索请求
-     * 收集表单数据并保留用户标识
+     * 处理工单提交
+     * @private
      */
-    handleSearch() {
-        const formData = new FormData(this.$searchForm[0]);
+    async _handleProcessSubmit() {
+        const processNote = $('#processNote').val().trim();
+        const processStatus = $('#processStatus').val();
+        const files = $('#processAttachments')[0].files;
 
-        // 更新筛选条件，保留用户ID
-        this.state.filters = {
-            userId: this.userInfo.userId,  // 保持用户ID
-            keyword: formData.get('keyword') || '',
-            priority: formData.get('priorityFilter') || '',
-            startDate: formData.get('startDate') || '',
-            endDate: formData.get('endDate') || ''
-        };
+        if (!processNote) {
+            this.showError('请输入处理说明');
+            return;
+        }
 
-        this.state.currentPage = 1;
-        this.loadTodoList();
-    }
-
-    /**
-     * 处理重置操作
-     * 重置筛选条件但保留用户标识
-     */
-    handleReset() {
-        this.$searchForm[0].reset();
-
-        // 重置筛选条件，保留用户ID
-        this.state.filters = {
-            userId: this.userInfo.userId,  // 保持用户ID
-            keyword: '',
-            priority: '',
-            startDate: '',
-            endDate: ''
-        };
-
-        this.state.currentPage = 1;
-        this.loadTodoList();
-    }
-
-    /**
-     * 处理工单操作
-     * @param {string} ticketId - 工单ID
-     * @param {string} action - 操作类型(process/complete/transfer)
-     */
-    async handleTicketAction(ticketId, action) {
         try {
-            await $.ajax({
-                url: `/api/tickets/${ticketId}/${action}`,
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'X-User-Id': this.userInfo.userId
-                },
+            // 1. 如果有附件，先上传附件
+            if (files.length > 0) {
+                const formData = new FormData();
+                Array.from(files).forEach(file => {
+                    formData.append('files', file);
+                });
+                formData.append('ticketId', this.state.currentTicket.ticketId);
+
+                const uploadResponse = await $.ajax({
+                    url: `/api/tickets/${this.state.currentTicket.ticketId}/attachments`,
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false
+                });
+
+                // 检查上传结果
+                if (uploadResponse.code !== 200) {
+                    this.showError(uploadResponse.msg || '附件上传失败');
+                    return;
+                }
+            }
+
+            // 2. 更新工单状态
+            const response = await $.ajax({
+                url: '/api/tickets/status',
+                method: 'PUT',
+                contentType: 'application/json',
                 data: JSON.stringify({
-                    userId: this.userInfo.userId,
-                    ticketId: ticketId,
-                    action: action
-                }),
-                contentType: 'application/json'
-            });
-
-            this.showSuccess('操作成功');
-            this.loadTodoList();
-        } catch (error) {
-            this.handleError(error);
-        }
-    }
-
-    /**
-     * 初始化事件处理器
-     * 绑定各种DOM事件监听
-     * @private
-     */
-    initEventHandlers() {
-        // 搜索表单提交
-        this.$searchForm.on('submit', (e) => {
-            e.preventDefault();
-            this.handleSearch();
-        });
-
-        // 重置按钮点击
-        $('#resetBtn').on('click', () => {
-            this.handleReset();
-        });
-
-        // 处理按钮点击
-        this.$todoList.on('click', '.process-btn', (e) => {
-            const ticketId = $(e.currentTarget).data('ticket-id');
-            this.handleProcess(ticketId);
-        });
-
-        // 完成按钮点击
-        this.$todoList.on('click', '.complete-btn', (e) => {
-            const ticketId = $(e.currentTarget).data('ticket-id');
-            this.handleComplete(ticketId);
-        });
-
-        // 转交按钮点击
-        this.$todoList.on('click', '.transfer-btn', (e) => {
-            const ticketId = $(e.currentTarget).data('ticket-id');
-            this.handleTransfer(ticketId);
-        });
-
-        // 详情按钮点击
-        this.$todoList.on('click', '.detail-btn', (e) => {
-            const ticketId = $(e.currentTarget).data('ticket-id');
-            this.showTicketDetail(ticketId);
-        });
-    }
-
-
-    /**
-     * 获取部门列表
-     * 从后端获取部门数据并构建映射表
-     * @returns {Promise<Object>} 部门ID到部门名称的映射表
-     * @private
-     */
-    async getDepartmentList() {
-        // 如果已有缓存，直接返回
-        if (this.departmentMap) {
-            return this.departmentMap;
-        }
-
-        try {
-            // 调用后端接口获取部门列表
-            const response = await $.ajax({
-                url: '/api/departments/selectAll',
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    ticketId: this.state.currentTicket.ticketId,
+                    status: processStatus,
+                    operatorId: this.userInfo.userId,
+                    content: processNote
+                })
             });
 
             if (response.code === 200) {
-                // 构建部门ID到名称的映射关系
-                this.departmentMap = response.data.reduce((map, dept) => {
-                    map[dept.departmentId] = dept.departmentName;
-                    // 处理子部门信息（如果有）
-                    if (dept.subDepartments) {
-                        dept.subDepartments.forEach(subDept => {
-                            map[subDept.departmentId] = subDept.departmentName;
-                        });
-                    }
-                    return map;
-                }, {});
-
-                return this.departmentMap;
+                this.showSuccess('处理成功');
+                this.elements.processModal.hide();
+                await this._loadTodos();
+                await this._refreshStatistics();
             } else {
-                throw new Error(response.msg || '获取部门列表失败');
+                this.showError(response.msg || '处理失败');
             }
+
         } catch (error) {
-            console.error('获取部门列表失败:', error);
-            return {};
-        }
-    }
-
-    /**
-     * 获取部门名称
-     * @param {number} departmentId - 部门ID
-     * @returns {Promise<string>} 部门名称
-     * @private
-     */
-    async getDepartmentName(departmentId) {
-        if (!departmentId) {
-            return '-';
-        }
-
-        const departmentMap = await this.getDepartmentList();
-        return departmentMap[departmentId] || '未知部门';
-    }
-
-    /**
-     * 显示工单详情
-     * 展示工单的详细信息和操作界面
-     * @param {string} ticketId - 工单ID
-     * @private
-     */
-    async showTicketDetail(ticketId) {
-        try {
-            this.showLoading();
-            // 获取工单详情
-            const response = await $.ajax({
-                url: `/api/tickets/${ticketId}`,
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (response.code === 200) {
-                // 缓存当前工单信息
-                this.currentTicket = response.data;
-
-                // 更新模态框内容
-                const departmentName = await this.getDepartmentName(response.data.departmentId);
-
-                // 填充基本信息
-                $('#ticketCode').text(`TK${String(ticketId).padStart(6, '0')}`);
-                $('#ticketTitle').text(this.escapeHtml(response.data.title));
-                $('#ticketContent').text(this.escapeHtml(response.data.content));
-                $('#createTime').text(this.formatDateTime(response.data.createTime));
-                $('#ticketDepartment').text(departmentName);
-                $('#ticketPriority').html(this.renderPriorityBadge(response.data.priority));
-                $('#ticketStatus').html(this.renderStatusBadge(response.data.status));
-
-                if (response.data.expectFinishTime) {
-                    $('#expectFinishTime').text(this.formatDateTime(response.data.expectFinishTime));
-                } else {
-                    $('#expectFinishTime').text('-');
-                }
-
-                // 根据工单状态控制操作按钮
-                this.updateDetailButtons(response.data.status);
-
-                // 显示模态框
-                const modal = new bootstrap.Modal('#processModal');
-                modal.show();
-            } else {
-                throw new Error(response.msg || '获取工单详情失败');
-            }
-        } catch (error) {
-            console.error('加载工单详情失败:', error);
-            NotifyUtil.error(error.message || '加载工单详情失败');
-        } finally {
-            this.hideLoading();
-        }
-    }
-
-    renderPriorityBadge(priority) {
-        const priorityClass = {
-            1: 'danger',
-            2: 'warning',
-            3: 'success'
-        }[priority] || 'secondary';
-
-        return `<span class="badge bg-${priorityClass}">${this.getPriorityText(priority)}</span>`;
-    }
-
-
-    /**
-     * 处理工单处理操作
-     * @param {string} ticketId - 工单ID
-     * @private
-     */
-    async handleProcess(ticketId) {
-        try {
-            await $.ajax({
-                url: `/api/tickets/${ticketId}/process`,
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            this.showSuccess('开始处理工单');
-            this.loadTodoList();
-        } catch (error) {
+            console.error('处理工单失败:', error);
             this.showError('处理失败，请重试');
         }
     }
 
+    /**
+     * 显示工单处理模态框
+     * @param {number} ticketId - 工单ID
+     * @private
+     */
+    async _showProcessModal(ticketId) {
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${ticketId}`,
+                method: 'GET'
+            });
+
+            if (response.code === 200) {
+                this.state.currentTicket = response.data;
+                this._renderTicketDetail();
+                this.elements.processModal.show();
+            }
+        } catch (error) {
+            console.error('加载工单详情失败:', error);
+            this.showError('加载详情失败');
+        }
+    }
 
     /**
-     * 渲染操作按钮
-     * @param {Object} ticket - 工单对象
+     * 渲染工单详情
+     * @private
      */
-    renderOperationButtons(ticket) {
-        const buttons = [];
+    _renderTicketDetail() {
+        const ticket = this.state.currentTicket;
+        if (!ticket) return;
 
-        switch(ticket.status) {
-            case 'PENDING':
-                buttons.push(`
-                    <button class="btn btn-sm btn-primary process-btn" 
-                            data-ticket-id="${ticket.ticketId}">
-                        处理
-                    </button>
-                `);
-                break;
-            case 'PROCESSING':
-                buttons.push(`
-                    <button class="btn btn-sm btn-success me-1 complete-btn" 
-                            data-ticket-id="${ticket.ticketId}">
-                        完成
-                    </button>
-                    <button class="btn btn-sm btn-warning transfer-btn" 
-                            data-ticket-id="${ticket.ticketId}">
-                        转交
-                    </button>
-                `);
-                break;
-            case 'COMPLETED':
-                buttons.push(`
-                    <button class="btn btn-sm btn-outline-secondary view-btn" 
-                            data-ticket-id="${ticket.ticketId}">
-                        查看
-                    </button>
-                `);
-                break;
-        }
-
-        // 添加详情按钮
-        buttons.push(`
-            <button class="btn btn-sm btn-outline-primary ms-1 detail-btn" 
-                    data-ticket-id="${ticket.ticketId}">
-                详情
-            </button>
+        $('#ticketCode').text(ticket.ticketId);
+        $('#ticketTitle').text(ticket.title);
+        $('#ticketContent').text(ticket.content);
+        $('#createTime').text(this._formatDate(ticket.createTime));
+        $('#expectFinishTime').text(this._formatDate(ticket.expectFinishTime));
+        $('#ticketPriority').html(`
+            <span class="badge ${this._getPriorityBadgeClass(ticket.priority)}">
+                ${this._getPriorityText(ticket.priority)}
+            </span>
         `);
 
-        return buttons.join('');
+        // 重置表单
+        $('#processForm')[0].reset();
+        $('#processStatus').val(ticket.status === 'PENDING' ? 'PROCESSING' : 'COMPLETED');
+    }
+
+    /**
+     * 更新统计数据
+     * @private
+     */
+    async _updateStats() {
+        try {
+            const response = await $.ajax({
+                url: '/api/tickets/statistics',
+                method: 'GET',
+                data: { userId: this.userInfo.userId }
+            });
+
+            if (response.code === 200) {
+                const stats = response.data;
+                $('#pendingCount').text(stats.statusCount?.PENDING || 0);
+                $('#processingCount').text(stats.statusCount?.PROCESSING || 0);
+                $('#todayCompletedCount').text(stats.todayCompleted || 0);
+            }
+        } catch (error) {
+            console.error('获取统计数据失败:', error);
+        }
+    }
+
+    /**
+     * 格式化日期时间为后端接受的格式
+     * @param {string} dateString - 日期字符串
+     * @returns {string} ISO格式的日期时间字符串
+     * @private
+     */
+    _formatDateForBackend(dateString) {
+        if (!dateString) return null;
+        // 将日期格式化为ISO格式，确保时区正确
+        const date = new Date(dateString);
+        return date.toISOString();
+    }
+
+
+    /**
+     * 处理重置事件
+     * @private
+     */
+    _handleReset() {
+        // 重置表单
+        this.elements.searchForm[0].reset();
+
+        // 重置状态
+        this.state.filters = {
+            keyword: '',
+            status: '',
+            priority: '',
+            startTime: '',
+            endTime: ''
+        };
+        this.state.pagination.current = 1;
+
+        // 重新加载数据
+        this._loadTodos();
+    }
+
+
+    /**
+     * 获取优先级样式类
+     * @param {string} priority - 优先级
+     * @returns {string} 样式类名
+     * @private
+     */
+    _getPriorityBadgeClass(priority) {
+        const classMap = {
+            'HIGH': 'priority-high',
+            'MEDIUM': 'priority-medium',
+            'LOW': 'priority-low'
+        };
+        return classMap[priority] || 'priority-low';
     }
 
     /**
      * 获取优先级文本
-     * @param {number} priority - 优先级值
-     */
-    getPriorityText(priority) {
-        return {
-            1: '高优先级',
-            2: '中优先级',
-            3: '低优先级'
-        }[priority] || '未知优先级';
-    }
-
-
-    /**
-     * 渲染工单列表
-     * @param {Array} tickets - 工单数据数组
-     */
-    async renderTodoList(tickets) {
-        if (!tickets || tickets.length === 0) {
-            this.$todoList.html(`
-           <tr>
-               <td colspan="7" class="text-center text-muted">
-                   <i class="bi bi-inbox me-2"></i>暂无待办工单
-               </td>
-           </tr>
-       `);
-            return;
-        }
-        await this.getDepartmentList();
-
-        const html = await Promise.all(tickets.map(async ticket => `
-       <tr>
-           <td>TK${String(ticket.ticketId).padStart(6, '0')}</td>
-           <td>
-               <div class="d-flex align-items-center">
-                   ${this.renderPriorityIndicator(ticket.priority)}
-                   ${this.escapeHtml(ticket.title)}
-               </div>
-           </td>
-           <td>${await this.getDepartmentName(ticket.departmentId)}</td>
-           <td>${this.getPriorityText(ticket.priority)}</td>
-           <td>${ticket.expectFinishTime ? this.formatDateTime(ticket.expectFinishTime) : '-'}</td>
-           <td>${this.formatDateTime(ticket.createTime)}</td>
-           <td>${this.renderOperationButtons(ticket)}</td>
-       </tr>
-   `));
-
-        this.$todoList.html(html.join(''));
-    }
-
-
-
-    /**
-     * 更新详情模态框按钮状态
-     * @param {string} status - 工单状态
+     * @param {string} priority - 优先级
+     * @returns {string} 显示文本
      * @private
      */
-    updateDetailButtons(status) {
-        const $processBtn = $('#submitProcessBtn');
-        const $completeBtn = $('#completeBtn');
-        const $transferBtn = $('#transferBtn');
-
-        switch(status) {
-            case 'PENDING':
-                $processBtn.show().prop('disabled', false);
-                $completeBtn.hide();
-                $transferBtn.show().prop('disabled', false);
-                break;
-            case 'PROCESSING':
-                $processBtn.hide();
-                $completeBtn.show().prop('disabled', false);
-                $transferBtn.show().prop('disabled', false);
-                break;
-            case 'COMPLETED':
-            case 'CLOSED':
-                $processBtn.hide();
-                $completeBtn.hide();
-                $transferBtn.hide();
-                break;
-        }
+    _getPriorityText(priority) {
+        const textMap = {
+            'HIGH': '高优先级',
+            'MEDIUM': '中等优先级',
+            'LOW': '低优先级'
+        };
+        return textMap[priority] || '普通';
     }
 
-
     /**
-     * 格式化日期时间
-     * @param {string} dateTime - ISO日期时间字符串
-     */
-    formatDateTime(dateTime) {
-        if (!dateTime) return '-';
-        const date = new Date(dateTime);
-        return date.toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-    /**
-     * 统一错误处理
-     * @param {Error} error - 错误对象
+     * 显示加载状态
      * @private
      */
-    handleError(error) {
-        if (error.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('userInfo');
-            window.location.href = '/login.html';
-            return;
+    _showLoading() {
+        if (!this.$loading) {
+            this.$loading = $(`
+                <div class="loading-overlay">
+                    <div class="spinner-border text-primary"></div>
+                    <div class="loading-text">加载中...</div>
+                </div>
+            `).appendTo('body');
         }
-
-        const message = error.responseJSON?.msg || error.message || '操作失败';
-        this.showError(message);
+        this.$loading.show();
     }
 
+    /**
+     * 隐藏加载状态
+     * @private
+     */
+    _hideLoading() {
+        if (this.$loading) {
+            this.$loading.hide();
+        }
+    }
+
+    /**
+     * 显示成功提示
+     * @param {string} message - 提示信息
+     */
     showSuccess(message) {
         NotifyUtil.success(message);
     }
 
+    /**
+     * 显示错误提示
+     * @param {string} message - 提示信息
+     */
     showError(message) {
         NotifyUtil.error(message);
     }
 
     /**
-     * 转义HTML
+     * HTML转义
      * @param {string} str - 需要转义的字符串
+     * @returns {string} 转义后的字符串
+     * @private
      */
-    escapeHtml(str) {
+    _escapeHtml(str) {
         if (!str) return '';
-        return str
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 
     /**
-     * 初始化搜索表单相关功能
-     * 实现表单内容变更的自动触发和手动搜索
+     * 更新分页
      * @private
      */
-    initSearchForm() {
-        // 缓存表单元素
-        const $form = this.$searchForm;
-        const $inputs = $form.find('input, select');
+    _updatePagination() {
+        const { current, pageSize, total } = this.state.pagination;
+        const totalPages = Math.ceil(total / pageSize);
 
-        // 使用防抖函数包装搜索请求
-        const debouncedSearch = _.debounce(() => {
-            this.silentSearch();  // 静默搜索
-        }, 1000);  // 1秒延迟
+        // 构建分页HTML
+        let html = '';
 
-        /**
-         * 监听表单内容变更
-         * 包括：文本输入、下拉选择、日期选择等
-         */
-        $inputs.on('input change', (e) => {
-            const $target = $(e.target);
+        // 上一页
+        html += `
+            <li class="page-item ${current <= 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${current - 1}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+        `;
 
-            // 日期输入特殊处理
-            if ($target.attr('type') === 'date') {
-                const startDate = $('#startDate').val();
-                const endDate = $('#endDate').val();
-
-                // 确保日期范围有效
-                if (startDate && endDate && startDate > endDate) {
-                    this.showError('开始日期不能大于结束日期');
-                    return;
+        // 页码
+        for (let i = 1; i <= totalPages; i++) {
+            if (
+                i === 1 || // 第一页
+                i === totalPages || // 最后一页
+                (i >= current - 2 && i <= current + 2) // 当前页附近的页码
+            ) {
+                html += `
+                    <li class="page-item ${i === current ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            } else if (
+                (i === 2 && current - 2 > 2) || // 前面的省略号
+                (i === totalPages - 1 && current + 2 < totalPages - 1) // 后面的省略号
+            ) {
+                html += `
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                    </li>
+                `;
+                // 跳过中间的页码
+                if (i === 2) {
+                    i = current - 3;
+                } else {
+                    i = totalPages - 1;
                 }
             }
+        }
 
-            debouncedSearch();
-        });
+        // 下一页
+        html += `
+            <li class="page-item ${current >= totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${current + 1}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        `;
 
-        /**
-         * 处理表单提交（手动搜索）
-         */
-        $form.on('submit', (e) => {
+        this.elements.pagination.html(html);
+
+        // 绑定点击事件
+        this.elements.pagination.find('.page-link').on('click', (e) => {
             e.preventDefault();
-            this.handleManualSearch();
-        });
+            const page = $(e.currentTarget).data('page');
+            if (!page || page === current) return;
 
-        /**
-         * 处理表单重置
-         */
-        $('#resetBtn').on('click', () => {
-            $form[0].reset();
-            this.handleManualSearch();
+            this.state.pagination.current = page;
+            this._loadTodos();
         });
     }
 
     /**
-     * 静默搜索
-     * 不显示loading状态，静默刷新数据
+     * 获取优先级样式类
+     * @param {string} priority - 优先级
+     * @returns {string} 样式类名
      * @private
      */
-    async silentSearch() {
-        try {
-            // 构建搜索参数
-            const params = {
-                userId: this.userInfo.userId,
-                pageNum: this.state.currentPage,
-                pageSize: this.state.pageSize,
-                ...this.collectSearchParams()
-            };
-
-            // 发送请求
-            const response = await $.ajax({
-                url: '/api/tickets/todos',
-                method: 'GET',
-                data: params,
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (response.code === 200) {
-                // 更新数据和视图
-                this.renderTodoList(response.data);
-            } else {
-                throw new Error(response.msg || '搜索失败');
-            }
-        } catch (error) {
-            console.error('静默搜索失败:', error);
-            // 静默搜索失败不显示错误提示
+    _getPriorityClass(priority) {
+        switch(priority) {
+            case 'HIGH':
+                return 'high';
+            case 'MEDIUM':
+                return 'medium';
+            case 'LOW':
+                return 'low';
+            default:
+                return 'low';
         }
     }
 
     /**
-     * 手动搜索处理
-     * 显示loading状态，展示搜索结果
+     * 显示工单详情
+     * @param {number} ticketId - 工单ID
      * @private
      */
-    async handleManualSearch() {
+    async _showTicketDetail(ticketId) {
         try {
-            this.showLoading();
-
-            const params = {
-                userId: this.userInfo.userId,
-                pageNum: 1,  // 手动搜索重置页码
-                pageSize: this.state.pageSize,
-                ...this.collectSearchParams()
-            };
-
             const response = await $.ajax({
-                url: '/api/tickets/todos',
-                method: 'GET',
-                data: params,
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                url: `/api/tickets/${ticketId}`,
+                method: 'GET'
             });
 
             if (response.code === 200) {
-                this.state.currentPage = 1;  // 重置页码
-                this.renderTodoList(response.data);
-                this.showSuccess('搜索完成');
-            } else {
-                throw new Error(response.msg || '搜索失败');
+                const ticket = response.data;
+                // 使用Bootstrap Modal显示详情
+                const modalHtml = `
+                    <div class="modal fade" id="detailModal" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">工单详情</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <label class="form-label">工单编号</label>
+                                            <div class="fw-bold">${ticket.ticketId}</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">当前状态</label>
+                                            <div>${this._getStatusText(ticket.status)}</div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">标题</label>
+                                        <div class="fw-bold">${ticket.title}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">内容</label>
+                                        <div>${ticket.content}</div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <label class="form-label">创建时间</label>
+                                            <div>${this._formatDate(ticket.createTime)}</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">期望完成时间</label>
+                                            <div class="${this._isDeadlineNear(ticket.expectFinishTime) ? 'deadline-warning' : ''}">
+                                                ${this._formatDate(ticket.expectFinishTime)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- 添加处理记录显示等其他内容 -->
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                    <button type="button" class="btn btn-primary process-btn" data-id="${ticket.ticketId}">
+                                        处理工单
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 移除可能存在的旧模态框
+                $('#detailModal').remove();
+
+                // 添加新模态框并显示
+                $(modalHtml).appendTo('body').modal('show');
             }
         } catch (error) {
-            console.error('搜索失败:', error);
-            this.showError(error.message);
-        } finally {
-            this.hideLoading();
+            console.error('加载工单详情失败:', error);
+            this.showError('加载详情失败');
         }
     }
 
     /**
-     * 收集搜索参数
-     * @returns {Object} 搜索参数对象
+     * 获取状态文本
+     * @param {string} status - 状态
+     * @returns {string} 状态文本
      * @private
      */
-    collectSearchParams() {
-        const formData = new FormData(this.$searchForm[0]);
-
-        return {
-            keyword: formData.get('keyword')?.trim() || '',
-            priority: formData.get('priorityFilter') || '',
-            startDate: formData.get('startDate') || '',
-            endDate: formData.get('endDate') || '',
-            _t: new Date().getTime()  // 防止缓存
+    _getStatusText(status) {
+        const statusMap = {
+            'PENDING': '待处理',
+            'PROCESSING': '处理中',
+            'COMPLETED': '已完成',
+            'CLOSED': '已关闭'
         };
+        return statusMap[status] || '未知状态';
     }
 }
 
-// 初始化
+// 页面加载完成后初始化
 $(document).ready(() => {
     window.todoList = new TodoList();
 });

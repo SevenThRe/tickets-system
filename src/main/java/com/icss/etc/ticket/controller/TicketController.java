@@ -8,6 +8,7 @@ import com.icss.etc.ticket.entity.TicketRecord;
 import com.icss.etc.ticket.entity.TicketType;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
+import com.icss.etc.ticket.entity.vo.TodoStatsVO;
 import com.icss.etc.ticket.entity.vo.ticket.TicketStatisticsVO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.enums.OperationType;
@@ -374,6 +375,21 @@ public class TicketController {
             return R.FAIL();
         }
     }
+
+    /**
+     * 获取待办工单统计信息
+     */
+    @GetMapping("/todo/stats")
+    public R<TodoStatsVO> getTodoStats(@RequestParam Long userId) {
+        try {
+            TodoStatsVO stats = ticketService.getTodoStats(userId);
+            return R.OK(stats);
+        } catch (Exception e) {
+            log.error("获取待办统计失败:", e);
+            return R.FAIL();
+        }
+    }
+
 
 
 }
