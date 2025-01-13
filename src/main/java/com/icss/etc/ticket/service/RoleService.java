@@ -24,6 +24,9 @@ public interface RoleService {
      * @return insert count
      */
     int insert(Role role);
+
+//    //根据id删除权限
+//    int deletePermissionByRoleId(@Param("permissionId") Long permissionId);
     Role2 selectByRoleId(@Param("roleId") Long roleId);
     /**
      * select by primary key

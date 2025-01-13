@@ -49,9 +49,12 @@ public interface RoleMapper {
     //根据roleId删除角色
     int deleteByRoleId(@Param("roleId") Long roleId);
 
+//    //根据id删除权限
+//    int deletePermissionByRoleId(@Param("permissionId") Long permissionId);
     //一个角色查询所有权限
     List<Role2> OneRoleMorePermission();
 
     List<ChooseRolesVO> chooseRoles();
+
 
 }

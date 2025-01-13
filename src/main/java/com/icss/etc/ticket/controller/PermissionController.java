@@ -31,6 +31,7 @@ public class PermissionController {
     @Autowired
     private PermissionService permissionService;
 
+
     //    //一个角色查询所有权限
 //    List<Role2> OneRoleMorePermission();
 //    //增加权限

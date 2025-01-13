@@ -33,6 +33,11 @@ public class RoleServiceImpl implements RoleService {
         return roleMapper.insert(role);
     }
 
+//    @Override
+//    public int deletePermissionByRoleId(Long permissionId) {
+//        return roleMapper.deletePermissionByRoleId(permissionId);
+//    }
+
     @Override
     public Role selectByByRoleId(Long roleId) {
         return roleMapper.selectByByRoleId(roleId);

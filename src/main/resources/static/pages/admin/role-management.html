@@ -105,6 +105,24 @@
 
                             </tbody>
                         </table>
+
+
+<!--                        权限-->
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>角色权限</th>
+                                <th class="text-right">
+                                    <button class="btn btn-success btn-sm" id="addRoleButton" onclick="addPermission()">
+                                        <i class="bi bi-plus-circle"></i> 添加权限
+                                    </button>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody id="permission">
+
+                            </tbody>
+                        </table>
 <!--                        <div class="row">-->
 <!--                            <div class="col-md-4">-->
 <!--                                <label class="form-label">角色编码</label>-->
@@ -126,23 +144,23 @@
 <!--                    </div>-->
 
                     <!-- 权限配置区域 -->
-                    <div class="permission-config">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="mb-0">权限配置</h6>
-                            <div class="permission-actions">
-                                <button class="btn btn-outline-secondary btn-sm me-2" id="expandAllBtn">
-                                    展开全部
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm" id="collapseAllBtn">
-                                    收起全部
-                                </button>
-                            </div>
-                        </div>
-                        <!-- 权限树形结构 -->
-                        <div class="permission-tree" id="permissionTree">
-                            <!-- 由JS动态填充权限树 -->
-                        </div>
-                    </div>
+<!--                    <div class="permission-config">-->
+<!--                        <div class="d-flex justify-content-between align-items-center mb-3">-->
+<!--                            <h6 class="mb-0">权限配置</h6>-->
+<!--                            <div class="permission-actions">-->
+<!--                                <button class="btn btn-outline-secondary btn-sm me-2" id="expandAllBtn">-->
+<!--                                    展开全部-->
+<!--                                </button>-->
+<!--                                <button class="btn btn-outline-secondary btn-sm" id="collapseAllBtn">-->
+<!--                                    收起全部-->
+<!--                                </button>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        &lt;!&ndash; 权限树形结构 &ndash;&gt;-->
+<!--                        <div class="permission-tree" id="permissionTree">-->
+<!--                            &lt;!&ndash; 由JS动态填充权限树 &ndash;&gt;-->
+<!--                        </div>-->
+<!--                    </div>-->
 
                     <!-- 保存按钮区域 -->
                     <div class="permission-actions mt-4 text-end" style="display: none;">
@@ -246,7 +264,7 @@
 <script src="/js/utils/notify-util.js"></script>
 <script src="/config/constants.js"></script>
 <script src="/js/utils/request-util.js"></script>
-<script src="/js/utils/request-interceptor.js"></script>
+<!--<script src="/js/utils/request-interceptor.js"></script>-->
 <script src="/js/utils/validator-util.js"></script>
 <script src="/js/components/base/base-component.js"></script>
 <script src="/js/components/layout/navbar.js"></script>

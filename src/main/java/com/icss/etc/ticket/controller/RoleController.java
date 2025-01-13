@@ -128,4 +128,9 @@ public class RoleController {
         Role2 role2 = roleService.selectByRoleId(roleId);
         return R.OK(role2);
     }
+//    @RequestMapping("/deletePermissionByRoleId/{permissionId}")
+//    public R deletePermissionByRoleId(@PathVariable("permissionId")Long permissionId){
+//        int result = roleService.deletePermissionByRoleId(permissionId);
+//        return result>0?R.OK():R.FAIL();
+//    }
 }

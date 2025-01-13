@@ -20,7 +20,7 @@
             for (const [api, permissions] of Object.entries(apiPermissions)) {
                 if (url.includes(api)) {
                     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-                    const userPermissions = JSON.parse(localStorage.getItem('permissions') || [];
+                    const userPermissions = JSON.parse(localStorage.getItem('permissions') || '[]');
                     // 检查是否有所需的任一权限
                     const hasPermission = permissions.some(p => userPermissions.includes(p));
                     if (!hasPermission) {
