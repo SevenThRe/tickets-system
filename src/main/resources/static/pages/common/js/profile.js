@@ -158,6 +158,8 @@ class Profile {
                 roleId: formData.get('roleId')               // 提交角色ID
             };
 
+            console.log(submitData);
+
             // 发送请求
             const response = await $.ajax({
                 url: '/api/users/profile',

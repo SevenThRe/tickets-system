@@ -83,7 +83,7 @@ class Navbar {
                     id: 'users',
                     title: '用户管理',
                     icon: 'bi bi-people',
-                    url: '/pages/pages/admin/user-management.html'
+                    url: '/pages/admin/user-management.html'
                 },
                 {
                     id: 'departments',

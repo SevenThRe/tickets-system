@@ -339,10 +339,10 @@ class Dashboard {
                 window.location.href = '/pages/user/todos.html';
                 break;
             case 'tickets':
-                window.location.href = '/pages/user/my-tickets.html';
+                window.location.href = '/pages/common/my-tickets.html';
                 break;
             case 'create':
-                window.location.href = '/pages/user/my-tickets.html?action=create';
+                window.location.href = '/pages/common/my-tickets.html?action=create';
                 break;
             case 'profile':
                 window.location.href = '/pages/user/profile.html';
