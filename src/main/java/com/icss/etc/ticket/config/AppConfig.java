@@ -1,12 +1,17 @@
 package com.icss.etc.ticket.config;
 
 import com.icss.etc.ticket.interceptors.AuthInterceptor;
+
 import org.springframework.context.annotation.Configuration;
+
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.io.IOException;
+import java.util.Properties;
+
 /**
  * {@code AppConfig}
  * 配置类
@@ -20,6 +25,7 @@ public class AppConfig implements WebMvcConfigurer {
     public AppConfig(AuthInterceptor authInterceptor) {
         this.authInterceptor = authInterceptor;
     }
+
 
     /**
      * 配置路径匹配

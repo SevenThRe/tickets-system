@@ -216,6 +216,7 @@ class Navbar {
         this.container
             .find('.navbar-items')
             .toggleClass('expanded', this.state.expanded);
+        this.container.toggleClass('navbar-expanded', this.state.expanded);
     }
 
     /**

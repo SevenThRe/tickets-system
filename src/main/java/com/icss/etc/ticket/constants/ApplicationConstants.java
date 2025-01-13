@@ -16,13 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Getter
 @Setter
-@PropertySource("classpath:options.properties")
 public class ApplicationConstants {
-
-
-
-
-
 
 
 }

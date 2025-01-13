@@ -11,7 +11,9 @@ import com.icss.etc.ticket.util.MD5Util;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -134,6 +136,25 @@ public class UserController {
             return R.builder().code(e.getCode()).msg(e.getMessage()).build();
         } catch (Exception e) {
             log.error("更新用户信息失败:", e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
+        }
+    }
+    /**
+     * 添加用户头像
+     * @param user_id 用户ID
+     * @param avatar 头像地址
+     */
+    @PostMapping("/avatar")
+    public R<String> uploadAvatar(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("userId") Long userId,
+            @RequestParam("username") String username) {
+
+        try {
+            userService.saveAvatar(file, userId, username);
+            return R.OK();
+        } catch (Exception e) {
+            log.error("Upload avatar failed", e);
             return R.FAIL(CodeEnum.INTERNAL_ERROR);
         }
     }

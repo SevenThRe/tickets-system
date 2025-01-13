@@ -9,15 +9,21 @@ import com.icss.etc.ticket.entity.User;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.exceptions.BusinessException;
+import com.icss.etc.ticket.mapper.DepartmentMapper;
 import com.icss.etc.ticket.mapper.UserMapper;
 import com.icss.etc.ticket.mapper.UserRoleMapper;
 import com.icss.etc.ticket.service.UserService;
+import com.icss.etc.ticket.util.PropertiesUtil;
 import io.micrometer.common.util.StringUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -26,9 +32,13 @@ import java.util.regex.Pattern;
 public class UserServiceImpl implements UserService{
     @Autowired
     private UserMapper userMapper;
-
+    @Autowired
+    private DepartmentMapper departmentMapper;
     @Autowired
     private UserRoleMapper userRoleMapper;
+    @Autowired
+    private PropertiesUtil propertiesUtil;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int register(RegisteredDTO user)  {
@@ -36,7 +46,7 @@ public class UserServiceImpl implements UserService{
         try {
             count = userMapper.register(user);
             log.info(this.getClass().getSimpleName()+ "user register :" + user.getUsername() + " count: " + count);
-            //TODO: 将用户信息写入到T USER_ROLE表中
+            //TODO: 将用户存储到无部门中
             Long userId = userMapper.login(user.getUsername());
             count += userRoleMapper.insert(new UserRole(userId, user.getRoleId()));
             if (count != 2) {
@@ -179,6 +189,45 @@ public class UserServiceImpl implements UserService{
     @Override
     public String[] selectUserPermissions(Long userId) {
         return userMapper.selectUserPermissions(userId);
+    }
+
+    /**
+     * 用户头像上传路径
+     */
+
+    private static  String AVATAR_PATH;
+
+    /**
+     * 初始化
+     */
+    @PostConstruct
+    public void init() {
+        AVATAR_PATH = propertiesUtil.getProperty("upload.avatarPath", "./src/main/resources/static/");
+    }
+    public void saveAvatar(MultipartFile file, Long userId, String username) throws IOException {
+        // 确保目录存在
+        File dir = new File(AVATAR_PATH);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        // 生成头像文件名
+        String fileName = this.getUserAvatarPath(username, userId);
+        String filePath = AVATAR_PATH + fileName;
+
+        // 保存文件
+        File dest = new File(filePath);
+        if (!dest.exists()) {
+            dest.createNewFile();
+        }
+        file.transferTo(dest);
+    }
+
+    /**
+     * 获取用户头像路径
+     */
+    public String getUserAvatarPath(String username, Long userId) {
+        return "/images/" + username + "_" + userId + "_avatar.png";
     }
 
 

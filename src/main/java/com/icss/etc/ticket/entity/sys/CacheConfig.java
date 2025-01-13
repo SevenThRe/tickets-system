@@ -1,5 +1,7 @@
 package com.icss.etc.ticket.entity.sys;
 
+import lombok.Data;
+
 /**
  * {@code CacheConfig}
  *
@@ -7,6 +9,7 @@ package com.icss.etc.ticket.entity.sys;
  * @version 1.0
  * @since 1.0
  */
+@Data
 public class CacheConfig {
     private boolean enableCache;
     private int expireTime;

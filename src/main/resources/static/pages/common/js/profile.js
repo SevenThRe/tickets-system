@@ -62,6 +62,7 @@ class Profile {
             if (response.code === 200) {
                 this.state.userInfo = response.data;
                 this.updateUI();
+
             } else {
                 throw new Error(response.msg || '加载用户信息失败');
             }
@@ -88,7 +89,15 @@ class Profile {
         // 更新头部显示信息
         $('#userName').text(userInfo.realName || userInfo.username);
         $('#userRole').text(userInfo.roleName || '普通用户');
-        $('#userAvatar').attr('src', userInfo.avatar || '/images/default-avatar.png');
+
+        const avatarPath = `/images/${userInfo.username}_${userInfo.userId}_avatar.png`;
+
+        $('#userAvatar')
+            .attr('src', avatarPath)
+            .on('error', function() {
+                // 如果加载失败，使用默认头像
+                $(this).attr('src', '/images/default-avatar.png');
+            });
 
         // 更新角色背景色
         $('.profile-cover').removeClass('role-ADMIN role-DEPT role-USER')
@@ -376,13 +385,15 @@ class Profile {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (!file.type.startsWith('/images/')) {
-            this.showError('请选择图片文件');
+        // 检查文件类型
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!validImageTypes.includes(file.type)) {
+            NotifyUtil.error('请选择JPG、PNG或GIF格式的图片文件');
             return;
         }
 
         if (file.size > 2 * 1024 * 1024) {
-            this.showError('图片大小不能超过2MB');
+            NotifyUtil.error('图片大小不能超过2MB');
             return;
         }
 
@@ -394,20 +405,22 @@ class Profile {
         };
         reader.readAsDataURL(file);
     }
-
     /**
      * 处理头像上传
      */
     async handleAvatarUpload() {
         const file = $('#avatarFile')[0].files[0];
         if (!file) {
-            this.showError('请选择图片');
+            NotifyUtil.error('请选择图片');
             return;
         }
 
         try {
             const formData = new FormData();
-            formData.append('avatar', file);
+            // 修改这里的字段名为'file'以匹配后端
+            formData.append('file', file);
+            formData.append('userId', this.state.userInfo.userId);
+            formData.append('username', this.state.userInfo.username);
 
             const response = await $.ajax({
                 url: '/api/users/avatar',
@@ -421,19 +434,22 @@ class Profile {
             });
 
             if (response.code === 200) {
-                this.state.userInfo.avatar = response.data.url;
-                this.updateUI();
+                // 刷新头像显示，添加时间戳避免缓存
+                const avatarPath = `/images/${this.state.userInfo.username}_${this.state.userInfo.userId}_avatar.png?t=${new Date().getTime()}`;
+                $('#userAvatar').attr('src', avatarPath);
+
                 this.avatarModal.hide();
-                this.showSuccess('头像更新成功');
+                NotifyUtil.success('头像更新成功');
             } else {
                 throw new Error(response.msg || '上传失败');
             }
 
         } catch (error) {
             console.error('上传头像失败:', error);
-            this.showError('上传失败，请重试');
+            NotifyUtil.error(error.responseJSON?.msg || '上传失败，请重试');
         }
     }
+
 
     /**
      * 处理设置变更

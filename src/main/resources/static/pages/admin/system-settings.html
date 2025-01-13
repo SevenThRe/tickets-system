@@ -39,6 +39,11 @@
                         <i class="bi bi-file-text"></i> 日志设置
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#upload">
+                        <i class="bi bi-upload"></i> 文件上传设置
+                    </a>
+                </li>
             </ul>
 
             <div class="tab-content mt-4">
@@ -47,16 +52,7 @@
                     <form id="generalForm">
                         <div class="mb-4">
                             <label class="form-label">系统名称</label>
-                            <input type="text" class="form-control" name="systemName">
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label">系统Logo</label>
-                            <div class="d-flex align-items-center">
-                                <img src="/images/logo.png" class="logo-preview me-3">
-                                <button type="button" class="btn btn-outline-primary">
-                                    更换Logo
-                                </button>
-                            </div>
+                            <input type="text" class="form-control" name="systemName" required>
                         </div>
                         <button type="submit" class="btn btn-primary">保存设置</button>
                     </form>
@@ -67,7 +63,7 @@
                     <form id="cacheForm">
                         <div class="mb-4">
                             <div class="form-check form-switch">
-                                <input type="checkbox" class="form-check-input" name="enableCache" id="enableCache" checked>
+                                <input type="checkbox" class="form-check-input" name="enableCache" id="enableCache">
                                 <label class="form-check-label">启用系统缓存</label>
                             </div>
                         </div>
@@ -75,7 +71,7 @@
                             <div class="mb-4">
                                 <label class="form-label">缓存过期时间</label>
                                 <div class="input-group">
-                                    <input type="number" class="form-control" name="expireTime" value="10">
+                                    <input type="number" class="form-control" name="expireTime" min="1" required>
                                     <select class="form-select" name="expireTimeUnit" style="max-width: 150px;">
                                         <option value="MINUTES">分钟</option>
                                         <option value="HOURS">小时</option>
@@ -85,7 +81,7 @@
                             </div>
                             <div class="mb-4">
                                 <label class="form-label">最大缓存条数</label>
-                                <input type="number" class="form-control" name="maxSize" value="1000">
+                                <input type="number" class="form-control" name="maxSize" min="100" required>
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary">保存设置</button>
@@ -97,11 +93,11 @@
                     <form id="logForm">
                         <div class="mb-4">
                             <label class="form-label">日志存储路径</label>
-                            <input type="text" class="form-control" name="logPath">
+                            <input type="text" class="form-control" name="logPath" required>
                         </div>
                         <div class="mb-4">
                             <label class="form-label">日志级别</label>
-                            <select class="form-select" name="logLevel">
+                            <select class="form-select" name="logLevel" required>
                                 <option value="DEBUG">DEBUG</option>
                                 <option value="INFO">INFO</option>
                                 <option value="WARN">WARN</option>
@@ -110,7 +106,38 @@
                         </div>
                         <div class="mb-4">
                             <label class="form-label">日志保留天数</label>
-                            <input type="number" class="form-control" name="logRetentionDays">
+                            <input type="number" class="form-control" name="logRetentionDays" min="1" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存设置</button>
+                    </form>
+                </div>
+
+                <!-- 上传文件 -->
+                <div class="tab-pane fade" id="upload">
+                    <form id="uploadForm">
+                        <div class="mb-4">
+                            <label class="form-label">上传文件路径</label>
+                            <input type="text" class="form-control" name="uploadPath" required>
+                            <div class="form-text">文件上传的存储路径,支持中文</div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">最大文件大小(MB)</label>
+                            <input type="number" class="form-control" name="maxSize" min="1" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">允许的文件类型</label>
+                            <select class="form-select" name="allowedTypes" multiple required>
+                                <option value="application/pdf">PDF文件</option>
+                                <option value="application/msword">Word文档</option>
+                                <option value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">Word 2007+文档</option>
+                                <option value="image/jpeg">JPEG图片</option>
+                                <option value="image/png">PNG图片</option>
+                            </select>
+                            <div class="form-text">按住Ctrl键可多选</div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">头像上传路径</label>
+                            <input type="text" class="form-control" name="avatarPath" required>
                         </div>
                         <button type="submit" class="btn btn-primary">保存设置</button>
                     </form>
@@ -126,7 +153,6 @@
 
 <!-- 工具类 -->
 <script src="/js/utils/notify-util.js"></script>
-<script src="/js/utils/request-util.js"></script>
 <script src="/js/utils/validator-util.js"></script>
 <script src="/js/utils/utils.js"></script>
 
