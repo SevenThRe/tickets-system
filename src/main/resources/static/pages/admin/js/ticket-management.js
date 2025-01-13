@@ -440,26 +440,6 @@ class TicketManagement {
         }
     }
 
-    /**
-     * 渲染工单详情
-     */
-    renderTicketDetail() {
-        const ticket = this.state.currentTicket;
-        if(!ticket) return;
-
-        $('#ticketCode').text(ticket.code);
-        $('#ticketTitle').text(ticket.title);
-        $('#ticketContent').text(ticket.content);
-        $('#createTime').text(this.formatDate(ticket.createTime));
-        $('#ticketStatus').html(`
-       <span class="ticket-status status-${ticket.status.toLowerCase()}">
-           ${this.STATUS_MAP[ticket.status]}
-       </span>
-   `);
-
-        this.renderTimeline(ticket.records);
-        this.updateActionButtons(ticket.status);
-    }
 
     /**
      * 渲染处理记录时间线

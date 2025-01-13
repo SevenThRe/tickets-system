@@ -317,7 +317,7 @@ class LoginPage {
      * 检查是否已登录
      */
     checkLoggedIn() {
-        return !!localStorage.getItem('token');
+        return !!localStorage.getItem('token') && !!localStorage.getItem('userInfo');
     }
 
     /**
