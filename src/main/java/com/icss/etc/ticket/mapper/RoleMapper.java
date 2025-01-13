@@ -44,7 +44,7 @@ public interface RoleMapper {
     int updateRole(Role role);
 
     //查询所有角色
-    List<Role> selectAll(String keyword);
+    List<Role> selectAll(@Param("keyword") String keyword);
 
     //根据roleId删除角色
     int deleteByRoleId(@Param("roleId") Long roleId);

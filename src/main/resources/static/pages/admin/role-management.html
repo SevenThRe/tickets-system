@@ -107,7 +107,7 @@
                         </table>
 
 
-<!--                        权限-->
+                        <!--                        权限-->
                         <table class="table">
                             <thead>
                             <tr>
@@ -123,49 +123,50 @@
 
                             </tbody>
                         </table>
-<!--                        <div class="row">-->
-<!--                            <div class="col-md-4">-->
-<!--                                <label class="form-label">角色编码</label>-->
-<!--                                <div id="roleCode" class="info-text"></div>-->
-<!--                            </div>-->
-<!--                            <div class="col-md-4">-->
-<!--                                <label class="form-label">基础角色</label>-->
-<!--                                <div id="baseRole" class="info-text"></div>-->
-<!--                            </div>-->
-<!--                            <div class="col-md-4">-->
-<!--                                <label class="form-label">状态</label>-->
-<!--                                <div id="roleStatus" class="info-text"></div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                        <div class="mt-3">-->
-<!--                            <label class="form-label">描述</label>-->
-<!--                            <div id="roleDescription" class="info-text"></div>-->
-<!--                        </div>-->
-<!--                    </div>-->
+                        <!--                        <div class="row">-->
+                        <!--                            <div class="col-md-4">-->
+                        <!--                                <label class="form-label">角色编码</label>-->
+                        <!--                                <div id="roleCode" class="info-text"></div>-->
+                        <!--                            </div>-->
+                        <!--                            <div class="col-md-4">-->
+                        <!--                                <label class="form-label">基础角色</label>-->
+                        <!--                                <div id="baseRole" class="info-text"></div>-->
+                        <!--                            </div>-->
+                        <!--                            <div class="col-md-4">-->
+                        <!--                                <label class="form-label">状态</label>-->
+                        <!--                                <div id="roleStatus" class="info-text"></div>-->
+                        <!--                            </div>-->
+                        <!--                        </div>-->
+                        <!--                        <div class="mt-3">-->
+                        <!--                            <label class="form-label">描述</label>-->
+                        <!--                            <div id="roleDescription" class="info-text"></div>-->
+                        <!--                        </div>-->
+                        <!--                    </div>-->
 
-                    <!-- 权限配置区域 -->
-<!--                    <div class="permission-config">-->
-<!--                        <div class="d-flex justify-content-between align-items-center mb-3">-->
-<!--                            <h6 class="mb-0">权限配置</h6>-->
-<!--                            <div class="permission-actions">-->
-<!--                                <button class="btn btn-outline-secondary btn-sm me-2" id="expandAllBtn">-->
-<!--                                    展开全部-->
-<!--                                </button>-->
-<!--                                <button class="btn btn-outline-secondary btn-sm" id="collapseAllBtn">-->
-<!--                                    收起全部-->
-<!--                                </button>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                        &lt;!&ndash; 权限树形结构 &ndash;&gt;-->
-<!--                        <div class="permission-tree" id="permissionTree">-->
-<!--                            &lt;!&ndash; 由JS动态填充权限树 &ndash;&gt;-->
-<!--                        </div>-->
-<!--                    </div>-->
+                        <!-- 权限配置区域 -->
+                        <!--                    <div class="permission-config">-->
+                        <!--                        <div class="d-flex justify-content-between align-items-center mb-3">-->
+                        <!--                            <h6 class="mb-0">权限配置</h6>-->
+                        <!--                            <div class="permission-actions">-->
+                        <!--                                <button class="btn btn-outline-secondary btn-sm me-2" id="expandAllBtn">-->
+                        <!--                                    展开全部-->
+                        <!--                                </button>-->
+                        <!--                                <button class="btn btn-outline-secondary btn-sm" id="collapseAllBtn">-->
+                        <!--                                    收起全部-->
+                        <!--                                </button>-->
+                        <!--                            </div>-->
+                        <!--                        </div>-->
+                        <!--                        &lt;!&ndash; 权限树形结构 &ndash;&gt;-->
+                        <!--                        <div class="permission-tree" id="permissionTree">-->
+                        <!--                            &lt;!&ndash; 由JS动态填充权限树 &ndash;&gt;-->
+                        <!--                        </div>-->
+                        <!--                    </div>-->
 
-                    <!-- 保存按钮区域 -->
-                    <div class="permission-actions mt-4 text-end" style="display: none;">
-                        <button class="btn btn-secondary me-2" id="cancelBtn">取消修改</button>
-                        <button class="btn btn-primary" id="savePermissionsBtn">保存权限</button>
+                        <!-- 保存按钮区域 -->
+                        <div class="permission-actions mt-4 text-end" style="display: none;">
+                            <button class="btn btn-secondary me-2" id="cancelBtn">取消修改</button>
+                            <button class="btn btn-primary" id="savePermissionsBtn">保存权限</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -235,6 +236,68 @@
     </div>
 </div>
 
+
+<!--编辑模态层-->
+<div class="modal fade" id="roleModal1" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleModalTitle1">修改角色</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="roleForm1" class="needs-validation" novalidate>
+                    <input type="hidden" id="roleId1" name="roleId">
+                    <!-- 基础角色选择 -->
+                    <div class="mb-3">
+                        <label class="form-label required">基础角色类型</label>
+                        <select class="form-select" id="baseRoleSelect1" name="baseRoleCode" required>
+                            <option value="">请选择要修改基础角色类型</option>
+                            <option value="ADMIN">系统管理员</option>
+                            <option value="DEPT">部门主管</option>
+                            <option value="USER">普通用户</option>
+                        </select>
+                        <div class="invalid-feedback">请选择基础角色类型</div>
+                    </div>
+                    <!-- 角色编码 -->
+                    <div class="mb-3">
+                        <label class="form-label required">要修改角色编码</label>
+                        <input type="text" class="form-control" id="roleCodeInput1" name="roleCode"
+                               required pattern="^[A-Z][A-Z0-9_]{2,19}$">
+                        <div class="form-text">大写字母开头,仅允许大写字母、数字和下划线,3-20位</div>
+                        <div class="invalid-feedback">请输入有效的角色编码</div>
+                    </div>
+                    <!-- 角色名称 -->
+                    <div class="mb-3">
+                        <label class="form-label required">要角色名称</label>
+                        <input type="text" class="form-control" id="roleName1" name="roleName"
+                               required maxlength="50">
+                        <div class="invalid-feedback">请输入角色名称</div>
+                    </div>
+                    <!-- 角色描述 -->
+                    <div class="mb-3">
+                        <label class="form-label">要角色描述</label>
+                        <textarea class="form-control" id="description1" name="description"
+                                  rows="3" maxlength="200"></textarea>
+                        <div class="form-text">最多200字符</div>
+                    </div>
+                    <!-- 状态开关 -->
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" class="form-check-input" id="status1"
+                                   name="status" value="1" checked>
+                            <label class="form-check-label">启用角色</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveRoleBtn2" onclick="updateRole()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- 删除确认模态框 -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">

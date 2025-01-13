@@ -47,8 +47,6 @@ $(function () {
         pageNumber = total;
         getList();
     });
-
-
 });
 // 获取角色权限
 //获取详细角色信息
@@ -56,7 +54,7 @@ function getSomePermission(roleId) {
     let url = `/api/roles/selectByRoleId/${roleId}`;
     $.ajax({
         url: url,
-        headers: { "token": localStorage.getItem("token") },
+        headers: {"token": localStorage.getItem("token")},
         success: function (result) {
             // 确保 result.data 和 result.data.morePermission 存在且是数组
             if (result && result.data && Array.isArray(result.data.morePermission)) {
@@ -98,7 +96,7 @@ function getSomeThing(roleId) {
     let url = `/api/roles/selectByRoleId/${roleId}`;
     $.ajax({
         url: url,
-        headers: { "token": localStorage.getItem("token") },
+        headers: {"token": localStorage.getItem("token")},
         success: function (result) {
             let html = `
                 <tr>
@@ -122,6 +120,7 @@ function getSomeThing(roleId) {
         }
     });
 }
+
 //删除权限
 function del(permissionId) {
     if (confirm('确定删除吗？')) {
@@ -149,9 +148,10 @@ function del(permissionId) {
 }
 
 //添加权限
-function addPermission(){
+function addPermission() {
 
 }
+
 //左侧获取角色名字
 function getList() {
     // 确保 pageNumber 和 length 已经被传递进来
@@ -159,16 +159,20 @@ function getList() {
         url: "/api/roles/selectAll",
         data: {
             pageNumber: pageNumber,
-            pageSize:$("#length").val(),
+            pageSize: $("#length").val(),
             keyword: $("#roleSearch").val(),
         },
-        headers: { "token": localStorage.getItem("token") },
+        headers: {"token": localStorage.getItem("token")},
         success: function (result) {
             total = result.data.total; // 使用 var, let 或 const 声明变量
             let html = '';
             $(result.data.list).each(function (index, e) {
                 html += "<tr>";
                 html += "<td class='role-name' data-id='" + e.roleId + "'>" + e.roleName + "</td>"; // 修改 data-i 为 data-id，更语义化
+                html += "<td>";
+                html += "<button class='btn btn-primary' onclick='updateRoleModal(" + JSON.stringify(e) + ")'>修改</button>";
+                html += "<button class='btn btn-danger' onclick='delRole(" + e.roleId + ")'>删除</button>";
+                html += "</td>";
                 html += "</tr>";
             });
             // 先移除之前绑定的事件，防止多次绑定
@@ -191,26 +195,101 @@ function getList() {
         }
     });
 }
+
 //增加的模态层
-function showroleModal(){
+function showroleModal() {
     $("#roleModal").modal('show');
+    $("#roleModal :input").val("");
 }
 
-$("#createRoleBtn").on('click', function() {
+//修改的模态层
+function updateRoleModal(e) {
+    $("#roleModal1").modal('show');
+    $("#baseRoleSelect1").val(e.baseRoleCode);
+    $("#roleCodeInput1").val(e.roleCode);
+    $("#roleName1").val(e.roleName);
+    $("#description1").val(e.description);
+    $("#status1").val(e.status);
+    $("#roleId1").val(e.roleId);
+}
+
+$("#createRoleBtn").on('click', function () {
     showroleModal();
 });
 
+//修改
+function updateRole() {
+    let P = $("#roleForm1").serialize();
+    console.log(P);
+    $.ajax({
+        url: "/api/roles/updateRole",
+        data: P,
+        headers: {"token": localStorage.getItem("token")},
+        success: function () {
+            alert("修改成功");
+            window.location.reload();
+        }, error: function (xhr, status, error) {
+            if (xhr.status == 401) {
+                alert('请登录！');
+                window.location.href = '/login.html';
+            }
+        }
+    })
+}
+
+//删除角色
+function delRole(id) {
+    if (confirm('确定删除吗')) {
+        $.ajax({
+            url: "/api/roles/deleteByRoleId/" + id,
+            headers: {"token": localStorage.getItem("token")},
+            success: function (result) {
+                alert("删除成功");
+                window.location.reload();
+            }, error: function (xhr, status, error) {
+                if (xhr.status == 401) {
+                    alert('请登录！');
+                    window.location.href = '/login.html';
+                }
+            }
+        })
+    }
+}
+
+// 这段代码的主要目的是创建一个防抖函数，可以将一个函数延迟执行，避免函数被频繁调用，从而降低系统的负担。下面是加上注释后的代码：
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+//搜索框模糊查询
+$(document).ready(function () {
+    let debouncedSearch; // 保存防抖后的函数
+    // 初始化防抖函数
+    debouncedSearch = debounce(function () {
+        getList();
+    }, 300);
+
+    $('#roleSearch').on('keyup', function (event) {
+        debouncedSearch();
+    });
+});
+
+
 //增加
-function addRole(){
-    let P= $("#roleForm").serialize();
+function addRole() {
+    let P = $("#roleForm").serialize();
     console.log(P);
     $.ajax({
         url: "/api/roles/insert",
-        data:P,
-        headers:{"token":localStorage.getItem("token")},
+        data: P,
+        headers: {"token": localStorage.getItem("token")},
         success: function () {
             alert("添加成功");
-                window.location.reload();
+            window.location.reload();
         }, error: function (xhr, status, error) {
             if (xhr.status == 401) {
                 alert('请登录！');

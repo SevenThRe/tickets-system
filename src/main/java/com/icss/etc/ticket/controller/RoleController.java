@@ -64,6 +64,7 @@ public class RoleController {
     @RequirePermissions("role:update")
     @RequestMapping("/updateRole")
     public R updateRole(Role role){
+        System.out.println(role);
         int result=roleService.updateRole(role);
         return result>0?R.OK():R.FAIL();
     }
@@ -86,7 +87,7 @@ public class RoleController {
      * @return 所有角色信息
      */
     @RequestMapping("/selectAll")
-    public R selectAllDept(RoleDTO roleDTO){
+    public R selectAll(RoleDTO roleDTO){
         PageHelper.startPage(roleDTO.pageNumber(),roleDTO.pageSize(),true);
         List<Role> list = roleService.selectAll(roleDTO.keyword());
         PageInfo<Role> pageInfo=new PageInfo<>(list);

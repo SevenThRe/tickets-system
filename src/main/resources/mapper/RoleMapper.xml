@@ -51,7 +51,7 @@
     </update>
 
     <!--查询所有角色-->
-    <select id="selectAll" resultType="com.icss.etc.ticket.entity.Role">
+    <select id="selectAll" resultType="com.icss.etc.ticket.entity.Role" >
         select
         <include refid="Base_Column_List"/>
         from t_role
@@ -270,13 +270,13 @@
 
 
 
-    <update id="deletePermissionByRoleId" >
-        update t_role r
-        left join t_role_permission on r.role_id = t_role_permission.role_id
-        left join t_permission p on p.permission_id = t_role_permission.permission_id
-        set p.is_deleted = 1
-        where p.permission_id= #{permissionId}
-    </update>
+<!--    <update id="deletePermissionByRoleId" >-->
+<!--        update t_role r-->
+<!--        left join t_role_permission on r.role_id = t_role_permission.role_id-->
+<!--        left join t_permission p on p.permission_id = t_role_permission.permission_id-->
+<!--        set p.is_deleted = 1-->
+<!--        where p.permission_id= #{permissionId}-->
+<!--    </update>-->
     <!--  <update id="updateBatchSelective" parameterType="java.util.List">-->
     <!--    &lt;!&ndash;@mbg.generated&ndash;&gt;-->
     <!--    update t_role-->
