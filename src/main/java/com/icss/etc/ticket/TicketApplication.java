@@ -19,6 +19,7 @@ import org.springframework.context.annotation.PropertySources;
  */
 @SpringBootApplication
 @MapperScan("com.icss.etc.ticket.mapper")
+
 public class TicketApplication {
 
     public static void main(String[] args) {

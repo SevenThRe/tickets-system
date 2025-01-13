@@ -92,6 +92,7 @@ body {
     text-decoration: none;
     border-radius: 0.25rem;
     transition: all 0.2s ease;
+    position: relative;
 }
 
 .navbar-item-inner:hover {
@@ -107,25 +108,56 @@ body {
     align-items: center;
 }
 
-/* 链接文本 */
+
 .link-text {
     margin: 0;
-    width: 0;
     white-space: nowrap;
-    opacity: 0;
-    transition: all var(--transition-speed) cubic-bezier(.175, .685, .32, 1);
+    opacity: 0; /* 默认隐藏文字 */
+    transition: opacity var(--transition-speed) cubic-bezier(.175, .685, .32, 1);
     overflow: hidden;
+    position: absolute; /* 使用绝对定位 */
+    left: 100%; /* 将文字放置在图标的右侧 */
+    top: 0;
+    bottom: 0;
+    width: calc(100% - 5rem); /* 计算文字的宽度 */
 }
 
-#navbar:hover .link-text {
-    width: calc(100% - calc(5rem - 8px));
-    opacity: 1;
+
+/* 导航项基础样式 */
+.navbar-item-inner {
+    display: flex;
+    align-items: center;
+    padding: 1rem 0;
+    color: var(--navbar-text);
+    text-decoration: none;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+/* 导航栏展开时的样式 */
+.navbar-expanded .navbar-item-inner-icon-wrapper {
+    width: 5rem; /* 展开时图标的宽度 */
+}
+
+.navbar-expanded .link-text {
+    opacity: 1; /* 展开时显示文字 */
+}
+
+/* 展开效果 */
+#navbar:hover .navbar-item-inner-icon-wrapper {
+    width: 5rem; /* 展开时图标的宽度 */
 }
 
 /* 活动状态 */
 .navbar-item.active .navbar-item-inner {
     color: var(--navbar-hover-text);
     background: var(--navbar-hover-bg);
+}
+
+
+#navbar:hover .link-text {
+    width: calc(100% - calc(5rem - 8px));
+    opacity: 1;
 }
 
 /* 滚动条样式 */

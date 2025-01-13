@@ -20,13 +20,14 @@
     ) VALUES (
     #{userId},
     #{ticketId},
-    #{notifyType},
+    #{notifyType, typeHandler=com.icss.etc.ticket.handler.NotifyTypeHandler},
     #{content},
     #{isRead},
     #{isDeleted},
-    #{createTime}
+    default
     )
   </insert>
+
 
   <!-- 更新通知 -->
   <update id="update" parameterType="com.icss.etc.ticket.entity.Notification">

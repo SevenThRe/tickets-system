@@ -1,20 +1,4 @@
--- we don't know how to generate root <with-no-name> (class Root) :(
-
-grant select on performance_schema.* to 'mysql.session'@localhost;
-
-grant trigger on sys.* to 'mysql.sys'@localhost;
-
-grant audit_abort_exempt, firewall_exempt, select, system_user on *.* to 'mysql.infoschema'@localhost;
-
-grant audit_abort_exempt, authentication_policy_admin, backup_admin, clone_admin, connection_admin, firewall_exempt, persist_ro_variables_admin, session_variables_admin, shutdown, super, system_user, system_variables_admin on *.* to 'mysql.session'@localhost;
-
-grant audit_abort_exempt, firewall_exempt, system_user on *.* to 'mysql.sys'@localhost;
-
-grant alter, alter routine, application_password_admin, audit_abort_exempt, audit_admin, authentication_policy_admin, backup_admin, binlog_admin, binlog_encryption_admin, clone_admin, connection_admin, create, create role, create routine, create tablespace, create temporary tables, create user, create view, delete, drop, drop role, encryption_key_admin, event, execute, file, firewall_exempt, flush_optimizer_costs, flush_status, flush_tables, flush_user_resources, group_replication_admin, group_replication_stream, index, innodb_redo_log_archive, innodb_redo_log_enable, insert, lock tables, passwordless_user_admin, persist_ro_variables_admin, process, references, reload, replication client, replication slave, replication_applier, replication_slave_admin, resource_group_admin, resource_group_user, role_admin, select, sensitive_variables_observer, service_connection_admin, session_variables_admin, set_user_id, show databases, show view, show_routine, shutdown, super, system_user, system_variables_admin, table_encryption_admin, telemetry_log_admin, trigger, update, xa_recover_admin, grant option on *.* to newuser@seven;
-
-grant alter, alter routine, create, create role, create routine, create tablespace, create temporary tables, create user, create view, delete, drop, drop role, event, execute, file, index, insert, lock tables, process, references, reload, replication client, replication slave, select, show databases, show view, shutdown, super, trigger, update, grant option on *.* to root;
-
-create table sys_theme
+create table if not exists sys_theme
 (
     theme_id    varchar(32)                        not null comment '主题ID'
         primary key,
@@ -30,7 +14,7 @@ create table sys_theme
         unique (theme_name)
 );
 
-create table sys_user_theme
+create table if not exists sys_user_theme
 (
     user_id     bigint                             not null comment '用户ID',
     theme_id    varchar(32)                        not null comment '主题ID',
@@ -45,7 +29,7 @@ create index idx_current
     on sys_user_theme (user_id, is_current)
     comment '当前主题索引';
 
-create table t_attachment
+create table if not exists t_attachment
 (
     attachment_id bigint auto_increment comment '附件ID'
         primary key,
@@ -64,7 +48,7 @@ create index idx_ticket
     on t_attachment (ticket_id)
     comment '工单索引';
 
-create table t_department
+create table if not exists t_department
 (
     department_id   bigint auto_increment comment '部门ID'
         primary key,
@@ -96,7 +80,7 @@ create index idx_parent
     on t_department (parent_id)
     comment '父部门索引';
 
-create table t_notification
+create table if not exists t_notification
 (
     notification_id bigint auto_increment comment '通知ID'
         primary key,
@@ -118,7 +102,7 @@ create index idx_user
     on t_notification (user_id)
     comment '用户索引';
 
-create table t_permission
+create table if not exists t_permission
 (
     permission_id   bigint auto_increment comment '权限ID'
         primary key,
@@ -136,7 +120,7 @@ create table t_permission
 )
     comment '权限表' charset = utf8mb4;
 
-create table t_role
+create table if not exists t_role
 (
     role_id        bigint auto_increment comment '角色ID'
         primary key,
@@ -154,7 +138,7 @@ create table t_role
 )
     comment '角色表' charset = utf8mb4;
 
-create table t_role_permission
+create table if not exists t_role_permission
 (
     role_id       bigint                             not null comment '角色ID',
     permission_id bigint                             not null comment '权限ID',
@@ -163,7 +147,7 @@ create table t_role_permission
 )
     comment '角色权限关联表' charset = utf8mb4;
 
-create table t_ticket
+create table if not exists t_ticket
 (
     ticket_id          bigint auto_increment comment '工单ID'
         primary key,
@@ -196,7 +180,7 @@ create index idx_type
     on t_ticket (type_id)
     comment '类型索引';
 
-create table t_ticket_record
+create table if not exists t_ticket_record
 (
     record_id          bigint auto_increment comment '记录ID'
         primary key,
@@ -219,7 +203,7 @@ create index idx_ticket
     on t_ticket_record (ticket_id)
     comment '工单索引';
 
-create table t_ticket_type
+create table if not exists t_ticket_type
 (
     type_id     bigint auto_increment comment '类型ID'
         primary key,
@@ -231,7 +215,7 @@ create table t_ticket_type
 )
     comment '工单类型表' charset = utf8mb4;
 
-create table t_user
+create table if not exists t_user
 (
     user_id       bigint auto_increment comment '用户ID'
         primary key,
@@ -256,7 +240,7 @@ create index idx_department
     on t_user (department_id)
     comment '部门索引';
 
-create table t_user_role
+create table if not exists t_user_role
 (
     user_id     bigint                             not null comment '用户ID',
     role_id     bigint                             not null comment '角色ID',
@@ -264,4 +248,20 @@ create table t_user_role
     primary key (user_id, role_id)
 )
     comment '用户角色关联表' charset = utf8mb4;
+
+create table if not exists t_user_settings
+(
+    id                   bigint auto_increment
+        primary key,
+    user_id              bigint            not null comment '用户ID',
+    ticket_notification  tinyint default 1 null comment '工单提醒',
+    process_notification tinyint default 1 null comment '处理进度提醒',
+    system_notification  tinyint default 1 null comment '系统消息',
+    is_deleted           tinyint default 0 null comment '是否删除',
+    create_time          datetime          not null comment '创建时间',
+    update_time          datetime          not null comment '更新时间',
+    constraint uk_user_id
+        unique (user_id)
+)
+    comment '用户通知设置表';
 

@@ -3,7 +3,10 @@ package com.icss.etc.ticket.service.impl;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.exceptions.BusinessException;
 import com.icss.etc.ticket.service.FileService;
+import com.icss.etc.ticket.util.PropertiesUtil;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,14 +29,28 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FileServiceImpl implements FileService {
 
-    @Value("${upload.path}")
+    @Autowired
+    private PropertiesUtil propertiesUtil;
+
+
+
     private String uploadPath;
 
-    @Value("${upload.allowedTypes}")
     private List<String> allowedTypes;
 
-    @Value("${upload.maxSize}")
     private long maxFileSize;
+
+
+    @PostConstruct
+    public void init() {
+        this.uploadPath = propertiesUtil.getProperty("upload.path", "./uploads/");
+        this.allowedTypes = Arrays.asList(propertiesUtil.getProperty("upload.allowedTypes", "image/jpeg,image/png,image/gif").split(","));
+        this.maxFileSize = Long.parseLong(propertiesUtil.getProperty("upload.maxSize", "10"));
+        log.info("File service initialized with upload path: {}", uploadPath);
+        log.info("File service initialized with allowed types: {}", allowedTypes);
+        log.info("File service initialized with max file size: {}MB", maxFileSize);
+    }
+
 
     @Override
     public String uploadFile(MultipartFile file, Long ticketId) {

@@ -19,16 +19,20 @@
     <!-- 个人信息概览 -->
     <div class="profile-header mb-4">
         <div class="profile-cover">
-            <div class="profile-avatar">
-                <img src="/images/default-avatar.png" style="width: 50px; height: 50px;" alt="用户头像" class="avatar" id="userAvatar">
-                <button class="btn btn-sm btn-light avatar-upload" id="uploadAvatarBtn">
-                    <i class="bi bi-camera"></i>
-                </button>
+            <div class="profile-info">
+                <div class="profile-avatar">
+                    <div class="avatar-container">
+                        <img src="/images/default-avatar.png" alt="用户头像" class="avatar" id="userAvatar">
+                        <button class="avatar-upload" id="uploadAvatarBtn">
+                            <i class="bi bi-camera"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="user-info">
+                    <h4 class="user-name" id="userName">loading...</h4>
+                    <p class="user-role" id="userRole">loading...</p>
+                </div>
             </div>
-        </div>
-        <div class="profile-info">
-            <h4 class="user-name" id="userName">loading...</h4>
-            <p class="user-role text-muted" id="userRole">loading...</p>
         </div>
     </div>
 
@@ -195,7 +199,8 @@
                 <form id="avatarForm">
                     <div class="mb-3">
                         <label class="form-label">选择图片</label>
-                        <input type="file" class="form-control" id="avatarFile" accept="image/*" required>
+                        <input type="file" class="form-control" id="avatarFile"
+                               accept="image/jpeg,image/png,image/gif" required>
                     </div>
                     <div class="avatar-preview text-center">
                         <img src="" alt="预览" id="avatarPreview" style="max-width: 200px; display: none;">

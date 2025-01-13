@@ -15,9 +15,13 @@ import java.time.LocalDateTime;
 public class UserSettings {
     private Long id;
     private Long userId;
-    private Boolean ticketNotification; // 工单提醒
-    private Boolean processNotification; // 处理进度提醒
-    private Boolean systemNotification; // 系统消息
-    private LocalDateTime updateTime;
+    private Boolean ticketNotification;
+    private Boolean processNotification;
+    private Boolean systemNotification;
+
+    private Boolean twoFactorAuth;
+    private Boolean loginNotification;
+
     private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }

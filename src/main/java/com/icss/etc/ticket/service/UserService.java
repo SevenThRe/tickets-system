@@ -8,7 +8,9 @@ import com.icss.etc.ticket.entity.User;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface UserService {
@@ -70,4 +72,11 @@ public interface UserService {
      * @return 用户权限
      */
     String[] selectUserPermissions(Long userId);
+
+    /**
+     * 更新用户头像
+     * @param userId 用户ID
+     * @param fileName  文件名
+     */
+    void saveAvatar(MultipartFile file, Long userId, String username) throws IOException;
 }

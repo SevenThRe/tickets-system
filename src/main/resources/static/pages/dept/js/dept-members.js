@@ -6,11 +6,6 @@
  * @author SevenThRe
  * @created 2024-01-06
  */
-/**
- * DepartmentWorkspace
- * 部门工作台控制器
- * 用于部门工单管理和统计展示
- */
 class DepartmentWorkspace {
     constructor() {
         this.container = $('#main');

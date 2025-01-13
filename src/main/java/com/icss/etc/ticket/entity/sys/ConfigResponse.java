@@ -15,4 +15,6 @@ public class ConfigResponse {
     private GeneralConfig general;
     private CacheConfig cache;
     private LogConfig log;
+    private UploadConfig upload;
+
 }
