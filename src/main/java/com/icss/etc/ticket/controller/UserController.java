@@ -5,8 +5,10 @@ import com.icss.etc.ticket.entity.User;
 import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.enums.CodeEnum;
+import com.icss.etc.ticket.exceptions.BusinessException;
 import com.icss.etc.ticket.service.UserService;
 import com.icss.etc.ticket.util.MD5Util;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +23,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/users")
+@Slf4j
 public class UserController {
     @Autowired
     private UserService userService;
@@ -51,7 +54,15 @@ public class UserController {
      */
     @GetMapping("/{userId}/info")
     public R getUserInfo(@PathVariable("userId") Long userId) {
-        return R.OK(userService.selectUserInfo(userId));
+        try {
+            return R.OK(userService.selectUserInfo(userId));
+        } catch (BusinessException e) {
+            log.error("获取用户信息失败: {}", e.getMessage());
+            return R.builder().code(e.getCode()).msg(e.getMessage()).build();
+        } catch (Exception e) {
+            log.error("获取用户信息失败:", e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
+        }
     }
 
 
@@ -69,38 +80,61 @@ public class UserController {
     //    修改密码
     @PutMapping("/password")
     public R updatePassword(@RequestBody UserPasswordDTO record) {
-        User u= userService.selectByPrimaryKey(record.getUserId());
-        //用户是否存在
-        if (u == null){return R.FAIL(CodeEnum.UNKNOW_USER);}
-        //验证旧密码是否正确
-        String userOldPassword = MD5Util.getMD5(record.getOldPassword());
-        assert userOldPassword!= null;
-        if (!userOldPassword.equals(u.getPassword())){return R.FAIL(CodeEnum.PASSWORD_ERROR);}
+        try {
+            // 获取用户信息
+            User user = userService.selectByPrimaryKey(record.getUserId());
+            if (user == null) {
+                return R.FAIL(CodeEnum.UNKNOW_USER);
+            }
 
-        // 验证新密码是否与旧密码相同
-        if (record.getNewPassword().equals(record.getOldPassword())){
-            return R.FAIL(CodeEnum.PASSWORD_SAME);
-        }
+            // 验证旧密码
+            String oldPasswordMd5 = MD5Util.getMD5(record.getOldPassword());
+            if (!user.getPassword().equals(oldPasswordMd5)) {
+                return R.FAIL(CodeEnum.PASSWORD_ERROR);
+            }
 
-        if(isStrongPassword(record.getNewPassword())){
-            return R.FAIL(CodeEnum.PASSWORD_WEAK);
+            // 验证新旧密码是否相同
+            if (record.getNewPassword().equals(record.getOldPassword())) {
+                return R.FAIL(CodeEnum.PASSWORD_SAME);
+            }
+
+            // 密码强度校验
+            if (!isStrongPassword(record.getNewPassword())) {
+                return R.FAIL(CodeEnum.PASSWORD_WEAK);
+            }
+
+            // 更新密码
+            record.setNewPassword(MD5Util.getMD5(record.getNewPassword()));
+            int result = userService.updateByPrimaryKey(record);
+            return result > 0 ? R.OK() : R.FAIL(CodeEnum.UPDATE_FAILED);
+
+        } catch (BusinessException e) {
+            log.error("修改密码失败: {}", e.getMessage());
+            return R.builder().code(e.getCode()).msg(e.getMessage()).build();
+        } catch (Exception e) {
+            log.error("修改密码失败:", e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
         }
-        // 更新密码
-        record.setNewPassword(MD5Util.getMD5(record.getNewPassword()));
-        int result = userService.updateByPrimaryKey(record);
-        return result > 0? R.OK() : R.FAIL(CodeEnum.UPDATE_FAILED);
     }
     // 密码强度检查方法
     private boolean isStrongPassword(String password) {
         // 密码强度规则：6位字母加数字的组合
-        String regex = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6}$";
+        String regex = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$";
         return password.matches(regex);
     }
 
-//修改个人基本信息
+    //修改个人基本信息
     @PutMapping("/profile")
     public R updateByPrimaryKeySelective(@RequestBody User user) {
-        int result = userService.updateByPrimaryKeySelective(user);
-        return result > 0 ? R.OK() : R.FAIL();
+        try {
+            int result = userService.updateByPrimaryKeySelective(user);
+            return result > 0 ? R.OK() : R.FAIL(CodeEnum.UPDATE_FAILED);
+        } catch (BusinessException e) {
+            log.error("更新用户信息失败: {}", e.getMessage());
+            return R.builder().code(e.getCode()).msg(e.getMessage()).build();
+        } catch (Exception e) {
+            log.error("更新用户信息失败:", e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
+        }
     }
 }

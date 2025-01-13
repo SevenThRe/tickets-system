@@ -84,10 +84,16 @@ class Profile {
         const { userInfo } = this.state;
         if (!userInfo) return;
 
-        // 更新头部显示信息 头像是假的，因为后端没有头像字段
+
+        // 更新头部显示信息
         $('#userName').text(userInfo.realName || userInfo.username);
         $('#userRole').text(userInfo.roleName || '普通用户');
         $('#userAvatar').attr('src', userInfo.avatar || '/images/default-avatar.png');
+
+        // 更新角色背景色
+        $('.profile-cover').removeClass('role-ADMIN role-DEPT role-USER')
+            .addClass(`role-${userInfo.baseRoleCode}`);
+
 
         // 基本信息表单填充
         const formData = {
@@ -147,15 +153,11 @@ class Profile {
             this.disableForm(true);
 
             // 获取表单数据
-            const formData = new FormData(e.target);
             const submitData = {
-                userId: formData.get('userId'),
-                username: formData.get('username'),
-                realName: formData.get('realName'),
-                email: formData.get('email'),
-                phone: formData.get('phone'),
-                departmentId: formData.get('departmentId'),  // 提交部门ID
-                roleId: formData.get('roleId')               // 提交角色ID
+                userId: this.$basicInfoForm.find('input[name="userId"]').val(),  // 从隐藏字段获取
+                realName: this.$basicInfoForm.find('input[name="realName"]').val(),
+                email: this.$basicInfoForm.find('input[name="email"]').val(),
+                phone: this.$basicInfoForm.find('input[name="phone"]').val(),
             };
 
             console.log(submitData);
@@ -180,13 +182,16 @@ class Profile {
 
                 NotifyUtil.success('个人信息更新成功');
                 this.updateUI();
+                window.location.reload();
             } else {
                 throw new Error(response.msg || '更新失败');
             }
 
         } catch(error) {
             console.error('更新个人信息失败:', error);
-            NotifyUtil.error(error.message || '更新失败，请重试');
+            // 优先使用后端返回的错误信息
+            const errorMsg = error.responseJSON ? error.responseJSON.msg : error.message;
+            NotifyUtil.error(errorMsg || '更新失败，请重试');
         } finally {
             this.state.loading = false;
             this.disableForm(false);
@@ -254,6 +259,10 @@ class Profile {
 
         // 设置变更
         $('input[type="checkbox"]').on('change', (e) => this.handleSettingChange(e));
+        // 设置变更事件
+        $('.form-check-input').on('change', (e) => {
+            this.handleSettingChange(e);
+        });
     }
 
 
@@ -292,14 +301,25 @@ class Profile {
                     ...this.state.settings,
                     ...response.data
                 };
-            } else {
-                throw new Error(response.msg || '加载用户设置失败');
+                this.updateSettingsUI();
             }
         } catch (error) {
             console.error('加载用户设置失败:', error);
-            throw error;
+            NotifyUtil.error('加载设置失败');
         }
     }
+
+    /**
+     * 更新设置UI
+     */
+    updateSettingsUI() {
+        const { settings } = this.state;
+        // 更新开关状态
+        Object.keys(settings).forEach(key => {
+            $(`#${key}`).prop('checked', settings[key]);
+        });
+    }
+
     /**
      * 处理密码修改
      */
@@ -341,7 +361,8 @@ class Profile {
 
         } catch (error) {
             console.error('修改密码失败:', error);
-            this.showError(error.msg || '修改失败，请重试');
+            const errorMsg = error.responseJSON ? error.responseJSON.msg : error.message;
+            NotifyUtil.error(errorMsg || '修改失败，请重试');
         } finally {
             this.state.loading = false;
             this.disableForm(this.$passwordForm, false);
@@ -431,22 +452,24 @@ class Profile {
                     'Content-Type': 'application/json'
                 },
                 data: JSON.stringify({
-                    [setting]: value
+                    [setting]: value,
+                    userId: this.state.userInfo.userId
                 })
             });
 
             if (response.code === 200) {
                 this.state.settings[setting] = value;
-                this.showSuccess('设置已更新');
+                NotifyUtil.success('设置已更新');
             } else {
                 throw new Error(response.msg || '更新失败');
+                // 恢复开关状态
+                target.checked = !value;
             }
-
         } catch (error) {
             console.error('更新设置失败:', error);
-            // 恢复原来的状态
-            target.checked = this.state.settings[setting];
-            this.showError('更新设置失败');
+            NotifyUtil.error(error.responseJSON?.msg || '更新设置失败');
+            // 恢复开关状态
+            target.checked = !value;
         }
     }
 

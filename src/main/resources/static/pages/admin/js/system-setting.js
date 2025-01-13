@@ -1,3 +1,4 @@
+
 $(document).ready(function() {
     // 加载当前配置
     loadCurrentConfig();
