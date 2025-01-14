@@ -19,15 +19,21 @@ import com.icss.etc.ticket.service.TicketService;
 import com.icss.etc.ticket.util.ExcelUtil;
 import com.icss.etc.ticket.util.PropertiesUtil;
 import com.icss.etc.ticket.util.SecurityUtils;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -140,26 +146,30 @@ public class TicketController {
             @Valid CreateTicketDTO createDTO) {
         try {
             // 写完才发现写到了controller里 controller最好不要放业务逻辑，我懒得改了
-
-            //如果工单创建成功 查询工单是否有附件
-            String filePath = "";
-            if (!file.isEmpty() || file.getSize() > 0){
-                if (FILE_PATH == null) {
-                    throw new BusinessException(CodeEnum.INTERNAL_ERROR, "文件上传路径未配置");
-                }
-                File f = new File(FILE_PATH);
-                if (!f.exists() && f.isDirectory()) {
-                    f.mkdirs();
-                }
-                String fileName = file.getOriginalFilename();
-                String suffix = fileName.substring(fileName.lastIndexOf("."));
-                String newFileName = String.format("%s%s", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")), suffix);
-                filePath = FILE_PATH + newFileName;
-                file.transferTo(new java.io.File(filePath));
-            }
-            // 创建工单
             Long ticketId = ticketService.createTicket(createDTO);
+            //如果工单创建成功 查询工单是否有附件
+//            String filePath = "";
+//            if (!file.isEmpty() || file.getSize() > 0){
+//                if (FILE_PATH == null) {
+//                    throw new BusinessException(CodeEnum.INTERNAL_ERROR, "文件上传路径未配置");
+//                }
+//                File f = new File(FILE_PATH);
+//                if (!f.exists() && f.isDirectory()) {
+//                    f.mkdirs();
+//                }
+//                String fileName = file.getOriginalFilename();
+//                String suffix = fileName.substring(fileName.lastIndexOf("."));
+//                String newFileName = String.format("%s%s", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")), suffix);
+//                filePath = FILE_PATH + newFileName;
+//                file.transferTo(new File(filePath));
+//            }
+
+            String filePath =
+                    fileService.uploadFile(file,ticketId).substring("/api/files/".length());
+
+            // 创建工单
             if (ticketId == null) throw new BusinessException(CodeEnum.INTERNAL_ERROR, "未知异常，工单创建失败");
+
             // 文件上传完毕，尝试传递文件路径到t_attachment表
             attachmentMapper.insertSelective(
                     Attachment.builder().ticketId(ticketId)
@@ -396,11 +406,19 @@ public class TicketController {
             // 1. 获取导出数据
             List<TicketExportDTO> exportData = ticketService.exportTickets(queryDTO);
 
-            // 2. 导出文件
-            String fileName = String.format("工单列表_%s",
+            String fileName = String.format("工单列表_%s.xlsx",
                     LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 
+            // 设置响应头
+            response.setContentType("application/vnd.ms-excel");
+            response.setCharacterEncoding("utf-8");
+            response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
+            response.addHeader("Pragma", "no-cache");
+            response.addHeader("Cache-Control", "no-cache");
+
+            // 导出文件
             ExcelUtil.export(fileName, exportData, TicketExportDTO.class, response);
+
         } catch (Exception e) {
             log.error("导出工单失败:", e);
             throw new BusinessException(CodeEnum.INTERNAL_ERROR, "导出失败");

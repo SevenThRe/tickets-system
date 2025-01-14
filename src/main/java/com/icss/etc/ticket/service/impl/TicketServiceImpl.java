@@ -183,27 +183,25 @@ public class TicketServiceImpl implements TicketService {
         }
 
         switch(updateDTO.getStatus()) {
-            case PROCESSING -> {
+            case PROCESSING ->
                 notificationService.createAssignNotification(
                         updateDTO.getTicketId(),
                         ticket.getCreateBy(),
                         "您的工单已开始处理"
                 );
-            }
-            case COMPLETED -> {
+            case COMPLETED ->
                 notificationService.createCompleteNotification(
                         updateDTO.getTicketId(),
                         ticket.getCreateBy(),
                         "您的工单已处理完成,请确认"
                 );
-            }
-            case CLOSED -> {
+            case CLOSED ->
                 notificationService.createCompleteNotification(
                         updateDTO.getTicketId(),
                         ticket.getProcessorId(),
                         "工单已关闭"
                 );
-            }
+
         }
     }
 

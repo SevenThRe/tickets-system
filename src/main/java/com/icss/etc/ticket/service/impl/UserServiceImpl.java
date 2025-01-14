@@ -227,7 +227,7 @@ public class UserServiceImpl implements UserService{
      * 获取用户头像路径
      */
     public String getUserAvatarPath(String username, Long userId) {
-        return "/images/" + username + "_" + userId + "_avatar.png";
+        return username + "_" + userId + "_avatar.png";
     }
 
 

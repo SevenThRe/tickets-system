@@ -85,12 +85,21 @@ class Profile {
         const { userInfo } = this.state;
         if (!userInfo) return;
 
+        // 清除当前页面的内容
+        $('#userName').text('');
+        $('#userRole').text('');
+        $('#userAvatar').attr('src', '');
+        $('.profile-cover').removeClass('role-ADMIN role-DEPT role-USER');
+        this.$basicInfoForm.find('input, select').val('').prop('readonly', false).prop('hidden', false).removeClass('bg-light');
+
+
 
         // 更新头部显示信息
         $('#userName').text(userInfo.realName || userInfo.username);
         $('#userRole').text(userInfo.roleName || '普通用户');
 
-        const avatarPath = `/images/${userInfo.username}_${userInfo.userId}_avatar.png`;
+        const timestamp = new Date().getTime();
+        const avatarPath = `/images/${userInfo.username}_${userInfo.userId}_avatar.png?t=${timestamp}`;
 
         $('#userAvatar')
             .attr('src', avatarPath)
@@ -191,7 +200,9 @@ class Profile {
 
                 NotifyUtil.success('个人信息更新成功');
                 this.updateUI();
-                window.location.reload();
+                setTimeout(() => {
+                    window.location.reload();
+                },3000)
             } else {
                 throw new Error(response.msg || '更新失败');
             }
@@ -434,12 +445,16 @@ class Profile {
             });
 
             if (response.code === 200) {
-                // 刷新头像显示，添加时间戳避免缓存
-                const avatarPath = `/images/${this.state.userInfo.username}_${this.state.userInfo.userId}_avatar.png?t=${new Date().getTime()}`;
-                $('#userAvatar').attr('src', avatarPath);
-
+                // 刷新头像显示
+                // const avatarPath = `/images/${this.state.userInfo.username}_${this.state.userInfo.userId}_avatar.png?t=${new Date().getTime()}`;
+                // $('#userAvatar').attr('src', avatarPath);
                 this.avatarModal.hide();
                 NotifyUtil.success('头像更新成功');
+                // this.updateUI();
+                setTimeout(() => {
+                    window.location.reload();
+                },3000)
+
             } else {
                 throw new Error(response.msg || '上传失败');
             }
@@ -477,9 +492,10 @@ class Profile {
                 this.state.settings[setting] = value;
                 NotifyUtil.success('设置已更新');
             } else {
-                throw new Error(response.msg || '更新失败');
                 // 恢复开关状态
                 target.checked = !value;
+
+                throw new Error(response.msg || '更新失败');
             }
         } catch (error) {
             console.error('更新设置失败:', error);
