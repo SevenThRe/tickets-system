@@ -99,20 +99,17 @@
     font-size: 12px;
 }
 
-/* 优先级样式 */
 .priority-high {
     background-color: #dc3545;
-    color: #fff;
+    color: white;
 }
-
 .priority-medium {
     background-color: #ffc107;
-    color: #000;
+    color: black;
 }
-
 .priority-low {
-    background-color: #198754;
-    color: #fff;
+    background-color: #28a745;
+    color: white;
 }
 
 /* 优先级指示器的样式 */

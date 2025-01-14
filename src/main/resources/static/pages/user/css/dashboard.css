@@ -143,6 +143,16 @@
     width: 6px;
 }
 
+.bg-low {
+    background-color: #28a745;
+}
+.bg-medium {
+    background-color: #ffc107;
+}
+.bg-high {
+    background-color: #dc3545;
+}
+
 .department-selector::-webkit-scrollbar-track {
     background: #f1f1f1;
 }
@@ -164,10 +174,24 @@
 
 .priority-selector option[value="MEDIUM"] {
     background-color: #ffc107;
+    color: black;
 }
 
 .priority-selector option[value="LOW"] {
-    background-color: #198754;
+    background-color: #28a745;
+    color: white;
+}
+
+.priority-high {
+    background-color: #dc3545;
+    color: white;
+}
+.priority-medium {
+    background-color: #ffc107;
+    color: black;
+}
+.priority-low {
+    background-color: #28a745;
     color: white;
 }
 

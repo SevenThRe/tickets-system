@@ -22,7 +22,10 @@ class TicketUtil {
         const map = {
             'HIGH': 'high',
             'MEDIUM': 'medium',
-            'LOW': 'low'
+            'LOW': 'low',
+            '2': 'high',
+            '1': 'medium',
+            '0': 'low'
         };
         return map[priority] || 'low';
     }
@@ -31,7 +34,10 @@ class TicketUtil {
         const map = {
             'HIGH': '高优先级',
             'MEDIUM': '中等优先级',
-            'LOW': '低优先级'
+            'LOW': '低优先级',
+            '2': '高优先级',
+            '1': '中等优先级',
+            '0': '低优先级'
         };
         return map[priority] || '普通';
     }
@@ -60,7 +66,11 @@ class TicketUtil {
             'PENDING': '待处理',
             'PROCESSING': '处理中',
             'COMPLETED': '已完成',
-            'CLOSED': '已关闭'
+            'CLOSED': '已关闭',
+            '0': '待处理',
+            '1': '处理中',
+            '2': '已完成',
+            '3': '已关闭'
         };
         return statusMap[status] || '未知状态';
     }

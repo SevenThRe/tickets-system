@@ -152,6 +152,7 @@ class TodoList {
         $('#processStatus').on('change', (e) => {
             const status = $(e.target).val();
             $('#transferDeptDiv').toggle(status === 'TRANSFER');
+            this._loadDepartments();
         });
     }
 
@@ -232,19 +233,19 @@ class TodoList {
      * @private
      */
     _formatDate(dateString) {
-        if (!dateString) return '-';
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch (error) {
-            return '-';
-        }
+        return  TicketUtil.formatDate(dateString);
+    }
+
+    _getStatusText(status) {
+        return TicketUtil.getStatusText(status);
+    }
+
+    _getPriorityText(priority) {
+        return TicketUtil.getPriorityText(priority);
+    }
+
+    _getPriorityClass(priority) {
+        return TicketUtil.getPriorityClass(priority);
     }
 
     /**
@@ -663,19 +664,6 @@ class TodoList {
         }
     }
 
-    /**
-     * 格式化日期时间为后端接受的格式
-     * @param {string} dateString - 日期字符串
-     * @returns {string} ISO格式的日期时间字符串
-     * @private
-     */
-    _formatDateForBackend(dateString) {
-        if (!dateString) return null;
-        // 将日期格式化为ISO格式，确保时区正确
-        const date = new Date(dateString);
-        return date.toISOString();
-    }
-
 
     /**
      * 处理重置事件
@@ -715,20 +703,6 @@ class TodoList {
         return classMap[priority] || 'priority-low';
     }
 
-    /**
-     * 获取优先级文本
-     * @param {string} priority - 优先级
-     * @returns {string} 显示文本
-     * @private
-     */
-    _getPriorityText(priority) {
-        const textMap = {
-            'HIGH': '高优先级',
-            'MEDIUM': '中等优先级',
-            'LOW': '低优先级'
-        };
-        return textMap[priority] || '普通';
-    }
 
     /**
      * 显示加载状态
@@ -794,33 +768,21 @@ class TodoList {
         const totalPages = Math.ceil(total / pageSize);
 
         // 构建分页HTML
-        let html = '';
-
-        // 上一页
-        html += `
+        let html = `
             <li class="page-item ${current <= 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="${current - 1}">
-                    <i class="bi bi-chevron-left"></i>
-                </a>
+                <a class="page-link" href="#" data-page="${current - 1}"><i class="bi bi-chevron-left"></i></a>
             </li>
         `;
 
         // 页码
         for (let i = 1; i <= totalPages; i++) {
-            if (
-                i === 1 || // 第一页
-                i === totalPages || // 最后一页
-                (i >= current - 2 && i <= current + 2) // 当前页附近的页码
-            ) {
+            if (i === 1 || i === totalPages || (i >= current - 2 && i <= current + 2)) {
                 html += `
                     <li class="page-item ${i === current ? 'active' : ''}">
                         <a class="page-link" href="#" data-page="${i}">${i}</a>
                     </li>
                 `;
-            } else if (
-                (i === 2 && current - 2 > 2) || // 前面的省略号
-                (i === totalPages - 1 && current + 2 < totalPages - 1) // 后面的省略号
-            ) {
+            } else if ((i === 2 && current - 2 > 2) || (i === totalPages - 1 && current + 2 < totalPages - 1)) {
                 html += `
                     <li class="page-item disabled">
                         <a class="page-link" href="#">...</a>
@@ -838,43 +800,23 @@ class TodoList {
         // 下一页
         html += `
             <li class="page-item ${current >= totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="${current + 1}">
-                    <i class="bi bi-chevron-right"></i>
-                </a>
+                <a class="page-link" href="#" data-page="${current + 1}"><i class="bi bi-chevron-right"></i></a>
             </li>
         `;
 
         this.elements.pagination.html(html);
 
         // 绑定点击事件
-        this.elements.pagination.find('.page-link').on('click', (e) => {
+        this.elements.pagination.find('.page-link').off('click').on('click', (e) => {
             e.preventDefault();
             const page = $(e.currentTarget).data('page');
-            if (!page || page === current) return;
-
-            this.state.pagination.current = page;
-            this._loadTodos();
+            if (page && page !== current) {
+                this.state.pagination.current = page;
+                this._loadTodos();
+            }
         });
     }
 
-    /**
-     * 获取优先级样式类
-     * @param {string} priority - 优先级
-     * @returns {string} 样式类名
-     * @private
-     */
-    _getPriorityClass(priority) {
-        switch(priority) {
-            case 'HIGH':
-                return 'high';
-            case 'MEDIUM':
-                return 'medium';
-            case 'LOW':
-                return 'low';
-            default:
-                return 'low';
-        }
-    }
 
     // /**
     //  * 显示工单详情
@@ -961,21 +903,7 @@ class TodoList {
     //     }
     // }
 
-    /**
-     * 获取状态文本
-     * @param {string} status - 状态
-     * @returns {string} 状态文本
-     * @private
-     */
-    _getStatusText(status) {
-        const statusMap = {
-            '0': '待处理',
-            '1': '处理中',
-            '2': '已完成',
-            '3': '已关闭'
-        };
-        return statusMap[status] || '未知状态';
-    }
+
 }
 
 // 页面加载完成后初始化
