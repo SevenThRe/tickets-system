@@ -57,25 +57,50 @@
     color: #6b7280;
 }
 
-/* 优先级标签 */
+
+/* 优先级样式 */
 .priority-indicator {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     display: inline-block;
-    margin-right: 0.5rem;
+    margin-right: 8px;
 }
 
+.priority-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+/* 高优先级 */
 .priority-high {
-    background-color: #ef4444;
+    background-color: #dc3545;
+    color: white;
+}
+.priority-badge.priority-high {
+    background-color: #dc3545;
+    color: white;
 }
 
+/* 中等优先级 */
 .priority-medium {
-    background-color: #f59e0b;
+    background-color: #ffc107;
+    color: black;
+}
+.priority-badge.priority-medium {
+    background-color: #ffc107;
+    color: black;
 }
 
+/* 低优先级 */
 .priority-low {
-    background-color: #10b981;
+    background-color: #28a745;
+    color: white;
+}
+.priority-badge.priority-low {
+    background-color: #28a745;
+    color: white;
 }
 
 /* 工单详情抽屉 */
@@ -352,26 +377,8 @@
     margin-right: 0.5rem;
 }
 
-/* 优先级指示器 */
-.priority-indicator {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 0.5rem;
-}
 
-.priority-high {
-    background-color: #dc3545;
-}
 
-.priority-medium {
-    background-color: #ffc107;
-}
-
-.priority-low {
-    background-color: #6c757d;
-}
 
 /* 关闭按钮样式 */
 .drawer-header .btn-close {
