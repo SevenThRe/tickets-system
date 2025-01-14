@@ -1,7 +1,9 @@
 package com.icss.etc.ticket.service;
 
+import com.icss.etc.ticket.entity.Permission;
 import com.icss.etc.ticket.entity.Role;
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.dto.PermissionDTO;
 import com.icss.etc.ticket.entity.vo.ChooseRolesVO;
 import org.apache.ibatis.annotations.Param;
 
@@ -52,8 +54,15 @@ public interface RoleService {
 
 
 
-    //一个角色查询所有权限
-    List<Role2> OneRoleMorePermission();
 
     List<ChooseRolesVO> chooseRoles();
+
+    /**
+     * 根据角色ID查询角色没有的权限
+     * @param permissionDTO 权限dto
+     * @return List集合
+     */
+    List<Permission> OneRoleMorePermission(PermissionDTO permissionDTO);
+
+
 }

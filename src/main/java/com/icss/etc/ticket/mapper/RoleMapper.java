@@ -1,11 +1,13 @@
 package com.icss.etc.ticket.mapper;
 
+import com.icss.etc.ticket.entity.Permission;
 import com.icss.etc.ticket.entity.Role;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.dto.PermissionDTO;
 import com.icss.etc.ticket.entity.vo.ChooseRolesVO;
 import org.apache.ibatis.annotations.Param;
 
@@ -52,7 +54,7 @@ public interface RoleMapper {
 //    //根据id删除权限
 //    int deletePermissionByRoleId(@Param("permissionId") Long permissionId);
     //一个角色查询所有权限
-    List<Role2> OneRoleMorePermission();
+    List<Permission> OneRoleMorePermission(@Param("p") PermissionDTO permissionDTO);
 
     List<ChooseRolesVO> chooseRoles();
 

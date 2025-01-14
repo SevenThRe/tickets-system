@@ -115,4 +115,8 @@
         )
     </foreach>
   </insert>
+
+  <delete id="delPermissionByRoleId">
+    delete from t_role_permission where role_id = #{roleId} and permission_id = #{permissionId}
+    </delete>
 </mapper>

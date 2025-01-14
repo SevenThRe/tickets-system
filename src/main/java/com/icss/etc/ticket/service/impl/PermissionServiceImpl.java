@@ -2,11 +2,14 @@ package com.icss.etc.ticket.service.impl;
 
 import com.icss.etc.ticket.entity.Permission;
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.dto.RPDTO;
 import com.icss.etc.ticket.enums.Logical;
 import com.icss.etc.ticket.mapper.PermissionMapper;
 import com.icss.etc.ticket.mapper.RoleMapper;
+import com.icss.etc.ticket.mapper.RolePermissionMapper;
 import com.icss.etc.ticket.service.PermissionService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +27,8 @@ import java.util.Set;
 public class PermissionServiceImpl implements PermissionService {
     @Autowired
     private PermissionMapper permissionMapper;
-
+    @Autowired
+    private RolePermissionMapper rolePermissionMapper;
 
 
     @Override
@@ -38,13 +42,18 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
-    public List<Permission> selectAllPermission() {
-        return permissionMapper.selectAllPermission();
+    public List<Permission> selectAllPermission(@Param("keyword") String keyword) {
+        return permissionMapper.selectAllPermission(keyword);
     }
 
     @Override
-    public int deletePermission(Long permissionId) {
-        return permissionMapper.deletePermission(permissionId);
+    public int deletePermission(RPDTO rpdto) {
+        return rolePermissionMapper.delPermissionByRoleId(rpdto);
+    }
+
+    @Override
+    public List<Permission> selectPermissionByRoleId(Long roleId) {
+        return permissionMapper.selectPermissionByRoleId(roleId);
     }
 
     @Override

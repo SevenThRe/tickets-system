@@ -24,10 +24,11 @@ public interface PermissionMapper {
     //修改权限
     int updatePermission(Permission permission);
     //查询所有权限
-    List<Permission> selectAllPermission();
+    List<Permission> selectAllPermission(@Param("keyword") String keyword);
     //删除权限
     int deletePermission(@Param("permissionId") Long permissionId);
-
+    //根据permissionId查询所有权限
+    List<Permission> selectPermissionByRoleId(@Param("roleId")Long roleId);
     Set<String> selectUserPermissions(Long userId);
 
     Set<String> selectUserRoles(Long userId);

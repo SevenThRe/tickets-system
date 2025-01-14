@@ -5,6 +5,7 @@ import com.icss.etc.ticket.entity.RolePermission;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.icss.etc.ticket.entity.dto.RPDTO;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -53,4 +54,11 @@ public interface RolePermissionMapper {
     int updateBatchSelective(@Param("list") List<RolePermission> list);
 
     int batchInsert(@Param("list") List<RolePermission> list);
+
+    /**
+     * 根据角色ID和权限ID 删除对应权限
+     * @param rpDTO 权限角色DTO
+     * @return 返回记录条数
+     */
+    int delPermissionByRoleId(RPDTO rpDTO);
 }
