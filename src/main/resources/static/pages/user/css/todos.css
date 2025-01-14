@@ -25,6 +25,26 @@
     background-color: var(--background-color);
     min-height: 100vh;
 }
+.attachment-item {
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.attachment-item:hover {
+    background-color: #f8f9fa;
+}
+
+.file-name {
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.file-meta {
+    color: #6c757d;
+}
+
 /* 加载遮罩样式 */
 .loading-overlay {
     display: none;

@@ -285,11 +285,21 @@ class Navbar {
      * 显示错误提示
      */
     _showError(message) {
-        console.error(message);
-        // 可以添加更友好的错误提示UI
+        NotifyUtil.error(message);
     }
 }
-
+$.ajaxSetup({
+    beforeSend: function(xhr) {
+        const token = localStorage.getItem('token');
+        if (token) {
+            xhr.setRequestHeader('Authorization', `${token}`);
+        }
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        if (userInfo.userId) {
+            xhr.setRequestHeader('X-User-Id', userInfo.userId);
+        }
+    }
+});
 // 自动初始化导航栏
 $(document).ready(function() {
     $('.navbar-container').each(function() {

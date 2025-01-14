@@ -5,6 +5,7 @@ import com.icss.etc.ticket.interceptors.AuthInterceptor;
 import org.springframework.context.annotation.Configuration;
 
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -46,18 +47,21 @@ public class AppConfig implements WebMvcConfigurer {
      * TODO: 身份验证拦截器
      * 结合JWT实现身份验证
      */
-//    public void addInterceptors(InterceptorRegistry registry) {
-//        registry.addInterceptor(authInterceptor)
-//                .addPathPatterns("/**")
-//                .excludePathPatterns(
-//                        "/auth/login",
-//                        "/auth/register",
-//                        "/error",
-//                        "/*.html",
-//                        "/css/**",
-//                        "/js/**",
-//                        "/images/**"
-//                );
-//    }
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(authInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns(
+                        "/pages/auth/login.html",
+                        "/pages/auth/register.html",
+                        "/error",
+                        "/api/auth/login",
+                        "/api/auth/register",
+                        "/css/**",
+                        "/js/**",
+                        ".js",
+                        ".css",
+                        "/images/**"
+                );
+    }
 
 }

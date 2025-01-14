@@ -421,7 +421,7 @@ public class TicketServiceImpl implements TicketService {
 
         // 1. 基础统计数据
         statistics.setTotalCount(ticketMapper.countUserTickets(userId));
-        statistics.setStatusCount(ticketMapper.countByStatus(userId));
+        statistics.setStatusCount(this.countByStatus(userId));
         statistics.setAvgProcessTime(ticketMapper.calculateAvgProcessTime(userId));
         statistics.setAvgSatisfaction(ticketMapper.calculateAvgSatisfaction(userId));
 
@@ -434,6 +434,16 @@ public class TicketServiceImpl implements TicketService {
         statistics.setDeptStats(deptStats);
 
         return statistics;
+    }
+
+    @Override
+    public Map<String, Integer> countByStatus(Long userId) {
+        Map<String, Integer> result = new HashMap<>();
+        result.put("PENDING", ticketMapper.countTicketsByStatus(userId, TicketStatus.PENDING));
+        result.put("PROCESSING", ticketMapper.countTicketsByStatus(userId, TicketStatus.PROCESSING));
+        result.put("COMPLETED", ticketMapper.countTicketsByStatus(userId, TicketStatus.COMPLETED));
+        result.put("CLOSED", ticketMapper.countTicketsByStatus(userId, TicketStatus.CLOSED));
+        return result;
     }
 
     @Override
@@ -493,37 +503,26 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public TodoStatsVO getTodoStats(Long userId) {
+        // 先进行参数校验
         if (userId == null) {
             throw new BusinessException(CodeEnum.BAD_REQUEST, "用户ID不能为空");
         }
 
-        // 获取今天开始和结束时间
-        LocalDateTime todayStart = LocalDateTime.now().with(LocalTime.MIN);
-        LocalDateTime todayEnd = LocalDateTime.now().with(LocalTime.MAX);
-
-        // 获取用户设置
-        UserSettings settings = userSettingsMapper.selectByUserId(userId);
-        boolean enableNotification = settings != null && settings.getTicketNotification();
-
         try {
-            // 查询统计数据
+            // 查询不同状态的工单数量
             Integer pendingCount = ticketMapper.countTicketsByStatus(userId, TicketStatus.PENDING);
             Integer processingCount = ticketMapper.countTicketsByStatus(userId, TicketStatus.PROCESSING);
+
+            // 查询今日完成数量
+            LocalDateTime todayStart = LocalDateTime.now().with(LocalTime.MIN);
+            LocalDateTime todayEnd = LocalDateTime.now().with(LocalTime.MAX);
             Integer todayCompleted = ticketMapper.countCompletedTickets(userId, todayStart, todayEnd);
 
-            // 如果开启了通知，且有待处理工单，发送提醒
-            if (enableNotification && pendingCount > 0) {
-                notificationService.createAssignNotification(
-                        null,
-                        userId,
-                        String.format("您有 %d 个待处理工单", pendingCount)
-                );
-            }
-
+            // 构建返回对象
             return TodoStatsVO.builder()
-                    .pendingCount(pendingCount)
-                    .processingCount(processingCount)
-                    .todayCompleted(todayCompleted)
+                    .pendingCount(pendingCount != null ? pendingCount : 0)
+                    .processingCount(processingCount != null ? processingCount : 0)
+                    .todayCompleted(todayCompleted != null ? todayCompleted : 0)
                     .build();
 
         } catch (Exception e) {

@@ -26,10 +26,10 @@ function MyTickets() {
 
     // 常量定义
     this.STATUS_MAP = {
-        'PENDING': '待处理',
-        'PROCESSING': '处理中',
-        'COMPLETED': '已完成',
-        'CLOSED': '已关闭'
+        '0': '待处理',
+        '1': '处理中',
+        '2': '已完成',
+        '3': '已关闭'
     };
 
     this.PRIORITY_MAP = {
@@ -1067,10 +1067,10 @@ MyTickets.prototype._getOperationText = function(operationType) {
  */
 MyTickets.prototype._getStatusClass = function(status) {
     const statusMap = {
-        'PENDING': 'pending',
-        'PROCESSING': 'processing',
-        'COMPLETED': 'completed',
-        'CLOSED': 'closed'
+        '0': 'pending',
+        '1': 'processing',
+        '2': 'completed',
+        '3': 'closed'
     };
     return statusMap[status] || 'unknown';
 };
