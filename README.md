@@ -85,7 +85,7 @@ project-root/
 │           ├── request-util.js
 │           ├── theme-preference.js
 │           ├── theme-utils.js
-│           ├── ticket-modal.js
+│           ├── ticket-util.js
 │           ├── utils.js
 │           └── validator-util.js
 │

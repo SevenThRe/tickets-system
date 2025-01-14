@@ -29,8 +29,7 @@ public class SecurityUtils {
     public static Long getCurrentUserId() {
         Long userId = userIdHolder.get();
         if (userId == null) {
-//            throw new BusinessException(CodeEnum.UNKNOW_USER);
-            return 20L;
+            throw new BusinessException(CodeEnum.UNKNOW_USER);
         }
         return userId;
     }

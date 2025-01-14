@@ -6,6 +6,7 @@ import com.icss.etc.ticket.enums.Logical;
 import com.icss.etc.ticket.exceptions.UnauthorizedException;
 import com.icss.etc.ticket.service.PermissionService;
 import com.icss.etc.ticket.util.JWTUtils;
+import com.icss.etc.ticket.util.SecurityUtils;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,11 +33,15 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         String token = request.getHeader("Authorization");
+
         if (token == null || token.isEmpty()) {
+
             log.warn("用户未登录,请求被拦截! 请求路径: {}", request.getRequestURI());
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             return false;
         }
+
+        token = token.replace("Bearer ", "");
 
         try {
             Claims claims = JWTUtils.verifyToken(token);
@@ -65,6 +70,8 @@ public class AuthInterceptor implements HandlerInterceptor {
                 response.setHeader("Authorization", newToken);
             }
 
+            SecurityUtils.setCurrentUser(userId, username, role);
+
             return true;
         } catch (UnauthorizedException e) {
             log.warn("权限校验失败! 请求路径: {}, 原因: {}", request.getRequestURI(), e.getMessage());
@@ -77,6 +84,12 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
     }
 
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
+                                Object handler, Exception ex) {
+        // 清除当前线程的用户信息
+        SecurityUtils.clear();
+    }
     /**
      * 检查权限注解
      */

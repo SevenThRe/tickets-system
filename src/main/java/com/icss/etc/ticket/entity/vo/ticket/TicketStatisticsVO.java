@@ -20,7 +20,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class TicketStatisticsVO {
     private Integer totalCount; // 总工单数
-    private Map<TicketStatus, Integer> statusCount; // 各状态工单数量
+    private Map<String, Integer> statusCount; // 各状态工单数量
     private Double avgProcessTime; // 平均处理时间(小时)
     private Double avgSatisfaction; // 平均满意度
     private List<MonthlyStatisticsVO> monthlyStats; // 月度统计

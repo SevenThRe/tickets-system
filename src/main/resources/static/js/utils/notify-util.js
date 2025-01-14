@@ -17,6 +17,7 @@ class NotifyUtil {
             closeable: true
         };
 
+
         // 合并配置
         const settings = { ...defaultOptions, ...options };
 
@@ -144,7 +145,72 @@ class NotifyUtil {
             }
         }, 300);
     }
+
+    /**
+     * 轮询通知
+     *
+     */
+    static notificationPollingInterval = null;
+
+
+    /**
+     * 启动通知轮询
+     */
+    static startNotificationPolling() {
+        if (this.notificationPollingInterval) {
+            return; // 已经在运行
+        }
+
+        // 立即检查一次
+        this.checkNotifications();
+
+        // 每30秒检查一次
+        this.notificationPollingInterval = setInterval(() => {
+            this.checkNotifications();
+        }, 30000);
+    }
+
+    /**
+     * 停止通知轮询
+     */
+    static stopNotificationPolling() {
+        if (this.notificationPollingInterval) {
+            clearInterval(this.notificationPollingInterval);
+            this.notificationPollingInterval = null;
+        }
+    }
+
+    /**
+     * 检查通知
+     */
+    static async checkNotifications() {
+        try {
+            const response = await $.ajax({
+                url: '/api/notifications/unread',
+                method: 'GET'
+            });
+
+            if (response.code === 200 && response.data.length > 0) {
+                response.data.forEach(notification => {
+                    this.info(notification.content);
+                });
+
+                // 标记为已读
+                await $.ajax({
+                    url: '/api/notifications/read/all',
+                    method: 'PUT'
+                });
+            }
+        } catch (error) {
+            console.error('检查通知失败:', error);
+        }
+    }
+
 }
 
 // 添加到全局对象
 window.NotifyUtil = NotifyUtil;
+$(document).ready(() => {
+    // 启动通知轮询
+    NotifyUtil.startNotificationPolling();
+});

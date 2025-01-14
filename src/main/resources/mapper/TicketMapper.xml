@@ -11,9 +11,9 @@
         <result column="processor_id" property="processorId" />
         <result column="department_id" property="departmentId" />
         <result column="priority" property="priority"
-                typeHandler="org.apache.ibatis.type.EnumOrdinalTypeHandler"/>
+                typeHandler="com.icss.etc.ticket.handler.PriorityTypeHandler"/>
         <result column="status" property="status"
-                typeHandler="org.apache.ibatis.type.EnumOrdinalTypeHandler"/>
+                typeHandler="com.icss.etc.ticket.handler.TicketStatusTypeHandler"/>
         <result column="expect_finish_time" property="expectFinishTime" />
         <result column="actual_finish_time" property="actualFinishTime" />
         <result column="is_deleted" property="isDeleted" />
@@ -108,7 +108,7 @@
         LEFT JOIN t_user u ON t.processor_id = u.user_id
         WHERE t.is_deleted = 0
         <if test="query.userId != null">
-            AND (t.create_by = #{query.userId} OR t.processor_id = #{query.userId})
+            AND t.create_by = #{query.userId}
         </if>
         <if test="query.keyword != null and query.keyword != ''">
             AND (
@@ -213,7 +213,7 @@
         COUNT(1) as count
         FROM t_ticket
         WHERE processor_id = #{userId}
-        AND status IN ('PENDING', 'PROCESSING')
+        AND status IN (0, 1)  <!-- PENDING, PROCESSING -->
         AND is_deleted = 0
         GROUP BY status
     </select>
@@ -223,13 +223,13 @@
         SELECT
         AVG(TIMESTAMPDIFF(HOUR, create_time,
         CASE
-        WHEN status IN (2,3) THEN actual_finish_time
+        WHEN status IN (2, 3) THEN actual_finish_time <!-- COMPLETED, CLOSED -->
         ELSE NOW()
         END)) as avg_time
         FROM t_ticket
         WHERE is_deleted = 0
         AND processor_id = #{userId}
-        AND status IN (2,3) -- 已完成或已关闭
+        AND status IN (2, 3)  <!-- COMPLETED, CLOSED -->
     </select>
 
     <!-- 计算平均满意度 -->
@@ -248,10 +248,10 @@
         SELECT
         DATE_FORMAT(create_time, '%Y-%m') as month,
         COUNT(1) as totalCount,
-        SUM(CASE WHEN status IN (2,3) THEN 1 ELSE 0 END) as completedCount,
-        ROUND(SUM(CASE WHEN status IN (2,3) THEN 1 ELSE 0 END) * 100.0 / COUNT(1), 2) as completionRate,
+        SUM(CASE WHEN status IN (2, 3) THEN 1 ELSE 0 END) as completedCount,
+        ROUND(SUM(CASE WHEN status IN (2, 3) THEN 1 ELSE 0 END) * 100.0 / COUNT(1), 2) as completionRate,
         AVG(CASE
-        WHEN status IN (2,3)
+        WHEN status IN (2, 3)
         THEN TIMESTAMPDIFF(HOUR, create_time, actual_finish_time)
         ELSE NULL
         END) as avgProcessTime
@@ -271,9 +271,9 @@
             COUNT(t.ticket_id) as totalCount,
             SUM(CASE WHEN t.status = 0 THEN 1 ELSE 0 END) as pendingCount,
             SUM(CASE WHEN t.status = 1 THEN 1 ELSE 0 END) as processingCount,
-            SUM(CASE WHEN t.status IN (2,3) THEN 1 ELSE 0 END) as completedCount,
+            SUM(CASE WHEN t.status IN (2, 3) THEN 1 ELSE 0 END) as completedCount,
             AVG(CASE
-                    WHEN t.status IN (2,3)
+                    WHEN t.status IN (2, 3)
                         THEN TIMESTAMPDIFF(HOUR, t.create_time, t.actual_finish_time)
                     ELSE NULL
                 END) as avgProcessTime,
@@ -290,18 +290,18 @@
     <!-- 获取工单处理效率排名 -->
     <select id="getEfficiencyRanking" resultType="java.util.Map">
         SELECT
-            u.user_id,
-            u.real_name,
-            COUNT(t.ticket_id) as totalCount,
-            AVG(TIMESTAMPDIFF(HOUR, t.create_time, t.actual_finish_time)) as avgProcessTime,
-            AVG(r.evaluation_score) as satisfaction
+        u.user_id,
+        u.real_name,
+        COUNT(t.ticket_id) as totalCount,
+        AVG(TIMESTAMPDIFF(HOUR, t.create_time, t.actual_finish_time)) as avgProcessTime,
+        AVG(r.evaluation_score) as satisfaction
         FROM t_user u
-                 LEFT JOIN t_ticket t ON u.user_id = t.processor_id
-            AND t.is_deleted = 0
-            AND t.status IN (2,3)
-                 LEFT JOIN t_ticket_record r ON t.ticket_id = r.ticket_id
-            AND r.operation_type = 3
-            AND r.evaluation_score IS NOT NULL
+        LEFT JOIN t_ticket t ON u.user_id = t.processor_id
+        AND t.is_deleted = 0
+        AND t.status IN (2, 3)  <!-- COMPLETED, CLOSED -->
+        LEFT JOIN t_ticket_record r ON t.ticket_id = r.ticket_id
+        AND r.operation_type = 3
+        AND r.evaluation_score IS NOT NULL
         WHERE t.create_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
         GROUP BY u.user_id, u.real_name
         HAVING totalCount > 0
@@ -326,21 +326,20 @@
         ORDER BY avgWorkload DESC
     </select>
 
-    <!-- 获取待处理工单列表 -->
     <select id="selectTodoList" resultMap="BaseResultMap">
         SELECT
         <include refid="Base_Column_List" />
         FROM t_ticket
-        WHERE processor_id = #{processorId}  <!-- 只查询分配给该处理人的工单 -->
-        AND status IN ('PENDING', 'PROCESSING')  <!-- 待处理或处理中的工单 -->
+        WHERE processor_id = #{processorId}
+        AND status IN (0, 1)  <!-- 0=PENDING, 1=PROCESSING -->
         AND is_deleted = 0
         ORDER BY
         CASE status
-        WHEN 'PENDING' THEN 0
-        WHEN 'PROCESSING' THEN 1
+        WHEN 0 THEN 0     <!-- PENDING -->
+        WHEN 1 THEN 1     <!-- PROCESSING -->
         END,
-        priority DESC,  <!-- 优先级高的排前面 -->
-        create_time ASC <!-- 创建时间早的排前面 -->
+        priority DESC,
+        create_time ASC
     </select>
 
     <!-- 按条件统计工单数量 -->
@@ -497,7 +496,7 @@
         SELECT COUNT(1)
         FROM t_ticket
         WHERE processor_id = #{userId}
-        AND status = 'COMPLETED'
+        AND status = 2
         AND actual_finish_time >= #{todayStart}
         AND is_deleted = 0
     </select>
@@ -505,7 +504,7 @@
         SELECT COUNT(1)
         FROM t_ticket
         WHERE processor_id = #{userId}
-        AND status = #{status}
+        AND status = #{status,typeHandler=com.icss.etc.ticket.handler.TicketStatusTypeHandler}
         AND is_deleted = 0
     </select>
 
@@ -513,15 +512,15 @@
         SELECT COUNT(1)
         FROM t_ticket
         WHERE processor_id = #{userId}
-        AND status = 'COMPLETED'
-        AND actual_finish_time BETWEEN #{startTime} AND #{endTime}
+        AND status = 2
+        AND create_time BETWEEN #{startTime} AND #{endTime}
         AND is_deleted = 0
     </select>
     <select id="countActiveTickets" resultType="java.lang.Integer">
-    SELECT COUNT(1)
-    FROM t_ticket
-    WHERE processor_id = #{userId}
-    AND status IN ('PENDING', 'PROCESSING')
-    AND is_deleted = 0
+        SELECT COUNT(1)
+        FROM t_ticket
+        WHERE processor_id = #{userId}
+        AND status IN (0, 1)  <!-- PENDING, PROCESSING -->
+        AND is_deleted = 0
     </select>
 </mapper>

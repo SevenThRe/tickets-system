@@ -121,4 +121,12 @@ public interface TicketService {
      * @return 是否成功分配
      */
     boolean autoAssignProcessor(Long ticketId, Long departmentId);
+
+
+    /**
+     * 获取工单类型名称
+     * @param typeId 类型ID
+     * @return 类型名称
+     */
+    Map<String, Integer> countByStatus(Long userId);
 }

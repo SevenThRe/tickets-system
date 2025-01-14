@@ -26,10 +26,10 @@ function MyTickets() {
 
     // 常量定义
     this.STATUS_MAP = {
-        'PENDING': '待处理',
-        'PROCESSING': '处理中',
-        'COMPLETED': '已完成',
-        'CLOSED': '已关闭'
+        '0': '待处理',
+        '1': '处理中',
+        '2': '已完成',
+        '3': '已关闭'
     };
 
     this.PRIORITY_MAP = {
@@ -67,10 +67,16 @@ MyTickets.prototype.init = function() {
         this._loadTicketTypes();
         const urlParams = new URLSearchParams(window.location.search);
         const action = urlParams.get('action');
+        const ticketId = urlParams.get('ticketId');
         if (action === 'create') {
             setTimeout(() => {
                 $('#createTicketBtn').click();
             }, 30);
+        }
+        if (ticketId) {
+            setTimeout(() => {
+                this._loadTicketDetail(ticketId);
+            },30)
         }
     }catch(e) {
         console.error('初始化失败:', error);
@@ -205,7 +211,7 @@ MyTickets.prototype._renderTicketList = function() {
                 <td>${this._escapeHtml(ticket.departmentName) || '-'}</td>
                 <td>${this._escapeHtml(ticket.processorName) || '-'}</td>
                 <td>
-                    <span class="ticket-status status-${this._getStatusClass(ticket.status)}">
+                    <span class="badge bg-${this._getStatusClass(ticket.status)}">
                         ${this.STATUS_MAP[ticket.status]}
                     </span>
                 </td>
@@ -266,7 +272,7 @@ MyTickets.prototype._renderTicketDetail = function() {
 
     // 渲染状态
     $('#ticketStatus').html([
-        '<span class="ticket-status status-', ticket.status.toLowerCase(), '">',
+        '<span class="badge bg-', this._getStatusClass[ticket.status], '">',
         this.STATUS_MAP[ticket.status],
         '</span>'
     ].join(''));
@@ -1067,10 +1073,10 @@ MyTickets.prototype._getOperationText = function(operationType) {
  */
 MyTickets.prototype._getStatusClass = function(status) {
     const statusMap = {
-        'PENDING': 'pending',
-        'PROCESSING': 'processing',
-        'COMPLETED': 'completed',
-        'CLOSED': 'closed'
+        '0': 'warning',
+        '1': 'info',
+        '2': 'success',
+        '3': 'secondary'
     };
     return statusMap[status] || 'unknown';
 };

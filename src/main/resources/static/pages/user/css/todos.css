@@ -25,6 +25,26 @@
     background-color: var(--background-color);
     min-height: 100vh;
 }
+.attachment-item {
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.attachment-item:hover {
+    background-color: #f8f9fa;
+}
+
+.file-name {
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.file-meta {
+    color: #6c757d;
+}
+
 /* 加载遮罩样式 */
 .loading-overlay {
     display: none;
@@ -172,18 +192,40 @@
 
 /* 分页样式 */
 .pagination {
-    margin-bottom: 0;
+    display: flex; /* 确保分页项是水平排列的 */
+    list-style: none; /* 移除默认的列表样式 */
+    padding: 0; /* 移除内边距 */
 }
 
 .pagination .page-link {
-    color: var(--primary-color);
-    border-color: var(--border-color);
-    padding: 0.5rem 1rem;
+    color: var(--primary-color); /* 文字颜色 */
+    background-color: #fff; /* 背景颜色 */
+    border: 1px solid var(--border-color); /* 边框颜色 */
+    padding: 0.5rem 1rem; /* 内边距 */
+    margin-right: 0.5rem; /* 右边距，为分页项之间提供间隔 */
+    border-radius: 0.25rem; /* 圆角边框 */
+    transition: background-color 0.2s, color 0.2s; /* 过渡效果 */
+}
+
+.pagination .page-item:first-child .page-link {
+    margin-left: 0; /* 第一个分页项去掉左边距 */
 }
 
 .pagination .page-item.active .page-link {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
+    background-color: var(--primary-color); /* 激活状态背景颜色 */
+    color: #fff; /* 激活状态文字颜色 */
+    border-color: var(--primary-color); /* 激活状态边框颜色 */
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #868e96; /* 禁用状态文字颜色 */
+    pointer-events: none; /* 禁用鼠标事件 */
+}
+
+.pagination .page-item:not(.active) .page-link:hover {
+    background-color: #f1f2f6; /* 悬停背景颜色 */
+    color: var(--primary-color); /* 悬停文字颜色 */
+    cursor: pointer; /* 指针样式 */
 }
 
 /* 附件列表样式 */

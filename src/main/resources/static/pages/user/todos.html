@@ -153,9 +153,16 @@
                     <div class="mb-3">
                         <label class="form-label required">处理进展</label>
                         <select class="form-select" id="processStatus" required>
-                            <option value="PROCESSING">继续处理</option>
+                            <option value="TRANSFER">转交工单</option>
                             <option value="COMPLETED">完成处理</option>
                         </select>
+                        <!-- 转交部门选择，初始隐藏 -->
+                        <div class="mb-3" id="transferDeptDiv" style="display: none;">
+                            <label class="form-label required">转交部门</label>
+                            <select class="form-select" id="transferDept" required>
+                                <!-- 动态填充部门选项 -->
+                            </select>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label required">处理说明</label>
@@ -182,8 +189,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script src="/js/utils/notify-util.js"></script>
-<script src="/js/utils/request-util.js"></script>
-<script src="/js/components/base/base-component.js"></script>
+<script src="/js/utils/ticket-util.js"></script>
 <script src="/js/components/layout/navbar.js"></script>
 <script src="/pages/user/js/todos.js"></script>
 </body>

@@ -345,7 +345,7 @@ class Dashboard {
                 window.location.href = '/pages/common/my-tickets.html?action=create';
                 break;
             case 'profile':
-                window.location.href = '/pages/user/profile.html';
+                window.location.href = '/pages/common/profile.html';
                 break;
         }
     }
@@ -354,7 +354,7 @@ class Dashboard {
      * 查看工单详情
      */
     _viewTicket(ticketId) {
-        window.location.href = `/pages/user/my-tickets.html?ticketId=${ticketId}`;
+        window.location.href = `/pages/common/my-tickets.html?ticketId=${ticketId}`;
     }
 
     /**
@@ -367,53 +367,33 @@ class Dashboard {
     /**
      * 工具方法
      */
-    _getPriorityClass(priority) {
-        const map = {
-            'HIGH': 'high',
-            'MEDIUM': 'medium',
-            'LOW': 'low'
-        };
-        return map[priority] || 'low';
-    }
-
-    _getPriorityText(priority) {
-        const map = {
-            'HIGH': '高优先级',
-            'MEDIUM': '中等优先级',
-            'LOW': '低优先级'
-        };
-        return map[priority] || '普通';
-    }
 
     _getStatusClass(status) {
         const map = {
-            'PENDING': 'warning',
-            'PROCESSING': 'info',
-            'COMPLETED': 'success',
-            'CLOSED': 'secondary'
+            '0': 'warning',
+            '1': 'info',
+            '2': 'success',
+            '3': 'secondary'
         };
         return map[status] || 'secondary';
     }
 
-    _getStatusText(status) {
-        const map = {
-            'PENDING': '待处理',
-            'PROCESSING': '处理中',
-            'COMPLETED': '已完成',
-            'CLOSED': '已关闭'
-        };
-        return map[status] || status;
-    }
+
 
     _formatDate(dateString) {
-        if (!dateString) return '-';
-        return new Date(dateString).toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        return TicketUtil.formatDate(dateString);
+    }
+
+    _getStatusText(status) {
+        return TicketUtil.getStatusText(status);
+    }
+
+    _getPriorityText(priority) {
+        return TicketUtil.getPriorityText(priority);
+    }
+
+    _getPriorityClass(priority) {
+        return TicketUtil.getPriorityClass(priority);
     }
 
     _escapeHtml(str) {

@@ -66,9 +66,9 @@ class TicketStatisticsTest {
         assertEquals(4.5, statistics.getAvgSatisfaction());
 
         // 验证状态统计
-        Map<TicketStatus, Integer> actualStatusCount = statistics.getStatusCount();
-        assertEquals(20, actualStatusCount.get(TicketStatus.PENDING));
-        assertEquals(30, actualStatusCount.get(TicketStatus.PROCESSING));
+        Map<String, Integer> actualStatusCount = statistics.getStatusCount();
+        assertEquals(20, actualStatusCount.get("PENDING"));
+        assertEquals(30, actualStatusCount.get("PROCESSING"));
 
         // 验证月度统计
         List<MonthlyStatisticsVO> actualMonthlyStats = statistics.getMonthlyStats();
