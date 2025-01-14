@@ -6,6 +6,7 @@ import com.icss.etc.ticket.entity.*;
 import com.icss.etc.ticket.entity.dto.*;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
+import com.icss.etc.ticket.entity.vo.TicketRecordVO;
 import com.icss.etc.ticket.entity.vo.TicketVO;
 import com.icss.etc.ticket.entity.vo.TodoStatsVO;
 import com.icss.etc.ticket.entity.vo.ticket.DepartmentStatisticsVO;
@@ -89,7 +90,7 @@ public class TicketServiceImpl implements TicketService {
         }
 
         // 2. 获取处理记录
-        List<TicketRecord> records = ticketRecordMapper.selectRecordsByTicketId(ticketId);
+        List<TicketRecordVO> records = ticketRecordMapper.selectRecordsByTicketId(ticketId);
         detail.setRecords(records);
 
         return detail;
@@ -220,6 +221,8 @@ public class TicketServiceImpl implements TicketService {
         record.setCreateTime(LocalDateTime.now());
         record.setIsDeleted(0);
 
+        // 禁止使用此接口评分
+        recordDTO.setEvaluationScore(null);
         if (ticketRecordMapper.insertRecord(record) <= 0) {
             throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED);
         }
@@ -354,12 +357,14 @@ public class TicketServiceImpl implements TicketService {
     @Transactional(rollbackFor = Exception.class)
     public void evaluateTicket(TicketEvaluationDTO evaluationDTO) {
         // 1. 查询工单
-        Ticket ticket = ticketMapper.selectTicketById(evaluationDTO.getTicketId());
+        Ticket ticket = ticketMapper.getTicketById(evaluationDTO.getTicketId());
         if (ticket == null) {
-            throw new BusinessException(TicketEnum.TICKET_NOT_EXIST);
+            throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED, "工单不可评价或已评价");
         }
-
         // 2. 校验状态
+        if (ticketRecordMapper.selectEvaluationByTicketId(evaluationDTO.getTicketId()) != null)
+            throw new BusinessException(TicketEnum.TICKET_STATUS_EXCEPTION, "工单已评价过");
+
         if (ticket.getStatus() != TicketStatus.COMPLETED) {
             throw new BusinessException(TicketEnum.TICKET_STATUS_EXCEPTION, "只能评价已完成的工单");
         }
@@ -368,15 +373,16 @@ public class TicketServiceImpl implements TicketService {
         TicketRecord record = new TicketRecord();
         record.setTicketId(evaluationDTO.getTicketId());
         record.setOperatorId(evaluationDTO.getEvaluatorId());
-        record.setOperationType(OperationType.FINISH);
+        record.setOperationType(OperationType.CLOSE);
         record.setOperationContent(evaluationDTO.getContent());
         record.setEvaluationScore(evaluationDTO.getScore());
         record.setEvaluationContent(evaluationDTO.getContent());
         record.setCreateTime(LocalDateTime.now());
         record.setIsDeleted(0);
 
+
         if(ticketRecordMapper.insertRecord(record) <= 0) {
-            throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED);
+            throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED, "评价保存失败");
         }
 
         // 4. 更新工单状态为已关闭
@@ -444,6 +450,17 @@ public class TicketServiceImpl implements TicketService {
         result.put("COMPLETED", ticketMapper.countTicketsByStatus(userId, TicketStatus.COMPLETED));
         result.put("CLOSED", ticketMapper.countTicketsByStatus(userId, TicketStatus.CLOSED));
         return result;
+    }
+
+    @Override
+    public Ticket  getTicketById(Long ticketId) {
+        return ticketMapper.getTicketById(ticketId);
+    }
+
+    @Override
+    public boolean canEvaluate(Long ticketId, Long userId) {
+        Boolean canEvaluate = ticketMapper.checkTicketEvaluable(ticketId, userId);
+        return canEvaluate != null && canEvaluate;
     }
 
     @Override

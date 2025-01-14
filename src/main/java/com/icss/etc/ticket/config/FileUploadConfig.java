@@ -44,7 +44,7 @@ public class FileUploadConfig {
     @PostConstruct
     public void init() {
         try {
-            String uploadPath = propertiesUtil.getProperty("upload.path", "./uploads");
+            String uploadPath = propertiesUtil.getProperty("upload.path", "/uploads");
 
             // 创建上传目录
             File uploadDir = new File(uploadPath);
@@ -54,7 +54,7 @@ public class FileUploadConfig {
             }
 
             log.info("文件上传配置初始化完成, 上传路径: {}, 最大文件大小: {}MB",
-                    uploadPath,
+                    uploadDir.getAbsolutePath(),
                     propertiesUtil.getProperty("upload.maxSize", "10"));
 
         } catch (Exception e) {

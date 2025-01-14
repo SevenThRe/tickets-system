@@ -523,4 +523,33 @@
         AND status IN (0, 1)  <!-- PENDING, PROCESSING -->
         AND is_deleted = 0
     </select>
+
+    <select id="getTicketById" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List">
+        </include>
+        from t_ticket
+        where is_deleted = 0 and status = 2
+    </select>
+
+    <select id="checkTicketEvaluable" resultType="java.lang.Boolean">
+        SELECT CASE
+        WHEN EXISTS (
+        SELECT 1
+        FROM t_ticket t
+        WHERE t.ticket_id = #{ticketId}
+        AND t.create_by = #{userId}
+        AND t.status = 2  <!-- 已完成状态 -->
+        AND t.is_deleted = 0
+        AND NOT EXISTS (  <!-- 检查是否已评价 -->
+        SELECT 1
+        FROM t_ticket_record r
+        WHERE r.ticket_id = t.ticket_id
+        AND r.evaluation_score IS NOT NULL
+        AND r.is_deleted = 0
+        )
+        ) THEN TRUE
+        ELSE FALSE
+        END
+    </select>
 </mapper>

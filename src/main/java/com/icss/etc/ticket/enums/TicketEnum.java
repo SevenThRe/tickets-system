@@ -58,7 +58,7 @@ public enum TicketEnum {
      * "工单已删除"
      */
     TICKET_DELETED(-11, "工单已被删除过"),
-    ;
+    NO_PERMISSION_EVALUATE(-12, "无权限评价");
 
     private final int code;
     private final String message;

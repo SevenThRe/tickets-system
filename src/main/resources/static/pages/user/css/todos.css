@@ -261,6 +261,16 @@
     margin-right: 8px;
 }
 
+.bg-low {
+    background-color: #28a745;
+}
+.bg-medium {
+    background-color: #ffc107;
+}
+.bg-high {
+    background-color: #dc3545;
+}
+
 .priority-high {
     background-color: #dc3545;
 }

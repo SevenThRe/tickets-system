@@ -2,19 +2,13 @@ package com.icss.etc.ticket.service;
 
 import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.Ticket;
-import com.icss.etc.ticket.entity.TicketRecord;
 import com.icss.etc.ticket.entity.TicketType;
-import com.icss.etc.ticket.entity.dto.*;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
-import com.icss.etc.ticket.entity.vo.TicketVO;
 import com.icss.etc.ticket.entity.vo.TodoStatsVO;
 import com.icss.etc.ticket.entity.vo.ticket.TicketStatisticsVO;
-import com.icss.etc.ticket.enums.OperationType;
-import com.icss.etc.ticket.enums.TicketStatus;
-import org.apache.ibatis.annotations.Param;
+import jakarta.validation.constraints.NotNull;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -129,4 +123,16 @@ public interface TicketService {
      * @return 类型名称
      */
     Map<String, Integer> countByStatus(Long userId);
+
+    /**
+     * 根据工单Id查询工单是否没有被评价过
+     * 如果没有评价且是已完成状态则返回工单
+     * @param ticketId 工单ID
+     * @return 工单
+     */
+    Ticket getTicketById(@NotNull(message = "工单ID不能为空") Long ticketId);
+
+
+    boolean canEvaluate(@NotNull(message = "工单ID不能为空") Long ticketId, @NotNull(message = "评价人不能为空") Long evaluatorId);
+
 }

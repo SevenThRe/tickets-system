@@ -2,12 +2,10 @@ package com.icss.etc.ticket.controller;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.icss.etc.ticket.entity.R;
-import com.icss.etc.ticket.entity.Ticket;
-import com.icss.etc.ticket.entity.TicketRecord;
-import com.icss.etc.ticket.entity.TicketType;
+import com.icss.etc.ticket.entity.*;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
+import com.icss.etc.ticket.entity.vo.TicketRecordVO;
 import com.icss.etc.ticket.entity.vo.TodoStatsVO;
 import com.icss.etc.ticket.entity.vo.ticket.TicketStatisticsVO;
 import com.icss.etc.ticket.enums.CodeEnum;
@@ -15,16 +13,21 @@ import com.icss.etc.ticket.enums.OperationType;
 import com.icss.etc.ticket.enums.TicketEnum;
 import com.icss.etc.ticket.enums.TicketStatus;
 import com.icss.etc.ticket.exceptions.BusinessException;
+import com.icss.etc.ticket.mapper.AttachmentMapper;
 import com.icss.etc.ticket.service.FileService;
 import com.icss.etc.ticket.service.TicketService;
 import com.icss.etc.ticket.util.ExcelUtil;
+import com.icss.etc.ticket.util.PropertiesUtil;
 import com.icss.etc.ticket.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -41,10 +44,22 @@ public class TicketController {
 
     private final FileService fileService;
 
+    private final PropertiesUtil propertiesUtil;
 
-    public TicketController(TicketService ticketService , FileService fileService) {
+    private final AttachmentMapper attachmentMapper;
+
+    private final String FILE_PATH;
+
+
+    public TicketController(TicketService ticketService , FileService fileService
+           , PropertiesUtil propertiesUtil
+            , AttachmentMapper attachmentMapper) {
         this.ticketService = ticketService;
         this.fileService = fileService;
+        this.propertiesUtil = propertiesUtil;
+        this.attachmentMapper = attachmentMapper;
+
+        this.FILE_PATH = propertiesUtil.getProperty("upload.path");
     }
 
     /* My-Ticket.HTML 相关代码 */
@@ -113,18 +128,46 @@ public class TicketController {
         }
     }
 
-    // TEST:OK
     /**
      * 创建工单
      * @param createDTO 创建工单请求
      *
      */
-    @PostMapping(value = "/create" ,consumes = "multipart/form-data")
+    @Transactional
+    @PostMapping("/create")
     public R<Long> createTicket(
             @RequestParam("attachments") MultipartFile file,
-            @RequestBody @Valid CreateTicketDTO createDTO) {
+            @Valid CreateTicketDTO createDTO) {
         try {
+            // 写完才发现写到了controller里 controller最好不要放业务逻辑，我懒得改了
+
+            //如果工单创建成功 查询工单是否有附件
+            String filePath = "";
+            if (!file.isEmpty() || file.getSize() > 0){
+                if (FILE_PATH == null) {
+                    throw new BusinessException(CodeEnum.INTERNAL_ERROR, "文件上传路径未配置");
+                }
+                File f = new File(FILE_PATH);
+                if (!f.exists() && f.isDirectory()) {
+                    f.mkdirs();
+                }
+                String fileName = file.getOriginalFilename();
+                String suffix = fileName.substring(fileName.lastIndexOf("."));
+                String newFileName = String.format("%s%s", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")), suffix);
+                filePath = FILE_PATH + newFileName;
+                file.transferTo(new java.io.File(filePath));
+            }
+            // 创建工单
             Long ticketId = ticketService.createTicket(createDTO);
+            if (ticketId == null) throw new BusinessException(CodeEnum.INTERNAL_ERROR, "未知异常，工单创建失败");
+            // 文件上传完毕，尝试传递文件路径到t_attachment表
+            attachmentMapper.insertSelective(
+                    Attachment.builder().ticketId(ticketId)
+                            .createBy(createDTO.getCurrentUserId())
+                            .fileName(file.getOriginalFilename())
+                            .fileSize(file.getSize())
+                            .filePath(filePath).build()
+            );
             return R.OK(ticketId);
         } catch (BusinessException e) {
             log.error("创建工单失败: {}", e.getMessage());
@@ -189,17 +232,19 @@ public class TicketController {
     /**
      * 工单评价
      */
-    @PostMapping("/{ticketId}/evaluate")
-    public R<Void> evaluateTicket(@RequestBody @Valid TicketEvaluationDTO evaluationDTO) {
+    @PostMapping("/evaluate")
+    public R<Void> evaluateTicket(
+            @RequestBody @Valid
+            TicketEvaluationDTO evaluationDTO) {
+        if(!ticketService.canEvaluate(evaluationDTO.getTicketId(), evaluationDTO.getEvaluatorId())) {
+            return R.FAIL(TicketEnum.NO_PERMISSION_EVALUATE);
+        }
         try {
             ticketService.evaluateTicket(evaluationDTO);
             return R.OK();
         } catch (BusinessException e) {
             log.error("工单评价失败: {}", e.getMessage());
             return R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
-        } catch (Exception e) {
-            log.error("工单评价失败:", e);
-            return R.FAIL();
         }
     }
 
@@ -258,7 +303,7 @@ public class TicketController {
             recordDTO.setTicketId(ticketId);
             recordDTO.setOperatorId(SecurityUtils.getCurrentUserId());
             recordDTO.setOperationType(OperationType.HANDLE);
-            recordDTO.setContent(note);
+            recordDTO.setOperationContent(note);
 
             ticketService.addTicketRecord(recordDTO);
             return R.OK();
@@ -309,7 +354,7 @@ public class TicketController {
             recordDTO.setTicketId(ticketId);
             recordDTO.setOperatorId(SecurityUtils.getCurrentUserId());
             recordDTO.setOperationType(OperationType.HANDLE);
-            recordDTO.setContent("上传附件：" + String.join(", ",
+            recordDTO.setOperationContent("上传附件：" + String.join(", ",
                     Arrays.stream(files)
                             .map(MultipartFile::getOriginalFilename)
                             .collect(Collectors.toList())));
@@ -330,7 +375,7 @@ public class TicketController {
      * 获取工单处理进度
      */
     @GetMapping("/{ticketId}/progress")
-    public R<List<TicketRecord>> getTicketProgress(@PathVariable Long ticketId) {
+    public R<List<TicketRecordVO>> getTicketProgress(@PathVariable Long ticketId) {
         try {
             TicketDetailVO detail = ticketService.getTicketDetail(ticketId);
             return R.OK(detail.getRecords());
