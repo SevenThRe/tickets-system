@@ -523,6 +523,7 @@ MyTickets.prototype._handleCloseTicket = function() {
         method: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify({
+            ticketId: this.state.currentTicket.ticketId,
             content: content,
             operatorId: this.state.filters.userId
         }),

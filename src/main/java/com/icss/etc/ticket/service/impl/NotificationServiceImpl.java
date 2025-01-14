@@ -8,6 +8,7 @@ import com.icss.etc.ticket.exceptions.BusinessException;
 import com.icss.etc.ticket.mapper.NotificationMapper;
 import com.icss.etc.ticket.service.NotificationService;
 import com.icss.etc.ticket.util.JsonUtil;
+import com.icss.etc.ticket.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ public class NotificationServiceImpl implements NotificationService {
      */
     @Override
     public void createAssignNotification(Long ticketId, Long userId, String content) {
+        if (userId == null) userId = SecurityUtils.getCurrentUserId();
         Notification notification = Notification.builder()
                 .ticketId(ticketId)
                 .userId(userId)
@@ -56,6 +58,7 @@ public class NotificationServiceImpl implements NotificationService {
      */
     @Override
     public void createCompleteNotification(Long ticketId, Long userId, String content) {
+        if (userId == null) userId = SecurityUtils.getCurrentUserId();
         Notification notification = Notification.builder()
                 .ticketId(ticketId)
                 .userId(userId)
@@ -164,6 +167,9 @@ public class NotificationServiceImpl implements NotificationService {
     private void saveAndPush(Notification notification) {
         if(notification == null) {
             throw new BusinessException(CodeEnum.BAD_REQUEST, "通知对象不能为空");
+        }
+        if(notification.getUserId() == null) {
+            throw new BusinessException(CodeEnum.BAD_REQUEST, "通知用户ID不能为空");
         }
 
         try {

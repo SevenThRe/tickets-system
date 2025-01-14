@@ -325,10 +325,12 @@
 
   <select id="selectEvaluationByTicketId" resultType="TicketRecord">
     SELECT *
-    FROM t_ticket_record
-    WHERE ticket_id = #{ticketId}
+    FROM t_ticket_record tr
+    LEFT JOIN t_ticket t ON t.ticket_id = tr.ticket_id
+    WHERE t.ticket_id = #{ticketId}
     AND evaluation_score IS NOT NULL
-    AND is_deleted = 0
+    AND t.is_deleted = 0
+    AND t.status = 2
     LIMIT 1
   </select>
 </mapper>

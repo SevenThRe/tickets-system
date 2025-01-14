@@ -320,10 +320,10 @@ public class TicketController {
      * 关闭工单
      */
     @PutMapping("/{ticketId}/close")
-    public R<Void> closeTicket(@PathVariable Long ticketId, @RequestBody CloseTicketRequest request) {
+    public R<Void> closeTicket( CloseTicketRequest request) {
         try {
             UpdateTicketStatusDTO updateDTO = new UpdateTicketStatusDTO();
-            updateDTO.setTicketId(ticketId);
+            updateDTO.setTicketId(request.getTickedId());
             updateDTO.setStatus(TicketStatus.CLOSED);
             updateDTO.setOperatorId(request.getOperatorId());
             updateDTO.setContent(request.getContent());
