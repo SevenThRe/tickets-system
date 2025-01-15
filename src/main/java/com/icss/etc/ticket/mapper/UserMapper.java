@@ -1,5 +1,7 @@
 package com.icss.etc.ticket.mapper;
 
+import com.github.pagehelper.PageInfo;
+import com.icss.etc.ticket.entity.dto.DepartmentsQueryDTO;
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
 import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
@@ -81,6 +83,9 @@ public interface UserMapper {
     List<DeptMemberVO> selectByDepartmentId(Long departmentId);
 
 
+    List<DeptMemberVO> queryByDepartmentId(DepartmentsQueryDTO departmentsQueryDTO);
+
+
     /**
      * 根据部门ID和用户ID添加用户
      * @param deptMemberDTO 部门ID和用户ID
@@ -108,4 +113,6 @@ public interface UserMapper {
     String[] selectUserPermissions(Long userId);
 
     List<User> selectOnlineProcessorsByDepartment(Long departmentId);
+
+    Long selectDepartmentId(Long userId);
 }

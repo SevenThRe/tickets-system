@@ -1,5 +1,6 @@
 package com.icss.etc.ticket.service;
 
+import com.icss.etc.ticket.entity.dto.DepartmentsQueryDTO;
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
 import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
@@ -44,7 +45,8 @@ public interface UserService {
     // TODO:获取用户列表
 
     // TODO:获取部门成员列表
-    List<DeptMemberVO> selectByDepartmentId(Long departmentId);
+    List<DeptMemberVO> selectByDepartmentId(Long userId);
+    List<DeptMemberVO> queryByDepartmentId(DepartmentsQueryDTO departmentsQueryDTO);
 
     /**
      * 添加部门成员

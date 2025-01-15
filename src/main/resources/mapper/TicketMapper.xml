@@ -383,6 +383,17 @@
         AND is_deleted = 0
     </update>
 
+    <!-- 获取工单处理历史记录 -->
+    <select id="selectTicketHistory" resultType="com.icss.etc.ticket.entity.TicketRecord">
+        SELECT
+            r.*,
+            u.real_name as operator_name
+        FROM t_ticket_record r
+                 LEFT JOIN t_user u ON r.operator_id = u.user_id
+        WHERE r.ticket_id = #{ticketId}
+          AND r.is_deleted = 0
+        ORDER BY r.create_time ASC
+    </select>
     <!-- 更新工单状态 -->
     <update id="updateStatus">
         UPDATE t_ticket
@@ -413,6 +424,17 @@
         </foreach>
         AND is_deleted = 0
     </update>
+<!--    获取用户当前工作量-->
+    <select id="countCrrentWorkload" resultType="integer">
+        <![CDATA[
+        select count(1)
+        from t_ticket
+        where is_deleted = 0
+          and processor_id = #{userId}
+          and status = 1
+        HAVING count(1) <= #{workloadFilter}
+        ]]>
+    </select>
 
     <!-- 获取个人工单统计 -->
     <select id="selectPersonalStatistics" resultType="java.util.Map">
@@ -446,17 +468,6 @@
         ORDER BY t.create_time DESC
     </select>
 
-    <!-- 获取工单处理历史记录 -->
-    <select id="selectTicketHistory" resultType="com.icss.etc.ticket.entity.TicketRecord">
-        SELECT
-        r.*,
-        u.real_name as operator_name
-        FROM t_ticket_record r
-        LEFT JOIN t_user u ON r.operator_id = u.user_id
-        WHERE r.ticket_id = #{ticketId}
-        AND r.is_deleted = 0
-        ORDER BY r.create_time ASC
-    </select>
 
 
     <!-- 导出工单数据 -->
@@ -492,6 +503,7 @@
         ORDER BY t.create_time DESC
     </select>
 
+    <!-- 统计今日完成工单数量 -->
     <select id="countTodayCompleted" resultType="integer">
         SELECT COUNT(1)
         FROM t_ticket
@@ -532,7 +544,35 @@
         where ticket_id = #{ticketId}
         and is_deleted = 0 and status = 2
     </select>
+    <select id="getSatisfaction" resultType="double">
+        SELECT AVG(evaluation_score)
+        FROM t_ticket_record
+        WHERE operator_id = #{userId}
+          AND evaluation_score IS NOT NULL
+          AND is_deleted = 0
+          AND EXISTS (
+            SELECT 1
+            FROM t_ticket
+            WHERE t_ticket.ticket_id = t_ticket_record.ticket_id
+              AND t_ticket.status = 2
+        )
+    </select>
 
+    <select id="getAvgProcessTime" resultType="java.lang.Double">
+        SELECT AVG(TIMESTAMPDIFF(HOUR, create_time, actual_finish_time)) AS avg_process_time
+        FROM t_ticket
+        WHERE processor_id = #{userId}
+        AND status = 2
+        AND is_deleted = 0
+        GROUP BY processor_id
+        <if test="grade!=null and grade!=''">
+            HAVING
+            <if test="grade == 'A'">avg_process_time &lt; 15</if>
+            <if test="grade == 'B'">avg_process_time >= 15 AND avg_process_time &lt; 40</if>
+            <if test="grade == 'C'">avg_process_time >= 40 AND avg_process_time &lt; 60</if>
+            <if test="grade == 'D'">avg_process_time >= 60</if>
+        </if>
+    </select>
     <select id="checkTicketEvaluable" resultType="java.lang.Boolean">
         SELECT CASE
         WHEN EXISTS (
@@ -553,4 +593,29 @@
         ELSE FALSE
         END
     </select>
+    <select id="getMonthlyPerformance" resultType="java.lang.Integer">
+        SELECT COUNT(*) AS completed_tickets_count
+        FROM ticket_system.t_ticket_record
+        WHERE operator_id = #{userId}
+            AND operation_type = 3 -- 完成操作类型
+            AND MONTH(create_time) = MONTH(CURRENT_DATE()) -- 本月
+          AND YEAR(create_time) = YEAR(CURRENT_DATE()) -- 本年
+          AND is_deleted = 0; -- 未删除的记录
+    </select>
+
+    <!--    <select id="countCompletedTickets" resultType="java.lang.Integer">-->
+<!--        SELECT COUNT(1)-->
+<!--        FROM t_ticket-->
+<!--        WHERE processor_id = #{userId}-->
+<!--        AND status = 2-->
+<!--        AND create_time BETWEEN #{startTime} AND #{endTime}-->
+<!--        AND is_deleted = 0-->
+<!--    </select>-->
+<!--    <select id="countActiveTickets" resultType="java.lang.Integer">-->
+<!--        SELECT COUNT(1)-->
+<!--        FROM t_ticket-->
+<!--        WHERE processor_id = #{userId}-->
+<!--        AND status IN (0, 1)  &lt;!&ndash; PENDING, PROCESSING &ndash;&gt;-->
+<!--        AND is_deleted = 0-->
+<!--    </select>-->
 </mapper>

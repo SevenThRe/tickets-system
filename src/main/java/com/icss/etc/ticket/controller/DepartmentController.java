@@ -3,6 +3,7 @@ package com.icss.etc.ticket.controller;
 
 import com.icss.etc.ticket.entity.Department;
 import com.icss.etc.ticket.entity.R;
+import com.icss.etc.ticket.entity.dto.DepartmentsQueryDTO;
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
 import com.icss.etc.ticket.service.DepartmentService;
 import com.icss.etc.ticket.service.UserService;
@@ -106,10 +107,16 @@ public class DepartmentController {
         return R.OK(departmentService.getDepartmentTree());
     }
 
-    //TODO:更改API接口
-    @GetMapping("/members/{id}")
-    public R getDeptMemberByDeptId(@PathVariable("id") Long department_id){
-        return R.OK(userService.selectByDepartmentId(department_id));
+
+
+    /**
+     * 通过用户ID 查询部门成员的全部信息
+     * @param departmentsQueryDTO 部门查询DTO
+     * @return
+     */
+    @GetMapping("/meblist")
+    public R getDeptMemberByDeptId(DepartmentsQueryDTO departmentsQueryDTO){
+        return R.OK(userService.queryByDepartmentId(departmentsQueryDTO));
     }
 
     @PostMapping("/addUser")
@@ -130,6 +137,13 @@ public class DepartmentController {
     public R selectAll() {
         return R.OK(departmentService.selectAll());
     }
+
+
+    @GetMapping("/parent")
+    public R selectParentAll() {
+        return R.OK(departmentService.selectParentAll());
+    }
+
 
 
 

@@ -180,4 +180,26 @@ public interface TicketMapper {
 
 
     Boolean checkTicketEvaluable(@Param("ticketId") Long ticketId, @Param("userId") Long userId);
+
+
+    /**
+     * 获取用户的已完成工单的平均满意度
+     * @param userId   用户ID
+     * @return 满意度
+     */
+    Double getSatisfaction(Long userId);
+
+
+    /**
+     * 获取用户的已完成工单的平均处理时间
+     * @param userId   用户ID
+     * @param grade 效率等级
+     * @return 平均处理时间
+     */
+    Double getAvgProcessTime(@Param("userId") Long userId, @Param("grade") String grade);
+
+
+    Integer countCrrentWorkload(@Param("userId") Long userId,@Param("workloadFilter") Integer workloadFilter);
+
+    Integer getMonthlyPerformance(@Param("userId") Long userId);
 }
