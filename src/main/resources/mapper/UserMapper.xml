@@ -3,7 +3,6 @@
 <mapper namespace="com.icss.etc.ticket.mapper.UserMapper">
   <resultMap id="BaseResultMap" type="com.icss.etc.ticket.entity.User">
     <!--@mbg.generated-->
-    <!--@Table t_user-->
     <id column="user_id" jdbcType="BIGINT" property="userId" />
     <result column="username" jdbcType="VARCHAR" property="username" />
     <result column="password" jdbcType="VARCHAR" property="password" />
