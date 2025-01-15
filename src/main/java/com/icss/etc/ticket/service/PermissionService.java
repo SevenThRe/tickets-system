@@ -2,6 +2,7 @@ package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.Permission;
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.dto.RPDTO;
 import com.icss.etc.ticket.enums.Logical;
 import org.apache.ibatis.annotations.Param;
 
@@ -22,9 +23,13 @@ public interface PermissionService {
     //修改权限
     int updatePermission(Permission permission);
     //查询所有权限
-    List<Permission> selectAllPermission();
+    List<Permission> selectAllPermission(@Param("keyword") String keyword);
     //删除权限
-    int deletePermission(@Param("permissionId") Long permissionId);
+    int deletePermission(RPDTO rpdto);
+    /**
+     * 根据roleID查询权限
+     */
+    List<Permission> selectPermissionByRoleId(@Param("roleId")Long roleId);
 
     /**
      * 检查权限

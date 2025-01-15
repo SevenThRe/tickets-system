@@ -169,40 +169,23 @@
   <!--  查询所有权限-->
   <select id="selectAllPermission" resultType="com.icss.etc.ticket.entity.Permission">
         <!--@mbg.generated-->
-        select
-        <include refid="Base_Column_List" />
+        select permission_id,permission_name
         from t_permission
-        <where>
-            <if test="permissionId != null and permissionName !=''">
-                and permission_id=#{permissionId,jdbcType=BIGINT}
-            </if>
-            <if test="permissionName != null and permissionName !=''">
-                and permission_name=#{permissionName,jdbcType=VARCHAR}
-            </if>
-            <if test="permissionCode != null and permissionCode !=''">
-                and permission_code=#{permissionCode,jdbcType=VARCHAR}
-            </if>
-            <if test="icon != null and icon !=''">
-                and icon=#{icon,jdbcType=VARCHAR}
-            </if>
-            <if test="sort != null and sort !=''">
-                and sort=#{sort,jdbcType=INTEGER}
-            </if>
-                and is_deleted=0
-            <if test="createBy != null and createBy !=''">
-                and create_by=#{createBy,jdbcType=BIGINT}
-            </if>
-            <if test="updateBy != null and updateBy !=''">
-                and update_by=#{updateBy,jdbcType=BIGINT}
-            </if>
-            <if test="createTime != null and createTime !=''">
-                and create_time=#{createTime,jdbcType=TIMESTAMP}
-            </if>
-            <if test="updateTime != null and updateTime !=''">
-                and update_time=#{updateTime,jdbcType=TIMESTAMP}
-            </if>
-        </where>
+    where is_deleted = 0
+    <if test="keyword != null and keyword != ''">
+      and permission_name like concat('%', #{keyword}, '%')
+    </if>
     </select>
+
+  <!--  查询所有权限-->
+  <select id="selectPermissionByRoleId" resultType="com.icss.etc.ticket.entity.Permission">
+    select p.permission_id,p.permission_name
+    from t_permission p
+    inner join t_role_permission c on p.permission_id=c.permission_id
+    inner join t_role r on r.role_id=c.role_id
+    where p.is_deleted = 0 and r.role_id=#{roleId}
+
+  </select>
   
   
 <!--  删除所有权限-->

@@ -32,7 +32,7 @@
     )
   </insert>
 
-  <select id="selectRecordsByTicketId" resultType="com.icss.etc.ticket.entity.TicketRecord">
+  <select id="selectRecordsByTicketId" resultType="com.icss.etc.ticket.entity.vo.TicketRecordVO">
     SELECT r.*, u.real_name as operator_name
     FROM t_ticket_record r
     LEFT JOIN t_user u ON r.operator_id = u.user_id
@@ -79,17 +79,6 @@
     from t_ticket_record
     where record_id = #{recordId,jdbcType=BIGINT}
   </select>
-  <insert id="insert" keyColumn="record_id" keyProperty="recordId" parameterType="com.icss.etc.ticket.entity.TicketRecord" useGeneratedKeys="true">
-    <!--@mbg.generated-->
-    insert into t_ticket_record (ticket_id, operator_id, operation_type,
-    operation_content, evaluation_score,
-    evaluation_content, is_deleted, create_time
-    )
-    values (#{ticketId,jdbcType=BIGINT}, #{operatorId,jdbcType=BIGINT}, #{operationType,jdbcType=TINYINT},
-    #{operationContent,jdbcType=LONGVARCHAR}, #{evaluationScore,jdbcType=TINYINT},
-    #{evaluationContent,jdbcType=LONGVARCHAR}, #{isDeleted,jdbcType=TINYINT}, #{createTime,jdbcType=TIMESTAMP}
-    )
-  </insert>
   <insert id="insertSelective" keyColumn="record_id" keyProperty="recordId" parameterType="com.icss.etc.ticket.entity.TicketRecord" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into t_ticket_record
@@ -304,4 +293,44 @@
       #{item.createTime,jdbcType=TIMESTAMP})
     </foreach>
   </insert>
+
+  <insert id="insert" parameterType="TicketRecord">
+    INSERT INTO t_ticket_record (
+    ticket_id,
+    operator_id,
+    operation_type,
+    operation_content,
+    evaluation_score,
+    evaluation_content
+    ) VALUES (
+    #{ticketId},
+    #{operatorId},
+    #{operationType},
+    #{operationContent},
+    #{evaluationScore},
+    #{evaluationContent}
+    )
+  </insert>
+
+  <select id="selectByTicketId" resultType="TicketRecord">
+    SELECT
+    r.*,
+    u.username as operator_name
+    FROM t_ticket_record r
+    LEFT JOIN t_user u ON r.operator_id = u.user_id
+    WHERE r.ticket_id = #{ticketId}
+    AND r.is_deleted = 0
+    ORDER BY r.create_time DESC
+  </select>
+
+  <select id="selectEvaluationByTicketId" resultType="TicketRecord">
+    SELECT *
+    FROM t_ticket_record tr
+    LEFT JOIN t_ticket t ON t.ticket_id = tr.ticket_id
+    WHERE t.ticket_id = #{ticketId}
+    AND evaluation_score IS NOT NULL
+    AND t.is_deleted = 0
+    AND t.status = 2
+    LIMIT 1
+  </select>
 </mapper>

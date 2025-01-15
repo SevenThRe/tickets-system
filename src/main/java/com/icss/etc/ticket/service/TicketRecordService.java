@@ -1,6 +1,7 @@
 package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.TicketRecord;
+import com.icss.etc.ticket.entity.dto.ticket.AddTicketRecordDTO;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -59,4 +60,12 @@ public interface TicketRecordService {
     int updateBatchSelective(@Param("list") List<TicketRecord> list);
 
     int batchInsert(@Param("list") List<TicketRecord> list);
+
+    /**
+     * add record
+     * @param recordDTO the record DTO
+     */
+    void addRecord(AddTicketRecordDTO recordDTO);
+
+    List<TicketRecord> getTicketRecords(Long ticketId);
 }

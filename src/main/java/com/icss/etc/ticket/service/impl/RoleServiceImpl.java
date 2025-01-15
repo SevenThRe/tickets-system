@@ -1,7 +1,9 @@
 package com.icss.etc.ticket.service.impl;
 
+import com.icss.etc.ticket.entity.Permission;
 import com.icss.etc.ticket.entity.Role;
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.dto.PermissionDTO;
 import com.icss.etc.ticket.entity.vo.ChooseRolesVO;
 import com.icss.etc.ticket.mapper.RoleMapper;
 import com.icss.etc.ticket.service.RoleService;
@@ -64,8 +66,8 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public List<Role2> OneRoleMorePermission() {
-        return roleMapper.OneRoleMorePermission();
+    public List<Permission> OneRoleMorePermission(PermissionDTO permissionDTO) {
+        return roleMapper.OneRoleMorePermission(permissionDTO);
     }
 
     @Override

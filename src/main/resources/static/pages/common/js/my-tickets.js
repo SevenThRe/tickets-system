@@ -20,7 +20,7 @@ function MyTickets() {
             departmentId: '',
             startTime: '',
             endTime: '',
-            userId: JSON.parse(localStorage.getItem('userInfo') || '{}').userId
+            userId: JSON.parse(localStorage.getItem('userInfo')).userId || ''
         }
     };
 
@@ -271,82 +271,75 @@ MyTickets.prototype._renderTicketDetail = function() {
     $('#createTime').text(this._formatDate(ticket.createTime));
 
     // 渲染状态
-    $('#ticketStatus').html([
-        '<span class="badge bg-', this._getStatusClass[ticket.status], '">',
-        this.STATUS_MAP[ticket.status],
-        '</span>'
-    ].join(''));
+    $('#ticketStatus').html(`
+        <span class="badge bg-${this._getStatusClass(ticket.status)}">
+            ${this.STATUS_MAP[ticket.status]}
+        </span>
+    `);
 
-    // 评价表单显示控制
-    let canEvaluate = ticket.status === 'COMPLETED' &&
+    // 评价表单显示控制 - 只有在工单完成状态(status=2)且是创建人才能评价
+    const canEvaluate = ticket.status === 2 &&
         ticket.createBy === this.state.filters.userId &&
         !this._hasEvaluation(ticket.records);
+
     $('#evaluationForm').toggle(canEvaluate);
 
-    // 按钮状态控制
-    let canClose = ticket.status !== 'CLOSED' &&
+    if(this._hasEvaluation(ticket.records)) {
+        // 已评价,显示评价内容
+        const evaluation = this._getEvaluation(ticket.records);
+        this._renderEvaluation(evaluation);
+    }
+
+    // 备注按钮控制 - 处理中状态可以添加备注
+    const canAddNote = ticket.status === 1;
+    $('#noteForm').toggle(canAddNote);
+
+    // 关闭按钮控制 - 非关闭状态且是创建人或处理人可以关闭
+    const canClose = ticket.status !== 3 &&
         (ticket.createBy === this.state.filters.userId ||
             ticket.processorId === this.state.filters.userId);
+
     $('#closeTicketBtn').prop('disabled', !canClose);
+
+
 
     // 渲染处理记录
     this._renderTicketRecords(ticket.records);
 };
 
-/**
- * 渲染处理记录
- */
-MyTickets.prototype._renderTicketRecords = function(records) {
-    if (!records || !records.length) {
-        $('#ticketTimeline').html('<div class="text-muted">暂无处理记录</div>');
-        return;
-    }
-
-    let self = this;
-    let html = records.map(function(record) {
-        let html = [
-            '<div class="timeline-item">',
-            '<div class="timeline-content">',
-            '<div class="timeline-time">',
-            self._formatDate(record.createTime),
-            '</div>',
-            '<div class="timeline-title">',
-            '<strong>', record.operatorName, '</strong> ',
-            self._getOperationText(record.operationType),
-            '</div>'
-        ];
-
-        if (record.operationContent) {
-            html.push(
-                '<div class="timeline-body">',
-                record.operationContent,
-                '</div>'
-            );
-        }
-
-        if (record.evaluationScore) {
-            html.push(
-                '<div class="evaluation-content">',
-                '<div class="rating-display">',
-                self._renderStars(record.evaluationScore),
-                '</div>',
-                '<div class="evaluation-text">',
-                record.evaluationContent,
-                '</div>',
-                '</div>'
-            );
-        }
-
-        html.push(
-            '</div>',
-            '</div>'
-        );
-
-        return html.join('');
-    }).join('');
-
-    $('#ticketTimeline').html(html);
+// 检查是否已有评价记录
+MyTickets.prototype._hasEvaluation = function(records) {
+    return records?.some(record =>
+        record.operationType === 2 && record.evaluationScore > 0
+    );
 };
+
+// 获取评价记录
+MyTickets.prototype._getEvaluation = function(records) {
+    return records?.find(record =>
+        record.operationType === 2 && record.evaluationScore > 0
+    );
+};
+
+// 渲染评价内容
+MyTickets.prototype._renderEvaluation = function(evaluation) {
+    if(!evaluation) return;
+
+    const $evaluation = $('<div class="evaluation-result mt-3">').appendTo('#ticketDetail');
+    $evaluation.html(`
+        <h6>服务评价</h6>
+        <div class="rating-display">
+            ${this._renderStars(evaluation.evaluationScore)}
+        </div>
+        <div class="evaluation-content">
+            ${evaluation.evaluationContent || ''}
+        </div>
+        <div class="evaluation-time">
+            评价时间: ${this._formatDate(evaluation.createTime)}
+        </div>
+    `);
+};
+
 /**
  * 绑定创建工单相关的事件
  * @private
@@ -389,7 +382,7 @@ MyTickets.prototype._bindCreateTicketEvents = function() {
 
         // 收集表单数据
         const formData = new FormData($form[0]);
-        formData.append('createBy', self.state.filters.userId);
+        formData.append('currentUserId', self.state.filters.userId);
 
         // 发起创建请求
         $.ajax({
@@ -418,40 +411,6 @@ MyTickets.prototype._bindCreateTicketEvents = function() {
         });
     });
 
-    // 部门选择变化时加载对应的工单类型
-    $('#departmentId').on('change', function() {
-        const departmentId = $(this).val();
-        const $typeSelect = $('#typeId');
-
-        if (!departmentId) {
-            $typeSelect.html('<option value="">请选择工单类型</option>').prop('disabled', true);
-            return;
-        }
-
-        // 加载工单类型
-        $.ajax({
-            url: '/api/tickets/types',
-            method: 'GET',
-            data: { departmentId: departmentId },
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        }).done(function(response) {
-            if (response.code === 200) {
-                const options = response.data.map(function(type) {
-                    return `<option value="${type.typeId}">${type.typeName}</option>`;
-                });
-                $typeSelect
-                    .html('<option value="">请选择工单类型</option>' + options.join(''))
-                    .prop('disabled', false);
-            } else {
-                $typeSelect.html('<option value="">加载失败</option>').prop('disabled', true);
-            }
-        }).fail(function() {
-            $typeSelect.html('<option value="">加载失败</option>').prop('disabled', true);
-            NotifyUtil.error('加载工单类型失败');
-        });
-    });
 
     // 附件上传相关事件
     const $attachments = $('#attachments');
@@ -564,6 +523,7 @@ MyTickets.prototype._handleCloseTicket = function() {
         method: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify({
+            ticketId: this.state.currentTicket.ticketId,
             content: content,
             operatorId: this.state.filters.userId
         }),
@@ -595,11 +555,18 @@ MyTickets.prototype._handleRating = function(rating) {
             .toggleClass('bi-star', index >= rating);
     });
 };
-
 /**
  * 处理提交评价
  */
 MyTickets.prototype._handleSubmitEvaluation = function() {
+    const self = this;
+
+    // 再次验证状态
+    if(this.state.currentTicket.status !== 2) {
+        NotifyUtil.warning('只能对已完成的工单进行评价');
+        return;
+    }
+
     if(!this.state.selectedRating) {
         NotifyUtil.warning('请选择评分');
         return;
@@ -611,34 +578,142 @@ MyTickets.prototype._handleSubmitEvaluation = function() {
         return;
     }
 
+    // 创建评价记录
     $.ajax({
-        url: '/api/records',
+        url: '/api/tickets/evaluate',
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({
             ticketId: this.state.currentTicket.ticketId,
-            operationType: 5, // 评价类型
-            operationContent: content,
-            evaluationScore: this.state.selectedRating,
-            evaluationContent: content
+            evaluatorId: this.state.filters.userId,
+            score: this.state.selectedRating,
+            content: content
         }),
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
-    }).done(() => {
-        NotifyUtil.success('评价提交成功');
-        $('#evaluationForm').hide();
-        this._loadTicketDetail(this.state.currentTicket.ticketId);
+    }).done((response) => {
+        if (response.code === 200) {
+            NotifyUtil.success('评价提交成功');
+            $('#evaluationContent').val('');
+            this.state.selectedRating = 0;
+            $('.rating-star').removeClass('bi-star-fill').addClass('bi-star');
+            self._loadTicketDetail(self.state.currentTicket.ticketId);
+        } else {
+            NotifyUtil.error(response.msg || '评价提交失败');
+        }
     }).fail((error) => {
-        console.error('提交评价失败:', error);
-        NotifyUtil.error('评价提交失败');
+        NotifyUtil.error('评价提交失败',error);
     });
+};
+
+/**
+ * 处理关闭工单
+ */
+MyTickets.prototype._handleCloseTicket = function() {
+    const self = this;
+    const content = $('#noteContent').val().trim();
+
+    if (!content) {
+        NotifyUtil.warning('请输入关闭说明');
+        return;
+    }
+
+    if(!confirm('确定要关闭此工单吗？')) {
+        return;
+    }
+
+    // 关闭工单请求
+    $.ajax({
+        url: `/api/tickets/${this.state.currentTicket.ticketId}/close`,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            ticketId: this.state.currentTicket.ticketId,
+            operatorId: this.state.filters.userId,
+            content: content
+        }),
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    }).done((response) => {
+        if (response.code === 200) {
+            NotifyUtil.success('工单已关闭');
+            self._loadTicketDetail(self.state.currentTicket.ticketId);
+            self._loadTickets();
+        } else {
+            NotifyUtil.error(response.msg || '关闭工单失败');
+        }
+    }).fail((error) => {
+        console.error('关闭工单失败:', error);
+        NotifyUtil.error('关闭工单失败');
+    });
+};
+
+/**
+ * 渲染工单记录
+ */
+MyTickets.prototype._renderTicketRecords = function(records) {
+    if (!records || !records.length) {
+        $('#ticketTimeline').html('<div class="text-muted">暂无处理记录</div>');
+        return;
+    }
+
+    const html = records.map(record => {
+        let recordHtml = `
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <div class="timeline-time">${this._formatDate(record.createTime)}</div>
+                    <div class="timeline-title">
+                        <strong>${record.operatorName}</strong> 
+                        ${this._getOperationText(record.operationType)}
+                    </div>`;
+
+        // 添加操作内容（如果存在）
+        if (record.operationContent) {
+            recordHtml += `
+                <div class="timeline-body">
+                    ${record.operationContent}
+                </div>`;
+        }
+
+        // 添加评价内容（如果存在）
+        if (record.evaluationScore) {
+            recordHtml += `
+                <div class="evaluation-content">
+                    <div class="rating-display">
+                        ${this._renderStars(record.evaluationScore)}
+                    </div>
+                    ${record.evaluationContent ? `
+                        <div class="evaluation-text">
+                            ${record.evaluationContent}
+                        </div>
+                    ` : ''}
+                </div>`;
+        }
+
+        recordHtml += `
+                </div>
+            </div>`;
+
+        return recordHtml;
+    }).join('');
+
+    $('#ticketTimeline').html(html);
 };
 
 /**
  * 处理添加备注
  */
 MyTickets.prototype._handleAddNote = function() {
+    const self = this;
+
+    // 验证工单状态
+    if(this.state.currentTicket.status !== 1) {
+        NotifyUtil.warning('只能对处理中的工单添加备注');
+        return;
+    }
+
     const content = $('#noteContent').val().trim();
     if(!content) {
         NotifyUtil.warning('请输入备注内容');
@@ -646,22 +721,28 @@ MyTickets.prototype._handleAddNote = function() {
     }
 
     $.ajax({
-        url: '/api/records',
+        url: '/api/tickets/records',
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({
             ticketId: this.state.currentTicket.ticketId,
             operatorId: this.state.filters.userId,
-            operationType: 2,
-            operationContent: content
+            operationType: 2, // 处理类型
+            operationContent: content,
+            evaluationScore: null,
+            evaluationContent: null
         }),
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
-    }).done(() => {
-        NotifyUtil.success('添加备注成功');
-        $('#noteContent').val('');
-        this._loadTicketDetail(this.state.currentTicket.ticketId);
+    }).done((response) => {
+        if (response.code === 200) {
+            NotifyUtil.success('添加备注成功');
+            $('#noteContent').val('');
+            self._loadTicketDetail(self.state.currentTicket.ticketId);
+        } else {
+            NotifyUtil.error(response.msg || '添加备注失败');
+        }
     }).fail((error) => {
         console.error('添加备注失败:', error);
         NotifyUtil.error('添加备注失败');

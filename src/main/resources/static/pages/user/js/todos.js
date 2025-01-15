@@ -102,6 +102,13 @@ class TodoList {
                 this._loadTodos(),     // 加载工单列表
                 this._loadStatistics() // 加载统计数据
             ]);
+            const urlParams = new URLSearchParams(window.location.search);
+            const ticketId = urlParams.get('ticketId');
+            if (ticketId) {
+                setTimeout(() => {
+                    this._showProcessModal(ticketId);
+                },30)
+            }
         } catch(error) {
             console.error('初始化失败:', error);
             this.showError('加载失败，请刷新重试');
@@ -307,7 +314,7 @@ class TodoList {
                 </td>
                 <td>${this._escapeHtml(ticket.departmentName) || '-'}</td>
                 <td>
-                    <span class="badge todo-badge ${this._getPriorityBadgeClass(ticket.priority)}">
+                    <span class="badge bg-${TicketUtil.getPriorityClass(ticket.priority)}">
                         ${this._getPriorityText(parseInt(ticket.priority))}
                     </span>
                 </td>
@@ -336,7 +343,6 @@ class TodoList {
         // <button class="btn btn-sm btn-outline-secondary view-detail" data-id="${ticket.ticketId}">
         //     <i class="bi bi-eye"></i> 详情
         // </button>
-
 
         this.elements.todoList.html(html);
         this.elements.totalCount.text(this.state.pagination.total);
@@ -631,7 +637,7 @@ class TodoList {
         $('#createTime').text(this._formatDate(ticket.createTime));
         $('#expectFinishTime').text(this._formatDate(ticket.expectFinishTime));
         $('#ticketPriority').html(`
-            <span class="badge ${this._getPriorityBadgeClass(ticket.priority)}">
+            <span class="badge bg-${TicketUtil.getPriorityClass(ticket.priority)}">
                 ${this._getPriorityText(ticket.priority)}
             </span>
         `);
@@ -688,20 +694,6 @@ class TodoList {
     }
 
 
-    /**
-     * 获取优先级样式类
-     * @param {string} priority - 优先级
-     * @returns {string} 样式类名
-     * @private
-     */
-    _getPriorityBadgeClass(priority) {
-        const classMap = {
-            'HIGH': 'priority-high',
-            'MEDIUM': 'priority-medium',
-            'LOW': 'priority-low'
-        };
-        return classMap[priority] || 'priority-low';
-    }
 
 
     /**

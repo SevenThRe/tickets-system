@@ -5,6 +5,7 @@ import com.icss.etc.ticket.entity.TicketRecord;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.icss.etc.ticket.entity.vo.TicketRecordVO;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -25,7 +26,7 @@ public interface TicketRecordMapper {
     /**
      * 查询工单处理记录
      */
-    List<TicketRecord> selectRecordsByTicketId(@Param("ticketId") Long ticketId);
+    List<TicketRecordVO> selectRecordsByTicketId(@Param("ticketId") Long ticketId);
 
     /**
      * 查询处理记录详情
@@ -42,7 +43,6 @@ public interface TicketRecordMapper {
 
     TicketRecord selectByPrimaryKey(Long recordId);
 
-    int insert(TicketRecord record);
 
     int insertSelective(TicketRecord record);
 
@@ -53,4 +53,19 @@ public interface TicketRecordMapper {
     int batchInsert(List<TicketRecord> list);
 
     int updateBatchSelective(List<TicketRecord> list);
+
+    /**
+     * 插入工单记录
+     */
+    int insert(TicketRecord record);
+
+    /**
+     * 查询工单的所有记录
+     */
+    List<TicketRecord> selectByTicketId(@Param("ticketId") Long ticketId);
+
+    /**
+     * 查询工单的评价记录
+     */
+    TicketRecord selectEvaluationByTicketId(@Param("ticketId") Long ticketId);
 }

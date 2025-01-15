@@ -114,6 +114,11 @@ public class FileController {
         return R.OK();
     }
 
+    /**
+     *  获取附件
+     * @param ticketId 工单ID
+     * @return R<List<Attachment>>
+     */
     @GetMapping("/ticket/{ticketId}")
     public R<List<Attachment>> getTicketAttachments(@PathVariable Long ticketId) {
         try {

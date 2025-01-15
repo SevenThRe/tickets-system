@@ -8,6 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link href="/css/navbar.css" rel="stylesheet">
+    <link href="/css/notify.css" rel="stylesheet">
     <link href="/pages/admin/css/role-management.css" rel="stylesheet">
 </head>
 <body class="admin-layout">
@@ -113,7 +114,7 @@
                             <tr>
                                 <th>角色权限</th>
                                 <th class="text-right">
-                                    <button class="btn btn-success btn-sm" id="addRoleButton" onclick="addPermission()">
+                                    <button class="btn btn-success btn-sm" id="addPer" onclick="showModal2()">
                                         <i class="bi bi-plus-circle"></i> 添加权限
                                     </button>
                                 </th>
@@ -236,7 +237,42 @@
     </div>
 </div>
 
-
+<!-- 添加权限模态层 -->
+<div class="modal fade" id="roleModal2" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleModalTitle2">添加权限</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="role-search p-3">
+                    <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                        <input type="text" class="form-control" id="PermissionSearch"
+                               placeholder="搜索权限...">
+                    </div>
+                </div>
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>角色权限</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="someThingRole2">
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <!-- 如果需要，也可以在这里添加一个保存按钮 -->
+            </div>
+        </div>
+    </div>
+</div>
 <!--编辑模态层-->
 <div class="modal fade" id="roleModal1" tabindex="-1">
     <div class="modal-dialog">

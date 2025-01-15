@@ -4,9 +4,11 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.annotation.RequirePermissions;
 import com.icss.etc.ticket.annotation.RequireRoles;
+import com.icss.etc.ticket.entity.Permission;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.Role;
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.dto.PermissionDTO;
 import com.icss.etc.ticket.entity.dto.RoleDTO;
 import com.icss.etc.ticket.entity.vo.ChooseRolesVO;
 import com.icss.etc.ticket.enums.CodeEnum;
@@ -119,8 +121,8 @@ public class RoleController {
      * @return 所有角色信息
      */
     @RequestMapping("/OneRoleMorePermission")
-    public R OneRoleMorePermission(){
-        List<Role2> list = roleService.OneRoleMorePermission();
+    public R OneRoleMorePermission(PermissionDTO permissionDTO){
+        List<Permission> list = roleService.OneRoleMorePermission(permissionDTO);
         return R.OK(list);
     }
 

@@ -170,6 +170,16 @@ public interface TicketMapper {
 
 
     Integer countActiveTickets(Long userId);
+    /**
+     * 根据工单ID查询完成的工单
+     * @param ticketId 工单ID
+     * @return 工单
+     */
+    Ticket getTicketById(Long ticketId);
+
+
+
+    Boolean checkTicketEvaluable(@Param("ticketId") Long ticketId, @Param("userId") Long userId);
 
 
     /**

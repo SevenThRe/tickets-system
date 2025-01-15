@@ -205,17 +205,8 @@
         </collection>
     </resultMap>
 
-    <select id="OneRoleMorePermission" resultMap="BaseResultMap">
-        select r.role_id,
-               r.role_name,
-               r.role_code,
-               r.base_role_code,
-               r.description,
-               r.status,
-               r.is_deleted,
-               r.create_by,
-               r.create_time,
-               r.update_time,
+    <select id="OneRoleMorePermission" resultType="com.icss.etc.ticket.entity.Permission">
+        select
                p.permission_id,
                p.permission_name,
                p.permission_code,
@@ -226,10 +217,17 @@
                p.update_by,
                p.create_time,
                p.update_time
-        from t_role r
-                 inner join t_role_permission on r.role_id = t_role_permission.role_id
-                 inner join t_permission p on p.permission_id = t_role_permission.permission_id
-        where p.is_deleted = 0
+        FROM t_permission p
+        LEFT JOIN t_role_permission trp ON p.permission_id = trp.permission_id
+        AND trp.role_id = #{p.roleId}
+        WHERE p.is_deleted = 0 AND trp.role_id IS NULL
+        <if test="p.keyword != null || p.keyword != ''">
+            and (
+            permission_code like concat('%',#{p.keyword},'%') or
+            permission_name like concat('%',#{p.keyword},'%')
+            )
+        </if>
+        ORDER BY p.sort;
     </select>
 
     <select id="chooseRoles" resultType="com.icss.etc.ticket.entity.vo.ChooseRolesVO">

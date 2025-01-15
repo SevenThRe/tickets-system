@@ -55,5 +55,5 @@ public class TicketDetailVO {
     private LocalDateTime actualFinishTime;
 
     // 处理记录
-    private List<TicketRecord> records;
+    private List<TicketRecordVO> records;
 }

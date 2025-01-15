@@ -6,6 +6,8 @@ import com.icss.etc.ticket.entity.Permission;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.Role;
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.dto.PermissionDTO;
+import com.icss.etc.ticket.entity.dto.RPDTO;
 import com.icss.etc.ticket.entity.dto.RoleDTO;
 import com.icss.etc.ticket.service.PermissionService;
 import org.apache.ibatis.annotations.Param;
@@ -31,17 +33,6 @@ public class PermissionController {
     @Autowired
     private PermissionService permissionService;
 
-
-    //    //一个角色查询所有权限
-//    List<Role2> OneRoleMorePermission();
-//    //增加权限
-//    int insertPermission(Permission permission);
-//    //修改权限
-//    int updatePermission(Permission permission);
-//    //查询所有权限
-//    List<Permission> selectAllPermission();
-//    //删除权限
-//    int deletePermission(@Param("permissionId") Long permissionId);
     @RequestMapping("/insertPermission")
     public R insertPermission(Permission permission) {
         int result = permissionService.insertPermission(permission);
@@ -54,14 +45,19 @@ public class PermissionController {
         return result > 0 ? R.OK() : R.FAIL();
     }
 
-    @RequestMapping("/deletePermission/{permissionId}")
-    public R deletePermission(@PathVariable("permissionId") Long permissionId) {
-        int result = permissionService.deletePermission(permissionId);
+    @RequestMapping("/deletePermission")
+    public R deletePermission(RPDTO rpdto) {
+        int result = permissionService.deletePermission(rpdto);
         return result > 0 ? R.OK() : R.FAIL();
     }
 
     @RequestMapping("/selectAllPermission")
-    public R selectAllPermission() {
-        return R.OK(permissionService.selectAllPermission());
+    public R selectAllPermission(PermissionDTO permissionDTO) {
+        return R.OK(permissionService.selectAllPermission(permissionDTO.keyword()));
+    }
+
+    @RequestMapping("/selectPermissionByPermissionId/{roleId}")
+    public R selectPermissionByPermissionId(@PathVariable("roleId")Long roleId) {
+        return R.OK(permissionService.selectPermissionByRoleId(roleId));
     }
 }
