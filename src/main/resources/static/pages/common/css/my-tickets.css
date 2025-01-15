@@ -394,6 +394,83 @@
     gap: 8px;
 }
 
+/* 预览区域样式  */
+.preview-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    background: white;
+    z-index: 1060;
+    padding: 1rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    display: none;
+    border-radius: 4px;
+}
+
+.preview-container.show {
+    display: block;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+
+/* 拖拽上传处理 */
+.upload-dropzone {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-dropzone.dragover {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.file-list {
+    margin-top: 1rem;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.file-item .file-name {
+    flex: 1;
+    margin: 0 0.5rem;
+}
+
+.file-item .file-size {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-right: 0.5rem;
+}
+
+.file-item .remove-file {
+    padding: 0;
+    font-size: 1.25rem;
+}
+
+.file-item .remove-file:hover {
+    color: #dc3545;
+}
+
 /* 模态框自定义样式 */
 .modal-header {
     background-color: #f8f9fa;

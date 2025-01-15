@@ -614,6 +614,14 @@
           AND is_deleted = 0; -- 未删除的记录
     </select>
 
+    <select id="selectPendingTickets" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List">
+        </include>
+        from t_ticket
+        where is_deleted = 0 and status = 0
+    </select>
+
     <!--    <select id="countCompletedTickets" resultType="java.lang.Integer">-->
 <!--        SELECT COUNT(1)-->
 <!--        FROM t_ticket-->

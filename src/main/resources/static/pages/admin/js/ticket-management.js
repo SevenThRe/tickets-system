@@ -21,7 +21,9 @@ class TicketManagement {
                 departmentId: '',
                 startTime: '',
                 endTime: ''
-            }
+            },
+            userInfo: JSON.parse(localStorage.getItem('userInfo') || '{}')
+
         };
 
         // DOM元素缓存
@@ -57,7 +59,8 @@ class TicketManagement {
 
         // 初始化组件
         this.init();
-        this._initModals();
+        this._initModals()
+        this._initActionButtons();
     }
 
     /**
@@ -122,6 +125,36 @@ class TicketManagement {
             console.error('初始化失败:', error);
             NotifyUtil.error('加载失败，请刷新重试');
         }
+    }
+
+    /**
+     * 不知道为什么在bindEvents中绑定的事件无法触发，所以在这里重新绑定一次
+     * @private
+     */
+    _initActionButtons() {
+        $('#processBtn').off('click').on('click', () => {
+            if (this._canProcess()) {
+                this._handleProcess();
+            }
+        });
+
+        $('#resolveBtn').off('click').on('click', () => {
+            if (this._canResolve()) {
+                this._handleResolve();
+            }
+        });
+
+        $('#transferBtn').off('click').on('click', () => {
+            if (this._canTransfer()) {
+                this._handleTransfer();
+            }
+        });
+
+        $('#closeBtn').off('click').on('click', () => {
+            if (this._canClose()) {
+                this._handleClose();
+            }
+        });
     }
 
     /**
@@ -224,28 +257,30 @@ class TicketManagement {
         });
 
         // 工单操作按钮
-        $('#processBtn').on('click', () => {
+        $(document).on('click', '#processBtn', () => {
             if (this._canProcess()) {
                 this._handleProcess();
             }
         });
 
-        $('#resolveBtn').on('click', () => {
+        $(document).on('click', '#resolveBtn', () => {
             if (this._canResolve()) {
                 this._handleResolve();
             }
         });
 
-        $('#closeBtn').on('click', () => {
+        $(document).on('click', '#closeBtn', () => {
             if (this._canClose()) {
                 this._handleClose();
             }
         });
 
-        // 工单详情操作按钮
-        $('#transferBtn').on('click', () => {if (this._canResolve()) {
-            this._handleTransfer();
-        }});
+        $(document).on('click', '#transferBtn', () => {
+            if (this._canTransfer()) {
+                this._handleTransfer();
+            }
+        });
+
 
         // 关闭详情面板
         $('#closeDetailBtn').on('click', () => {
@@ -307,6 +342,14 @@ class TicketManagement {
             this.state.loading = false;
             this._hideLoading();
         }
+    }
+
+    _formatFileSize(bytes) {
+        if(bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
     }
 
     /**
@@ -380,16 +423,10 @@ class TicketManagement {
      */
     async _confirmTransfer() {
         const departmentId = $('#transferDepartment').val();
-        const processorId = $('#transferProcessor').val();
         const note = $('#transferNote').val().trim();
 
         if (!departmentId) {
             NotifyUtil.warning('请选择转交部门');
-            return;
-        }
-
-        if (!processorId) {
-            NotifyUtil.warning('请选择处理人');
             return;
         }
 
@@ -404,11 +441,14 @@ class TicketManagement {
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    departmentId,
-                    processorId,
-                    note,
-                    updateBy: this.userInfo.userId
-                })
+                    departmentId: departmentId,
+                    updateBy: this.userInfo.userId,
+                    note: note,
+                    ticketId: this.state.currentTicket.ticketId
+                }),
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
             });
 
             if (response.code === 200) {
@@ -425,19 +465,6 @@ class TicketManagement {
         }
     }
 
-    /**
-     * 检查是否可以转交
-     */
-    _canTransfer() {
-        if (!this.state.currentTicket) return false;
-        const status = this.state.currentTicket.status;
-        if (status === 'COMPLETED' || status === 'CLOSED' ||
-            status === '2' || status === '3') {
-            NotifyUtil.warning('已完成或关闭的工单不能转交');
-            return false;
-        }
-        return true;
-    }
 
     /**
      * 加载处理人列表
@@ -476,24 +503,47 @@ class TicketManagement {
     /**
      * 状态检查方法
      */
-    _canProcess() {
-        if (!this.state.currentTicket) return false;
-        return this.state.currentTicket.status === 'PENDING' ||
-            this.state.currentTicket.status === '0';
+    async _checkOperation(operation, ticketId) {
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/check-operation/${ticketId}`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    operation: operation,
+                    userId: this.userInfo.userId
+                }),
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            return response.code === 200;
+        } catch(error) {
+            console.error(`Check ${operation} permission failed:`, error);
+            return false;
+        }
     }
 
-    _canResolve() {
+    async _canProcess() {
         if (!this.state.currentTicket) return false;
-        return this.state.currentTicket.status === 'PROCESSING' ||
-            this.state.currentTicket.status === '1';
+        return await this._checkOperation('PROCESS', this.state.currentTicket.ticketId);
     }
 
-    _canClose() {
+    async _canResolve() {
         if (!this.state.currentTicket) return false;
-        const status = this.state.currentTicket.status;
-        return status !== 'CLOSED' && status !== 'COMPLETED' &&
-            status !== '2' && status !== '3';
+        return await this._checkOperation('RESOLVE', this.state.currentTicket.ticketId);
     }
+
+    async _canClose() {
+        if (!this.state.currentTicket) return false;
+        return await this._checkOperation('CLOSE', this.state.currentTicket.ticketId);
+    }
+
+    async _canTransfer() {
+        if (!this.state.currentTicket) return false;
+        return await this._checkOperation('TRANSFER', this.state.currentTicket.ticketId);
+    }
+
 
 
     /**
@@ -589,6 +639,10 @@ class TicketManagement {
      * 加载工单详情
      */
     async _loadTicketDetail(ticketId) {
+
+        // 清理之前的预览和附件列表
+        $('#filePreviewContainer').remove();
+        $('#ticketAttachments').empty();
         try {
             const response = await $.ajax({
                 url: `/api/tickets/${ticketId}`,
@@ -601,6 +655,8 @@ class TicketManagement {
                 // 加载附件信息
                 await this._loadTicketAttachments(ticketId);
                 this.elements.ticketDetail.addClass('show');
+
+
             }
         } catch(error) {
             console.error('加载工单详情失败:', error);
@@ -645,13 +701,15 @@ class TicketManagement {
         // 处理记录渲染
         this._renderTicketRecords(ticket.records);
 
-
-
         // 将附件区域插入到指定位置
         $('#ticketContent').parent().after(attachmentsArea);
 
         // 更新操作按钮状态
+
         this._updateActionButtons(ticket.status);
+
+        // 重新初始化按钮事件
+        this._initActionButtons();
     }
 
     /**
@@ -873,22 +931,38 @@ class TicketManagement {
         this._loadTickets();
     }
 
-    /**
-     * 处理开始处理
-     */
     async _handleProcess() {
-        const content = $('#processNote').val().trim();
-        if(!content) {
-            NotifyUtil.warning('请输入处理说明');
+        if (!await this._canProcess()) {
+            NotifyUtil.warning('您没有处理该工单的权限');
             return;
         }
+        try {
+            const response = await $.ajax({
+                url: '/api/tickets/status',
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ticketId: this.state.currentTicket.ticketId,
+                    status: 'PROCESSING',
+                    operatorId: this.userInfo.userId,
+                    content: content
+                }),
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
 
-        await this._handleStatusUpdate('PROCESSING', content);
+            if(response.code === 200) {
+                NotifyUtil.success('已开始处理');
+                await this._loadTicketDetail(this.state.currentTicket.ticketId);
+                await this._loadTickets();
+            }
+        } catch(error) {
+            console.error('处理失败:', error);
+            NotifyUtil.error('处理失败');
+        }
     }
 
-    /**
-     * 处理完成操作
-     */
     async _handleResolve() {
         const content = $('#processNote').val().trim();
         if(!content) {
@@ -896,12 +970,33 @@ class TicketManagement {
             return;
         }
 
-        await this._handleStatusUpdate('COMPLETED', content);
+        try {
+            const response = await $.ajax({
+                url: '/api/tickets/status',
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ticketId: this.state.currentTicket.ticketId,
+                    status: 'COMPLETED',
+                    operatorId: this.userInfo.userId,
+                    content: content
+                }),
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if(response.code === 200) {
+                NotifyUtil.success('工单已完成');
+                await this._loadTicketDetail(this.state.currentTicket.ticketId);
+                await this._loadTickets();
+            }
+        } catch(error) {
+            console.error('完成失败:', error);
+            NotifyUtil.error('完成失败');
+        }
     }
 
-    /**
-     * 处理关闭操作
-     */
     async _handleClose() {
         const content = $('#processNote').val().trim();
         if(!content) {
@@ -914,18 +1009,15 @@ class TicketManagement {
         }
 
         try {
-            // 构造请求数据，字段名与后端CloseTicketRequest匹配
-            const closeRequest = {
-                content: content,
-                operatorId: this.userInfo.userId,
-                ticketId: this.state.currentTicket.ticketId
-            };
-
             const response = await $.ajax({
                 url: `/api/tickets/${this.state.currentTicket.ticketId}/close`,
                 method: 'PUT',
                 contentType: 'application/json',
-                data: JSON.stringify(closeRequest),
+                data: JSON.stringify({
+                    content: content,
+                    operatorId: this.userInfo.userId,
+                    ticketId: this.state.currentTicket.ticketId
+                }),
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -935,12 +1027,10 @@ class TicketManagement {
                 NotifyUtil.success('工单已关闭');
                 await this._loadTicketDetail(this.state.currentTicket.ticketId);
                 await this._loadTickets();
-            } else {
-                NotifyUtil.error(response.msg || '关闭工单失败');
             }
         } catch(error) {
-            console.error('关闭工单失败:', error);
-            NotifyUtil.error('关闭工单失败');
+            console.error('关闭失败:', error);
+            NotifyUtil.error('关闭失败');
         }
     }
 
@@ -1172,27 +1262,27 @@ class TicketManagement {
             const iconClass = this._getFileIconClass(fileExt);
 
             return `
-                <div class="attachment-item d-flex align-items-center mb-2">
-                    <i class="bi ${iconClass} me-2"></i>
-                    <div class="flex-grow-1">
-                        <div class="file-name">${attachment.fileName}</div>
-                        <div class="file-meta text-muted small">
-                            ${TicketUtil.formatFileSize(attachment.fileSize)} 
-                            · ${TicketUtil.formatDate(attachment.createTime)}
-                        </div>
-                    </div>
-                    <div class="attachment-actions">
-                        <button class="btn btn-sm btn-outline-primary me-2" 
-                                onclick="window.ticketManagement._downloadFile('${attachment.filePath}', '${attachment.fileName}')">
-                            <i class="bi bi-download"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" 
-                                onclick="window.ticketManagement._previewFile('${attachment.filePath}', '${attachment.fileName}')">
-                            <i class="bi bi-eye"></i>
-                        </button>
+            <div class="attachment-item d-flex align-items-center mb-2">
+                <i class="bi ${iconClass} me-2"></i>
+                <div class="flex-grow-1">
+                    <div class="file-name">${this._escapeHtml(attachment.fileName)}</div>
+                    <div class="file-meta text-muted small">
+                        ${TicketUtil.formatFileSize(attachment.fileSize)} 
+                        · ${TicketUtil.formatDate(attachment.createTime)}
                     </div>
                 </div>
-            `;
+                <div class="attachment-actions">
+                    <button class="btn btn-sm btn-outline-primary me-2" 
+                            onclick="window.ticketManagement._downloadAttachment(${attachment.ticketId}, '${attachment.filePath}')">
+                        <i class="bi bi-download"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" 
+                            onclick="window.ticketManagement._previewFile('${attachment.filePath}')">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+        `;
         }).join('');
 
         $('#ticketAttachments').html(html);
@@ -1200,6 +1290,7 @@ class TicketManagement {
 
     /**
      * 处理工单评价
+     * 管理员禁用此功能
      */
     async _handleEvaluation() {
         if(!this.state.currentTicket) return;
@@ -1247,38 +1338,31 @@ class TicketManagement {
         try {
             this._showLoading();
 
-            // 构建导出参数
             const params = new URLSearchParams({
                 ...this.state.filters,
                 pageSize: 1000
-            }).toString();
+            });
 
             const response = await $.ajax({
-                url: `/api/tickets/export?${params}`,
+                url: `/api/tickets/export?${params.toString()}`,
                 method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Accept': 'application/octet-stream'
-                },
                 xhrFields: {
                     responseType: 'blob'
+                },
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
 
-            // 创建下载链接
-            const blob = new Blob([response], {
-                type: 'application/vnd.ms-excel'
-            });
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.download = `工单列表_${new Date().getTime()}.xlsx`;
-
-            // 触发下载
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(downloadUrl);
+            const blob = new Blob([response], { type: 'application/vnd.ms-excel' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `工单列表_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
 
             NotifyUtil.success('导出成功');
         } catch(error) {
@@ -1325,50 +1409,90 @@ class TicketManagement {
     /**
      * 文件下载处理
      */
-    async _downloadFile(filePath, fileName) {
-        try {
-            const response = await $.ajax({
-                url: `/api/files/check/${this.state.currentTicket.ticketId}/${fileName}`,
-                method: 'GET'
-            });
-
-            if(response.code === 200 && response.data) {
-                window.open(`/api/files/download/${this.state.currentTicket.ticketId}/${fileName}`, '_blank');
+    _downloadAttachment(ticketId, filePath, fileName) {
+        $.ajax({
+            url: `/api/files/check/${ticketId}/${filePath}`,
+            method: 'GET'
+        }).done((response) => {
+            if (response.code === 200 && response.data) {
+                $.ajax({
+                    url: `/api/files/download/${ticketId}/${filePath}`,
+                    method: 'GET',
+                    xhrFields: {
+                        responseType: 'blob'
+                    }
+                }).done((blob) => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }).fail(() => {
+                    NotifyUtil.error("下载失败");
+                });
             } else {
-                NotifyUtil.error(`文件"${fileName}"已失效`);
+                NotifyUtil.error("文件已失效");
             }
-        } catch(error) {
-            NotifyUtil.error('文件下载失败，请重试');
-        }
+        }).fail(() => {
+            NotifyUtil.error("校验文件失败");
+        });
     }
 
     /**
      * 文件预览处理
      */
-    _previewFile(filePath, fileName) {
-        const fileExt = fileName.split('.').pop().toLowerCase();
-        const previewUrl = `/api/files/preview/${fileName}`;
+    _previewFile(ticketId, filePath, fileName) {
+        if (!ticketId || !filePath || !fileName) {
+            NotifyUtil.error("文件信息不完整");
+            return;
+        }
 
-        // 图片和PDF直接预览
-        if(['jpg', 'jpeg', 'png', 'gif', 'pdf'].includes(fileExt)) {
+        // 清除之前的预览
+        $('#filePreviewContainer').remove();
+
+        const fileExt = fileName.split('.').pop().toLowerCase();
+        const $previewContainer = $(`
+            <div id="filePreviewContainer" class="preview-container">
+                <div class="preview-header">
+                    <h5>${fileName}</h5>
+                    <button class="btn-close"></button>
+                </div>
+                <div class="preview-body"></div>
+            </div>
+        `).appendTo('body');
+
+        $previewContainer.find('.btn-close').on('click', () => {
+            $previewContainer.remove();
+        });
+
+        if (['jpg', 'jpeg', 'png', 'gif', 'pdf'].includes(fileExt)) {
             $.ajax({
-                url: `/api/files/preview/${fileName}`,
+                url: `/api/files/preview/${filePath}`,
                 type: 'GET',
                 xhrFields: {
-                    responseType: 'blob' // 设置响应类型为blob
-                },
-                success: function(blob) {
-                    const url = window.URL.createObjectURL(blob);
-                    const previewElement = $(`<${fileExt === 'pdf' ? 'iframe' : 'img'} src="${url}">`);
-                    $('body').append(previewElement); // 将预览元素添加到页面中
-                },
-                error: function() {
-                    NotifyUtil.error('文件预览失败');
+                    responseType: 'blob'
                 }
+            }).done((blob) => {
+                const url = window.URL.createObjectURL(blob);
+                const $previewBody = $previewContainer.find('.preview-body');
+
+                if (fileExt === 'pdf') {
+                    $previewBody.html(`<iframe src="${url}" width="100%" height="100%"></iframe>`);
+                } else {
+                    $previewBody.html(`<img src="${url}" alt="${fileName}" style="max-width: 100%; max-height: 100%;">`);
+                }
+
+                $previewContainer.addClass('show');
+            }).fail(() => {
+                NotifyUtil.error("预览失败");
+                $previewContainer.remove();
             });
         } else {
-            // 其他类型文件尝试直接下载
-            this._downloadFile(filePath, fileName);
+            this._downloadAttachment(ticketId, filePath, fileName);
+            $previewContainer.remove();
         }
     }
 

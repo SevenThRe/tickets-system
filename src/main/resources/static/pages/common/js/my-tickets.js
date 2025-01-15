@@ -65,6 +65,7 @@ MyTickets.prototype.init = function() {
         this._bindEvents();
         this._loadTickets();
         this._loadTicketTypes();
+        this._initFileUpload();
         const urlParams = new URLSearchParams(window.location.search);
         const action = urlParams.get('action');
         const ticketId = urlParams.get('ticketId');
@@ -286,18 +287,16 @@ MyTickets.prototype._loadAttachments = function(ticketId) {
  * 渲染附件列表
  */
 MyTickets.prototype._renderAttachments = function(attachments) {
-    const $attachmentList = $('#ticketAttachments');
-    // 清空之前的附件显示
-    $attachmentList.empty();
-
-    if (!attachments || attachments.length === 0) {
-        $attachmentList.html('<div class="text-muted">暂无附件</div>');
+    if(!attachments || !attachments.length) {
+        $('#ticketAttachments').html('<div class="text-muted">暂无附件</div>');
         return;
     }
 
     const html = attachments.map(attachment => {
         const fileExt = attachment.fileName.split('.').pop().toLowerCase();
         const iconClass = this._getFileIconClass(fileExt);
+        let filePath = attachment.filePath;
+        if (!filePath.startsWith('/')) filePath = '/' + filePath;
 
         return `
             <div class="attachment-item d-flex align-items-center mb-2">
@@ -311,28 +310,58 @@ MyTickets.prototype._renderAttachments = function(attachments) {
                 </div>
                 <div class="attachment-actions">
                     <button class="btn btn-sm btn-outline-primary me-2" 
-                            onclick="window.myTickets._downloadAttachment('${attachment.ticketId}', '${attachment.fileName}')">
+                            onclick="window.myTickets._downloadAttachment('${attachment.ticketId}', '${filePath}', '${attachment.fileName}')">
                         <i class="bi bi-download"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" 
+                            onclick="window.myTickets._previewFile('${attachment.ticketId}', '${filePath}', '${attachment.fileName}')">
+                        <i class="bi bi-eye"></i>
                     </button>
                 </div>
             </div>
         `;
     }).join('');
 
-    $attachmentList.html(html);
+    $('#ticketAttachments').html(html);
 };
 
 
 /**
- * 获取状态样式类
- * @param ticketId 工单ID
- * @param fileName  文件名
- * @private
+ * 文件下载处理
  */
-MyTickets.prototype._downloadAttachment = function(ticketId, fileName) {
-    window.open(`/api/files/download/${ticketId}/${fileName}`, '_blank');
+MyTickets.prototype._downloadAttachment = function(ticketId, filePath, fileName) {
+    $.ajax({
+        url: `/api/files/check/${ticketId}${filePath}`,
+        method: 'GET'
+    }).done(function(response) {
+        if (response.code === 200 && response.data) {
+            // 使用ajax下载
+            $.ajax({
+                url: `/api/files/download/${ticketId}${filePath}`,
+                method: 'GET',
+                xhrFields: {
+                    responseType: 'blob'
+                }
+            }).done(function(blob) {
+                // 创建blob链接进行下载
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName; // 使用原始文件名
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }).fail(function() {
+                NotifyUtil.error("下载失败");
+            });
+        } else {
+            NotifyUtil.error("文件已失效");
+        }
+    }).fail(function() {
+        NotifyUtil.error("校验文件失败");
+    });
 };
-
 /**
  * 获取文件图标
  */
@@ -350,6 +379,55 @@ MyTickets.prototype._getFileIconClass = function(fileExt) {
     };
     return iconMap[fileExt] || iconMap.default;
 };
+
+/**
+ * 文件预览处理
+ */
+MyTickets.prototype._previewFile = function(ticketId, filePath, fileName) {
+    const fileExt = fileName.split('.').pop().toLowerCase();
+
+    // 清除之前的预览
+    $('.preview-container').remove();
+
+    // 创建预览容器
+    const $previewContainer = $('<div class="preview-container">').appendTo('body');
+
+    if (['jpg', 'jpeg', 'png', 'gif', 'pdf'].includes(fileExt)) {
+        $.ajax({
+            url: `/api/files/preview${filePath}`,
+            type: 'GET',
+            xhrFields: {
+                responseType: 'blob'
+            }
+        }).done(function(blob) {
+            const url = window.URL.createObjectURL(blob);
+            if (fileExt === 'pdf') {
+                $previewContainer.html(`
+                    <div class="preview-header">
+                        <h5>${fileName}</h5>
+                        <button class="btn-close" onclick="$(this).closest('.preview-container').remove()"></button>
+                    </div>
+                    <iframe src="${url}" width="100%" height="90%"></iframe>
+                `);
+            } else {
+                $previewContainer.html(`
+                    <div class="preview-header">
+                        <h5>${fileName}</h5>
+                        <button class="btn-close" onclick="$(this).closest('.preview-container').remove()"></button>
+                    </div>
+                    <img src="${url}" alt="${fileName}" style="max-width: 100%; height: auto;">
+                `);
+            }
+            $previewContainer.addClass('show');
+        }).fail(function() {
+            NotifyUtil.error("预览失败");
+        });
+    } else {
+        // 其他类型文件直接下载
+        this._downloadAttachment(ticketId, filePath, fileName);
+    }
+};
+
 
 /**
  * 渲染工单详情
@@ -527,39 +605,86 @@ MyTickets.prototype._bindCreateTicketEvents = function() {
         $('.is-invalid').removeClass('is-invalid');
     });
 };
-/**
- * 文件上传相关
- */
-MyTickets.prototype._initFileUpload = function() {
-    let self = this;
-    let $fileInput = $('#attachments');
-    let $fileList = $('<div class="file-list mt-2"></div>').insertAfter($fileInput);
 
-    $fileInput.on('change', function(e) {
-        self._updateFileList(e.target.files, $fileList);
+MyTickets.prototype._initFileUpload = function() {
+    // 创建拖拽上传区域
+    const $dropZone = $(`
+        <div class="upload-dropzone">
+            <i class="bi bi-cloud-upload me-2"></i>
+            拖拽文件到此处或点击上传
+            <input type="file" id="attachments" name="attachments" multiple style="display: none;">
+        </div>
+    `).insertAfter('#content');
+
+    const $fileList = $('<div class="file-list mt-2"></div>').insertAfter($dropZone);
+    const $fileInput = $('#attachments');
+
+    // 点击上传区域触发文件选择
+    $dropZone.on('click', () => {
+        $fileInput.click();
     });
 
-    // 拖拽上传区域
-    let $dropZone = $('<div class="upload-dropzone">拖拽文件到此处上传</div>')
-        .insertAfter($fileInput);
-
+    // 拖拽相关事件
     $dropZone.on({
-        dragover: function(e) {
+        dragover: (e) => {
             e.preventDefault();
+            e.stopPropagation();
             $dropZone.addClass('dragover');
         },
-        dragleave: function() {
+        dragleave: (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             $dropZone.removeClass('dragover');
         },
-        drop: function(e) {
+        drop: (e) => {
             e.preventDefault();
+            e.stopPropagation();
             $dropZone.removeClass('dragover');
-            let files = e.originalEvent.dataTransfer.files;
-            $fileInput[0].files = files;
-            self._updateFileList(files, $fileList);
+
+            const files = e.originalEvent.dataTransfer.files;
+            this._handleFiles(files, $fileList);
         }
     });
+
+    // 文件选择变更事件
+    $fileInput.on('change', (e) => {
+        this._handleFiles(e.target.files, $fileList);
+    });
 };
+
+/**
+ * 处理上传的文件
+ */
+MyTickets.prototype._handleFiles = function(files, $fileList) {
+    $fileList.empty();
+
+    Array.from(files).forEach(file => {
+        const $item = $(`
+            <div class="file-item">
+                <i class="bi bi-file-earmark me-2"></i>
+                <span class="file-name">${file.name}</span>
+                <span class="file-size">(${this._formatFileSize(file.size)})</span>
+                <button type="button" class="btn btn-sm btn-link text-danger remove-file">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        `).appendTo($fileList);
+
+        $item.find('.remove-file').on('click', () => {
+            $item.remove();
+            // 更新文件列表
+            const dt = new DataTransfer();
+            Array.from(files).forEach(f => {
+                if (f !== file) {
+                    dt.items.add(f);
+                }
+            });
+            $('#attachments')[0].files = dt.files;
+        });
+    });
+};
+
+
 
 /**
  * 更新文件列表显示

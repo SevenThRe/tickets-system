@@ -3,11 +3,9 @@ package com.icss.etc.ticket.service.impl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.*;
-import com.icss.etc.ticket.entity.dto.*;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
 import com.icss.etc.ticket.entity.vo.TicketRecordVO;
-import com.icss.etc.ticket.entity.vo.TicketVO;
 import com.icss.etc.ticket.entity.vo.TodoStatsVO;
 import com.icss.etc.ticket.entity.vo.ticket.DepartmentStatisticsVO;
 import com.icss.etc.ticket.entity.vo.ticket.MonthlyStatisticsVO;
@@ -22,7 +20,6 @@ import com.icss.etc.ticket.service.NotificationService;
 import com.icss.etc.ticket.service.TicketService;
 import com.icss.etc.ticket.util.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +47,7 @@ public class TicketServiceImpl implements TicketService {
     private final UserSettingsMapper userSettingsMapper;
     private final UserMapper userMapper;
     private final UserRoleMapper userRoleMapper;
+    private final OnlineUserManager onlineUserManager;
 
 
     public TicketServiceImpl(TicketMapper ticketMapper,
@@ -58,7 +56,8 @@ public class TicketServiceImpl implements TicketService {
                              NotificationService notificationService,
                              UserMapper userMapper,
                              UserSettingsMapper userSettingsMapper,
-                             UserRoleMapper userRoleMapper) {
+                             UserRoleMapper userRoleMapper,
+                             OnlineUserManager onlineUserManager) {
         this.ticketMapper = ticketMapper;
         this.ticketRecordMapper = ticketRecordMapper;
         this.notificationService = notificationService;
@@ -66,6 +65,7 @@ public class TicketServiceImpl implements TicketService {
         this.userMapper = userMapper;
         this.userSettingsMapper = userSettingsMapper;
         this.userRoleMapper = userRoleMapper;
+        this.onlineUserManager = onlineUserManager;
     }
 
 
@@ -472,6 +472,10 @@ public class TicketServiceImpl implements TicketService {
         return canEvaluate != null && canEvaluate;
     }
 
+
+
+
+
     @Override
     public Map<String, Object> getEfficiencyAnalysis() {
         Map<String, Object> result = new HashMap<>();
@@ -557,72 +561,165 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
+
+//    @Override
+//    @Transactional
+//    public void assignProcessor(Long ticketId, Long processorId) {
+//        // 1. 验证工单状态
+//        Ticket ticket = ticketMapper.selectTicketById(ticketId);
+//        if (ticket == null || ticket.getIsDeleted() == 1) {
+//            throw new BusinessException(TicketEnum.TICKET_NOT_EXIST);
+//        }
+//
+//        // 2. 只有PENDING状态的工单可以分配
+//        if (ticket.getStatus() != TicketStatus.PENDING) {
+//            throw new BusinessException(TicketEnum.TICKET_STATUS_EXCEPTION, "只能给待处理的工单分配处理人");
+//        }
+//
+//        // 3. 更新处理人
+//        Ticket update = new Ticket();
+//        update.setTicketId(ticketId);
+//        update.setProcessorId(processorId);
+//        update.setUpdateTime(LocalDateTime.now());
+//        ticketMapper.updateTicket(update);
+//
+//        // 4. 记录分配操作
+//        TicketRecord record = new TicketRecord();
+//        record.setTicketId(ticketId);
+//        record.setOperationType(OperationType.ASSIGN);
+//        record.setOperatorId(SecurityUtils.getCurrentUserId());
+//        record.setCreateTime(LocalDateTime.now());
+//        ticketRecordMapper.insertRecord(record);
+//
+//        // 5. 发送通知给处理人
+//        notificationService.createAssignNotification(ticketId, processorId, "您有新的工单待处理");
+//    }
+
+    /**
+     * 自动分配所有待处理工单
+     */
     @Override
-    @Transactional
-    public void assignProcessor(Long ticketId, Long processorId) {
-        // 1. 验证工单状态
-        Ticket ticket = ticketMapper.selectTicketById(ticketId);
-        if (ticket == null || ticket.getIsDeleted() == 1) {
-            throw new BusinessException(TicketEnum.TICKET_NOT_EXIST);
+    @Transactional(rollbackFor = Exception.class)
+    public void autoAssignPendingTickets() {
+        try {
+            // 1. 获取所有待处理的工单
+            List<Ticket> pendingTickets = ticketMapper.selectPendingTickets();
+
+            for (Ticket ticket : pendingTickets) {
+                this.assignSingleTicket(ticket);
+            }
+        } catch (Exception e) {
+            log.error("批量分配工单失败", e);
+            throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED);
         }
-
-        // 2. 只有PENDING状态的工单可以分配
-        if (ticket.getStatus() != TicketStatus.PENDING) {
-            throw new BusinessException(TicketEnum.TICKET_STATUS_EXCEPTION, "只能给待处理的工单分配处理人");
-        }
-
-        // 3. 更新处理人
-        Ticket update = new Ticket();
-        update.setTicketId(ticketId);
-        update.setProcessorId(processorId);
-        update.setUpdateTime(LocalDateTime.now());
-        ticketMapper.updateTicket(update);
-
-        // 4. 记录分配操作
-        TicketRecord record = new TicketRecord();
-        record.setTicketId(ticketId);
-        record.setOperationType(OperationType.ASSIGN);
-        record.setOperatorId(SecurityUtils.getCurrentUserId());
-        record.setCreateTime(LocalDateTime.now());
-        ticketRecordMapper.insertRecord(record);
-
-        // 5. 发送通知给处理人
-        notificationService.createAssignNotification(ticketId, processorId, "您有新的工单待处理");
     }
 
-    @Override
-    public boolean autoAssignProcessor(Long ticketId, Long departmentId) {
+    /**
+     * 分配单个工单
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void assignSingleTicket(Ticket ticket) {
         try {
-            // TODO:  获取部门在线处理人
-            List<User> processors = userMapper.selectOnlineProcessorsByDepartment(departmentId);
-            if (processors.isEmpty()) {
-                return false;
+            // 1. 获取部门内所有可用处理人
+            List<User> availableProcessors = selectAvailableProcessors(ticket.getDepartmentId());
+            if (availableProcessors.isEmpty()) {
+                log.warn("部门编号{}-{}没有可用处理人",ticket.getDepartmentId(), ticket.getDepartmentName());
+                throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED, "部门没有可用处理人");
             }
 
-            // TODO:  获取处理人当前工作量
-            Map<Long, Integer> workloads = processors.stream()
-                    .collect(Collectors.toMap(
-                            User::getUserId,
-                            user -> ticketMapper.countActiveTickets(user.getUserId())
-                    ));
+            // 2. 获取处理人工作量
+            Map<Long, Integer> workloads = new HashMap<>();
+            for (User processor : availableProcessors) {
+                int currentWorkload = ticketMapper.countActiveTickets(processor.getUserId());
+                workloads.put(processor.getUserId(), currentWorkload);
+            }
 
-            //  选择工作量最少的处理人
+            // 3. 选择工作量最少的处理人
             Long processorId = workloads.entrySet().stream()
                     .min(Map.Entry.comparingByValue())
                     .map(Map.Entry::getKey)
                     .orElse(null);
 
-            if (processorId != null) {
-                //  分配工单
-                assignProcessor(ticketId, processorId);
-                return true;
+            if (processorId == null) {
+                log.warn("无法为工单{}分配处理人", ticket.getTicketId());
+                return;
             }
 
-            return false;
+            // 4. 在一个事务中执行所有操作
+            doAssignTicket(ticket.getTicketId(), processorId);
+
         } catch (Exception e) {
-            log.error("自动分配处理人失败, ticketId: {}, departmentId: {}", ticketId, departmentId, e);
-            return false;
+            log.error("分配工单{}失败", ticket.getTicketId(), e);
+            throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED);
         }
+    }
+
+    /**
+     * 执行工单分配的具体操作
+     * 所有操作在一个事务中完成，任何一步失败都会回滚整个事务
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void doAssignTicket(Long ticketId, Long processorId) {
+        try {
+            // 1. 更新工单信息
+            Ticket updateTicket = new Ticket();
+            updateTicket.setTicketId(ticketId);
+            updateTicket.setProcessorId(processorId);
+            updateTicket.setStatus(TicketStatus.PROCESSING);
+            updateTicket.setUpdateTime(LocalDateTime.now());
+
+            int rows = ticketMapper.updateTicket(updateTicket);
+            if (rows == 0) {
+                throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED, "更新工单失败");
+            }
+
+            // 2. 创建分配记录
+            TicketRecord record = new TicketRecord();
+            record.setTicketId(ticketId);
+            record.setOperatorId(processorId);
+            record.setOperationType(OperationType.ASSIGN);
+            record.setOperationContent("系统自动分配");
+            record.setCreateTime(LocalDateTime.now());
+            record.setIsDeleted(0);
+
+            rows = ticketRecordMapper.insertRecord(record);
+            if (rows == 0) {
+                throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED, "创建分配记录失败");
+            }
+
+            // 3. 发送通知
+            notificationService.createAssignNotification(
+                    ticketId,
+                    processorId,
+                    String.format("系统已自动为您分配工单：%d，请及时处理", ticketId)
+            );
+
+        } catch (Exception e) {
+            log.error("分配工单事务执行失败, ticketId: {}, processorId: {}", ticketId, processorId, e);
+            throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED);
+        }
+    }
+
+    /**
+     * 获取可用的处理人
+     */
+    private List<User> selectAvailableProcessors(Long departmentId) {
+        // 1. 获取部门所有处理人
+        List<User> allProcessors = userMapper.selectDepartmentProcessors(departmentId);
+        if (allProcessors.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 2. 获取在线处理人IDs
+        Set<Long> onlineUserIds = onlineUserManager.getOnlineUsersByDepartment(
+                departmentId,
+                allProcessors.stream().map(User::getUserId).collect(Collectors.toList())
+        );
+
+        // 3. 过滤出在线的处理人
+        return allProcessors.stream()
+                .filter(user -> onlineUserIds.contains(user.getUserId()))
+                .collect(Collectors.toList());
     }
 
 

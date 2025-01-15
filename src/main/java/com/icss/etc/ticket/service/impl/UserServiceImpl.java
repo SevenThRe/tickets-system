@@ -336,6 +336,16 @@ public class UserServiceImpl implements UserService{
         return i;
     }
 
+    @Override
+    public List<UserVO> getDeptMembersInDept(Long departmentId) {
+        return userMapper.getDeptMembersInDept(departmentId);
+    }
+
+    @Override
+    public List<UserVO> searchUser(String keyword) {
+        return userMapper.searchUser(keyword);
+    }
+
     /**
      * 获取用户头像路径
      */

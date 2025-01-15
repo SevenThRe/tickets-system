@@ -203,4 +203,9 @@ public class UserController {
     public R updateUserInfo(@PathVariable Long userId,@RequestBody UserViewBackDTO userViewBackDTO) {
         return R.OK(userService.updateUserInfo(userId,userViewBackDTO));
     }
+
+    @GetMapping("/search")
+    public R searchUser(@RequestParam("keyword") String keyword) {
+        return R.OK(userService.searchUser(keyword));
+    }
 }

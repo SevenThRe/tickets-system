@@ -202,4 +202,10 @@ public interface TicketMapper {
     Integer countCrrentWorkload(@Param("userId") Long userId,@Param("workloadFilter") Integer workloadFilter);
 
     Integer getMonthlyPerformance(@Param("userId") Long userId);
+
+    /**
+     * 获取所有待分配的工单
+     * @return 待分配工单列表
+     */
+    List<Ticket> selectPendingTickets();
 }

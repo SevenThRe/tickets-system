@@ -140,4 +140,20 @@ public interface UserMapper {
      */
     int updateUserInfo(@Param("userId") Long userId, @Param("dto") UserViewBackDTO userViewBackDTO);
 
+
+    /**
+     * 根据部门ID查询部门处理人
+     * @param departmentId 部门ID
+     * @return 处理人列表
+     */
+    List<User> selectDepartmentProcessors(@Param("departmentId") Long departmentId);
+
+    /**
+     * 根据部门ID查询部门成员
+     * @param departmentId 部门ID
+     * @return 部门成员列表
+     */
+    List<UserVO> getDeptMembersInDept(Long departmentId);
+
+    List<UserVO> searchUser(@Param("keyword") String keyword);
 }

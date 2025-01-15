@@ -101,20 +101,6 @@ public interface TicketService {
      */
     TodoStatsVO getTodoStats(Long userId);
 
-    /**
-     * 分配工单处理人
-     * @param ticketId 工单ID
-     * @param processorId 处理人ID
-     */
-    void assignProcessor(Long ticketId, Long processorId);
-
-    /**
-     * 自动分配工单处理人
-     * @param ticketId 工单ID
-     * @param departmentId 部门ID
-     * @return 是否成功分配
-     */
-    boolean autoAssignProcessor(Long ticketId, Long departmentId);
 
 
     /**
@@ -135,4 +121,8 @@ public interface TicketService {
 
     boolean canEvaluate(@NotNull(message = "工单ID不能为空") Long ticketId, @NotNull(message = "评价人不能为空") Long evaluatorId);
 
+    /**
+     * 自动分配待处理工单
+     */
+    void autoAssignPendingTickets();
 }

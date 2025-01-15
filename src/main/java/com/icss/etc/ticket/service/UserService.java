@@ -113,4 +113,13 @@ public interface UserService {
      * @return 返回结果
      */
     int updateUserInfo(Long userId, UserViewBackDTO userViewBackDTO);
+
+    /**
+     * 根据部门ID查询成员
+     * @param departmentId 部门ID
+     * @return 员工列表
+     */
+    List<UserVO> getDeptMembersInDept( Long departmentId);
+
+    List<UserVO> searchUser(String keyword);
 }
