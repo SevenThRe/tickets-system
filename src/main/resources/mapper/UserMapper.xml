@@ -351,7 +351,7 @@
     from t_user u
     left join t_user_role ur on u.user_id = ur.user_id
     left join t_role r on ur.role_id = r.role_id
-    where u.department_id = #{departmentId,jdbcType=BIGINT}
+    where u.department_id = #{param1.departmentId,jdbcType=BIGINT}
     and u.is_deleted = 0 and u.status = 1
      and r.is_deleted = 0
      and r.status = 1
@@ -417,5 +417,36 @@
  还是不加数据表了-->
     ORDER BY u.create_time DESC
   </select>
+    <select id="selectDepartmentId" resultType="java.lang.Long">
+      select department_id
+      from t_user
+      where is_deleted = 0
+      and status = 1
+      and user_id = #{userId}
+    </select>
+  <select id="queryByDepartmentId" resultType="com.icss.etc.ticket.entity.vo.DeptMemberVO">
+    SELECT
+      u.user_id,
+      u.real_name
+    FROM
+      t_user u
+    WHERE
+      u.department_id = #{departmentId}
+      AND (
+      u.user_id LIKE CONCAT('%', #{keyword}, '%')
+       OR u.real_name LIKE CONCAT('%', #{keyword}, '%')
+      )
+    ORDER BY user_id
+  </select>
+
+  <resultMap id="DeptMemberVOResultMap" type="com.icss.etc.ticket.entity.vo.DeptMemberVO">
+    <result property="userId" column="userId"/>
+    <result property="realName" column="realName"/>
+    <result property="currentWorkload" column="currentWorkload"/>
+    <result property="processingEfficiency" column="processingEfficiency"/>
+    <result property="averageProcessingTime" column="averageProcessingTime"/>
+    <result property="satisfaction" column="satisfaction"/>
+    <result property="monthlyPerformance" column="monthlyPerformance"/>
+  </resultMap>
 
 </mapper>

@@ -158,4 +158,11 @@ public class UserController {
             return R.FAIL(CodeEnum.INTERNAL_ERROR);
         }
     }
+    /**
+     * 根据用户ID 查询用户所在部门ID
+     */
+    @GetMapping("/department/{userId}")
+    public R getDepartmentIdByUserId(@PathVariable("userId") Long userId) {
+        return R.OK(userService.getUserInfo(userId).getDepartmentId());
+    }
 }

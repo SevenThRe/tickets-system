@@ -9,6 +9,9 @@
  * 4. 响应数据预处理
  * 5. 统一的错误提示
  */
+window.Const = {
+    BASE_URL: 'http://your-api-url.com' // 在这里设置你的基础URL
+};
 class RequestUtil {
     constructor() {
         /**
@@ -106,7 +109,7 @@ class RequestUtil {
             const response = await $.ajax({
                 url: this.baseURL + options.url,
                 method: options.method,
-                data: options.data ? JSON.stringify(options.data) : null,
+                data: options.data? JSON.stringify(options.data) : null,
                 headers: options.headers,
                 timeout: options.timeout || 10000
             });
@@ -141,7 +144,7 @@ class RequestUtil {
      * @returns {Promise} 请求Promise
      */
     get(url, params) {
-        const queryString = params ? '?' + $.param(params) : '';
+        const queryString = params? '?' + $.param(params) : '';
         return this.request({
             method: 'GET',
             url: url + queryString

@@ -1,6 +1,9 @@
 package com.icss.etc.ticket.service.impl;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.UserRole;
+import com.icss.etc.ticket.entity.dto.DepartmentsQueryDTO;
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
 import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
@@ -10,9 +13,11 @@ import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.exceptions.BusinessException;
 import com.icss.etc.ticket.mapper.DepartmentMapper;
+import com.icss.etc.ticket.mapper.TicketMapper;
 import com.icss.etc.ticket.mapper.UserMapper;
 import com.icss.etc.ticket.mapper.UserRoleMapper;
 import com.icss.etc.ticket.service.UserService;
+import com.icss.etc.ticket.util.GradeCalculator;
 import com.icss.etc.ticket.util.PropertiesUtil;
 import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.PostConstruct;
@@ -35,6 +40,8 @@ public class UserServiceImpl implements UserService{
     @Autowired
     private DepartmentMapper departmentMapper;
     @Autowired
+    private TicketMapper ticketMapper;
+    @Autowired
     private UserRoleMapper userRoleMapper;
     @Autowired
     private PropertiesUtil propertiesUtil;
@@ -46,7 +53,7 @@ public class UserServiceImpl implements UserService{
         try {
             count = userMapper.register(user);
             log.info(this.getClass().getSimpleName()+ "user register :" + user.getUsername() + " count: " + count);
-            //TODO: 将用户存储到无部门中
+            //TODO: 将用户信息写入到T USER_ROLE表中
             Long userId = userMapper.login(user.getUsername());
             count += userRoleMapper.insert(new UserRole(userId, user.getRoleId()));
             if (count != 2) {
@@ -126,11 +133,6 @@ public class UserServiceImpl implements UserService{
             throw new BusinessException(CodeEnum.BAD_REQUEST.getCode(), "邮箱格式不正确");
         }
 
-        // 手机号格式校验
-        if(StringUtils.isNotBlank(user.getPhone()) && !isValidPhone(user.getPhone())) {
-            throw new BusinessException(CodeEnum.BAD_REQUEST.getCode(), "手机号格式不正确");
-        }
-
         // 更新用户信息
         try {
             return userMapper.updateByPrimaryKeySelective(user);
@@ -144,21 +146,36 @@ public class UserServiceImpl implements UserService{
         String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
         return Pattern.compile(emailRegex).matcher(email).matches();
     }
-
-    private boolean isValidPhone(String phone) {
-        String phoneRegex = "^1[3-9]\\d{9}$";
-        return Pattern.compile(phoneRegex).matcher(phone).matches();
-    }
-
-
     @Override
     public User getUserInfo(Long userId) {
         return userMapper.getUserInfo(userId);
     }
 
     @Override
-    public List<DeptMemberVO> selectByDepartmentId(Long departmentId) {
-        return userMapper.selectByDepartmentId(departmentId);
+    public List<DeptMemberVO> queryByDepartmentId(DepartmentsQueryDTO departmentsQueryDTO) {
+        if(departmentsQueryDTO.getUserId() == null)throw new BusinessException(CodeEnum.BAD_REQUEST,"用户ID不能为空");
+        Long departmentId = userMapper.selectDepartmentId(departmentsQueryDTO.getUserId());
+        if(departmentId == null|| departmentId == 0)throw new BusinessException(CodeEnum.BAD_REQUEST,"用户所在部门不存在,或者用户无部门");
+        departmentsQueryDTO.setDepartmentId(departmentId);
+        PageHelper.startPage(departmentsQueryDTO.getPageNum(),departmentsQueryDTO.getPageSize());
+        PageInfo<DeptMemberVO> pageInfo = new PageInfo<>(userMapper.queryByDepartmentId(departmentsQueryDTO));
+        List<DeptMemberVO> deptMemberVOs = pageInfo.getList();
+        for(DeptMemberVO deptMemberVO : deptMemberVOs){
+            Double avgProcessTime = ticketMapper.getAvgProcessTime(deptMemberVO.getUserId(), departmentsQueryDTO.getPerformanceFilter());
+            if(avgProcessTime != null){
+                deptMemberVO.setAverageProcessingTime(avgProcessTime);
+                deptMemberVO.setProcessingEfficiency(GradeCalculator.getGrade(avgProcessTime));
+            };
+            deptMemberVO.setMonthlyPerformance(ticketMapper.getMonthlyPerformance(deptMemberVO.getUserId()));
+            deptMemberVO.setSatisfaction(ticketMapper.getSatisfaction(deptMemberVO.getUserId()));
+            deptMemberVO.setCurrentWorkload(ticketMapper.countCrrentWorkload(deptMemberVO.getUserId(),departmentsQueryDTO.getWorkloadFilter()));
+        }
+        return deptMemberVOs;
+    }
+
+    @Override
+    public List<DeptMemberVO> selectByDepartmentId(Long userId) {
+        return userMapper.selectByDepartmentId(userId);
     }
 
 

@@ -58,8 +58,7 @@ public class AppConfig implements WebMvcConfigurer {
                         "/api/auth/register",
                         "/css/**",
                         "/js/**",
-                        ".js",
-                        ".css",
+                        "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js",
                         "/images/**"
                 );
     }

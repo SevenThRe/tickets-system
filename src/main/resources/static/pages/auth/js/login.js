@@ -104,7 +104,6 @@ class LoginPage {
         if (!userInfo) {
             const storedUserInfo = localStorage.getItem('userInfo');
             if (!storedUserInfo) {
-                window.location.href = '/pages/auth/login.html';
                 return;
             }
             userInfo = JSON.parse(storedUserInfo);
