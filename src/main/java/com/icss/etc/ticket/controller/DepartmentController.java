@@ -119,6 +119,11 @@ public class DepartmentController {
         return R.OK(userService.queryByDepartmentId(departmentsQueryDTO));
     }
 
+    @GetMapping("/members/{userId}")
+    public R getDeptMembersInDept(DepartmentsQueryDTO departmentsQueryDTO){
+        return R.OK(userService.queryByDepartmentId(departmentsQueryDTO));
+    }
+
     @PostMapping("/addUser")
     public R addUser(DeptMemberDTO deptMemberDTO) {
         return R.OK(userService.addUser(deptMemberDTO));
@@ -143,6 +148,15 @@ public class DepartmentController {
     public R selectParentAll() {
         return R.OK(departmentService.selectParentAll());
     }
+
+
+    @DeleteMapping("{departmentId}/members/{userId}")
+    public R deleteMember(@PathVariable("departmentId") Long departmentId, @PathVariable("userId") Long userId) {
+        return R.OK(userService.deleteUserFromDepartment(departmentId, userId));
+    }
+
+
+
 
 
 

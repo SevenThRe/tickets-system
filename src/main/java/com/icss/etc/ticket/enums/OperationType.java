@@ -36,7 +36,11 @@ public enum OperationType {
     /**
      * 转交
      */
-    TRANSFER(5);
+    TRANSFER(5),
+    /**
+     * 备注
+     */
+    Note(6);
 
     private final int value;
 

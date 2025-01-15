@@ -108,7 +108,7 @@ class DepartmentManagement {
             this.$departmentTree = $('#departmentTree');
             this._renderDepartmentTree(this.state.departmentsTrees);
         } catch (error) {
-            console.error('初始化失败:', error);
+            NotifyUtil.error('初始化失败:', error);
             this._showError('页面初始化失败，请刷新重试');
         }
     }
@@ -330,7 +330,7 @@ class DepartmentManagement {
         });
 
         // 成员移除事件
-        this.$membersList.on('click', '.remove-member', (e) => {
+        this.$memberBody.on('click', '.remove-member', (e) => {
             const userId = $(e.currentTarget).data('id');
             this._handleRemoveMember(userId);
         });
@@ -368,7 +368,7 @@ class DepartmentManagement {
             }
 
         } catch (error) {
-            console.error('加载部门数据失败:', error);
+            NotifyUtil.error('加载部门数据失败:', error);
             throw error;
         } finally {
             this.state.loading = false;
@@ -396,7 +396,7 @@ class DepartmentManagement {
             }
 
         } catch (error) {
-            console.error('加载部门数据失败:', error);
+            NotifyUtil.error('加载部门数据失败:', error);
             throw error;
         } finally {
             this.state.loading = false;
@@ -484,7 +484,7 @@ class DepartmentManagement {
                 throw new Error(response.message || '加载部门成员失败');
             }
         } catch (error) {
-            console.error('加载部门成员失败:', error);
+            NotifyUtil.error('加载部门成员失败:', error);
             this._showError('加载部门成员失败');
         }
     }
@@ -579,6 +579,8 @@ class DepartmentManagement {
 
         // 重新绑定添加成员按钮事件
         $('#addMemberBtn').on('click', () => this._handleAddMember());
+
+      
     }
 
     /**
@@ -623,7 +625,7 @@ class DepartmentManagement {
             }
 
         } catch (error) {
-            console.error(`${isEdit ? '更新' : '创建'}部门失败:`, error);
+            NotifyUtil.error(`${isEdit ? '更新' : '创建'}部门失败:`, error);
             this._showError(error.message);
         } finally {
             this._disableForm(false);
@@ -711,7 +713,7 @@ class DepartmentManagement {
             }
 
         } catch (error) {
-            console.error('添加成员失败:', error);
+            NotifyUtil.error('添加成员失败:', error);
             this._showError(error.message || '添加成员失败');
         }
     }
@@ -727,7 +729,7 @@ class DepartmentManagement {
 
         try {
             const response = await $.ajax({
-                url: `/api/departments/selectByPrimaryKey/${this.state.currentDepartment.departmentId}/members/${userId}`,
+                url: `/api/departments/${this.state.currentDepartment.departmentId}/members/${userId}`,
                 method: 'DELETE'
             });
 
@@ -739,7 +741,7 @@ class DepartmentManagement {
             }
 
         } catch (error) {
-            console.error('移除成员失败:', error);
+            NotifyUtil.error('移除成员失败:', error);
             this._showError(error.message || '移除成员失败');
         }
     }
@@ -1035,7 +1037,7 @@ class DepartmentManagement {
                 throw new Error(response.message || '搜索用户失败');
             }
         } catch (error) {
-            console.error('搜索用户失败:', error);
+            NotifyUtil.error('搜索用户失败:', error);
             this._showError('搜索用户失败');
         }
     }
@@ -1087,20 +1089,20 @@ class DepartmentManagement {
 
     // 显示错误信息
     _showError(message) {
-        // 使用Bootstrap的alert
-        const alertHtml = `
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        $('#main').prepend(alertHtml);
-
-        // 3秒后自动消失
-        setTimeout(() => {
-            $('.alert').alert('close');
-        }, 3000);
-
+        // const alertHtml = `
+        //     <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        //         ${message}
+        //         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        //     </div>
+        // `;
+        // $('#main').prepend(alertHtml);
+        //
+        // // 3秒后自动消失
+        // setTimeout(() => {
+        //     $('.alert').alert('close');
+        // }, 3000);
+        //
+        NotifyUtil.error(message);
         }
 }
 

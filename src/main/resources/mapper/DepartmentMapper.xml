@@ -119,7 +119,6 @@
   </select>
 
   <select id="selectAll" resultMap="BaseResultMap">
-    <!--@mbg.generated-->
     select
     <include refid="Base_Column_List"/>
     from t_department

@@ -25,11 +25,19 @@ public class UserViewBackDTO {
      */
     private String phone;
     /**
-     *  邮箱
+     *  部门Id
+     */
+    private Long departmentId;
+    /**
+     *  部门名称
      */
     private String departmentName;
     /**
-     *  部门ID
+     *  角色Id
+     */
+    private Long roleId;
+    /**
+     *  角色名称
      */
     private String roleName;
     /**
@@ -44,4 +52,8 @@ public class UserViewBackDTO {
      * 角色编码
      */
     private String baseRoleCode;
+    /**
+     *  角色状态
+     */
+    private Integer status;
 }

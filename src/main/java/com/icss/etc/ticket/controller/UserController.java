@@ -3,13 +3,18 @@ package com.icss.etc.ticket.controller;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.User;
 import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
+import com.icss.etc.ticket.entity.dto.UserQueryDTO;
+import com.icss.etc.ticket.entity.dto.UserUpdateInfoDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
+import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.exceptions.BusinessException;
 import com.icss.etc.ticket.service.UserService;
 import com.icss.etc.ticket.util.MD5Util;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -141,8 +146,8 @@ public class UserController {
     }
     /**
      * 添加用户头像
-     * @param user_id 用户ID
-     * @param avatar 头像地址
+     * @param userId 用户ID
+     * @param file 头像地址
      */
     @PostMapping("/avatar")
     public R<String> uploadAvatar(
@@ -164,5 +169,38 @@ public class UserController {
     @GetMapping("/department/{userId}")
     public R getDepartmentIdByUserId(@PathVariable("userId") Long userId) {
         return R.OK(userService.getUserInfo(userId).getDepartmentId());
+    }
+
+    /**
+     * 获取所有用户个人信息
+     */
+    @GetMapping("/list")
+    public R selectAllUsersInfo(UserQueryDTO queryDTO) {
+        return R.OK(userService.selectAllUsersInfo(queryDTO));
+    }
+
+    /**
+     * 禁用或启用用户
+     */
+    @PutMapping("/{userId}/status")
+    public R changeUserStatus(@PathVariable Long userId) {
+        return R.OK(userService.changeUserStatus(userId));
+    }
+    /**
+     * 重置密码
+     */
+    @PostMapping("/{userId}/reset-password")
+    public R resetPassword(@PathVariable Long userId) {
+        return R.OK(userService.resetPassword(userId));
+    }
+
+    /**
+     * 更新用户信息
+     * @param userViewBackDTO 用户信息
+     * @return R
+     */
+    @PutMapping("{userId}")
+    public R updateUserInfo(@PathVariable Long userId,@RequestBody UserViewBackDTO userViewBackDTO) {
+        return R.OK(userService.updateUserInfo(userId,userViewBackDTO));
     }
 }

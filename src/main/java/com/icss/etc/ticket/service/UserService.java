@@ -1,14 +1,17 @@
 package com.icss.etc.ticket.service;
 
+import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.dto.DepartmentsQueryDTO;
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
 import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
+import com.icss.etc.ticket.entity.dto.UserQueryDTO;
+import com.icss.etc.ticket.entity.dto.user.UserCreateDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.entity.vo.UserVO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -81,4 +84,33 @@ public interface UserService {
      * @param fileName  文件名
      */
     void saveAvatar(MultipartFile file, Long userId, String username) throws IOException;
+
+    int deleteUserFromDepartment(Long departmentId, Long userId);
+
+    PageInfo<UserVO> selectAllUsersInfo(UserQueryDTO queryDTO);
+
+    /**
+     * 更改用户状态
+     * @param userId 用户ID
+     * @return 返回结果
+     */
+    int changeUserStatus(Long userId);
+
+    int createANewUser(UserCreateDTO userCreateDTO);
+
+    /**
+     * 重置密码
+     * @param userId 用户ID
+     * @return 返回结果
+     */
+    int resetPassword(Long userId);
+
+    /**
+     * 更新用户信息
+     *
+     * @param userId
+     * @param userViewBackDTO 用户信息DTO
+     * @return 返回结果
+     */
+    int updateUserInfo(Long userId, UserViewBackDTO userViewBackDTO);
 }

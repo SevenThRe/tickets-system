@@ -62,7 +62,7 @@
   <select id="selectUserInfo" resultType="com.icss.etc.ticket.entity.vo.UserViewBackDTO">
     <!--@mbg.generated-->
     select
-        u.user_id,u.password,
+        u.user_id,u.password,u.status,r.role_id,d.department_id,
     u.username,u.real_name,u.phone,d.department_name,r.role_name,r.base_role_code
     ,u.email
     from t_user u,t_role r,t_department d,t_user_role ur
@@ -448,4 +448,82 @@
     <result property="monthlyPerformance" column="monthlyPerformance"/>
   </resultMap>
 
+  <update id="deleteUserFromDepartment">
+    update t_user
+    set department_id = 0
+    where user_id = #{userId,jdbcType=BIGINT}
+      and is_deleted = 0
+      and status = 1
+    </update>
+
+  <select id="selectAllUsersInfo" resultType="com.icss.etc.ticket.entity.vo.UserVO" parameterType="com.icss.etc.ticket.entity.dto.UserQueryDTO">
+    select
+        u.user_id,u.username,u.real_name,u.create_time,u.status,u.email,u.phone,
+      r.role_name,r.role_id,r.base_role_code,
+      d.department_name,d.department_id
+     from t_user u,t_user_role ur,t_role r,t_department d
+    where u.user_id = ur.user_id
+    and ur.role_id = r.role_id
+    and d.department_id = u.department_id
+    and u.is_deleted = 0
+    <if test="queryDTO.keyword != null and queryDTO.keyword != ''">
+        and (u.username like concat('%',#{queryDTO.keyword},'%')
+        or u.real_name like concat('%',#{queryDTO.keyword},'%')
+        or u.email like concat('%',#{queryDTO.keyword},'%')
+        or r.role_name like concat('%',#{queryDTO.keyword},'%'))
+    </if>
+    <if test="queryDTO.status != null">
+            and u.status = #{queryDTO.status}
+    </if>
+    <if test="queryDTO.departmentId != null">
+            and u.department_id = #{queryDTO.departmentId}
+    </if>
+    <if test="queryDTO.roleId != null">
+            and ur.role_id = #{queryDTO.roleId}
+    </if>
+    order by u.create_time desc ,u.username desc
+  </select>
+
+  <update id="changeUserStatus">
+    update t_user
+    set status =
+    case when
+        status = 1
+    then 0 else 1
+    end
+    where user_id = #{userId}
+  </update>
+
+  <insert id="createANewUser">
+    insert into t_user
+    (username,`password`,real_name,department_id,email,phone,status,is_deleted,create_by,create_time)
+    values
+    (#{username},#{password},#{realName},#{departmentId},#{email},#{phone},1,0,#{userId},default)
+  </insert>
+
+  <update id="resetPassword">
+    update t_user set password = #{password} where user_id = #{userId}
+  </update>
+
+  <update id="updateUserInfo">
+    update t_user
+    <set>
+      <if test="dto.departmentId != null">
+        department_id = #{dto.departmentId,jdbcType=BIGINT},
+      </if>
+      <if test="dto.password != null">
+        password = #{dto.password,jdbcType=VARCHAR},
+      </if>
+      <if test="dto.email != null">
+        email = #{dto.email,jdbcType=VARCHAR},
+      </if>
+      <if test="dto.phone != null">
+        phone = #{dto.phone,jdbcType=VARCHAR},
+      </if>
+      <if test="dto.realName != null">
+        real_name = #{dto.realName,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where user_id = #{userId}
+  </update>
 </mapper>

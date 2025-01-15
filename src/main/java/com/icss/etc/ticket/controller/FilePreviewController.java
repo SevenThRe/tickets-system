@@ -34,12 +34,15 @@ public class FilePreviewController {
     @PostConstruct
     public void init() {
         this.uploadPath = propertiesUtil.getProperty("upload.path", "./uploads/");
+        if (!uploadPath.endsWith("/"))
+            uploadPath += "/";
         log.info("FilePreviewController initialized with upload path: {}", uploadPath);
     }
 
     @GetMapping("/preview/{fileName}")
-    public void previewFile(@PathVariable String fileName, HttpServletResponse response) {
-        File file = new File(uploadPath + fileName);
+    public void
+    previewFile(@PathVariable String fileName, HttpServletResponse response) {
+        File file = new File(uploadPath  + fileName);
         if (!file.exists()) {
             throw new BusinessException(CodeEnum.NOT_FOUND);
         }

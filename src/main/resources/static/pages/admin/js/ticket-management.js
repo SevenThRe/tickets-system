@@ -704,14 +704,23 @@ class TicketManagement {
         }
 
         try {
-            const formData = new FormData(form[0]);
+            const formData = new FormData();
+
+
+            formData.append('typeId', $('#typeId').val());
+            formData.append('title', $('#title').val());
+            formData.append('content', $('#content').val());
+            formData.append('departmentId', $('#department').val());
+            formData.append('priority', $('#priority').val());
+            formData.append('expectFinishTime', $('#expectFinishTime').val());
             formData.append('currentUserId', this.userInfo.userId);
+
 
             // 处理文件上传
             const filesInput = $('#attachments')[0];
             if(filesInput.files && filesInput.files.length > 0) {
                 Array.from(filesInput.files).forEach(file => {
-                    formData.append('files', file);
+                    formData.append('attachments', file);
                 });
             }
 
@@ -749,7 +758,8 @@ class TicketManagement {
             });
 
             if(response.code === 200) {
-                const options = response.data.map(dept =>
+                const options = response.data.filter(dept => dept.departmentId !== 0)
+                    .map(dept =>
                     `<option value="${dept.departmentId}">${dept.departmentName}</option>`
                 ).join('');
 
@@ -810,6 +820,20 @@ class TicketManagement {
             startTime: $('#startDate').val() || '',
             endTime: $('#endDate').val() || ''
         };
+
+        if (this.state.filters.startTime > this.state.filters.endTime) {
+            NotifyUtil.warning('开始时间不能晚于结束时间');
+            let temp = this.state.filters.startTime;
+            $('#startDate').val(this.state.filters.endTime);
+            $('#endDate').val(temp);
+            return;
+        }
+        if(this.state.filters.startTime){
+            this.state.filters.startTime = `${this.state.filters.startTime}T00:00:00`;
+        }
+        if(this.state.filters.endTime){
+            this.state.filters.endTime = `${this.state.filters.endTime}T23:59:59`;
+        }
 
         // 重置分页到第一页
         this.state.pagination.current = 1;
@@ -885,7 +909,39 @@ class TicketManagement {
             return;
         }
 
-        await this._handleStatusUpdate('CLOSED', content);
+        if(!confirm('确定要关闭此工单吗？')) {
+            return;
+        }
+
+        try {
+            // 构造请求数据，字段名与后端CloseTicketRequest匹配
+            const closeRequest = {
+                content: content,
+                operatorId: this.userInfo.userId,
+                ticketId: this.state.currentTicket.ticketId
+            };
+
+            const response = await $.ajax({
+                url: `/api/tickets/${this.state.currentTicket.ticketId}/close`,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(closeRequest),
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if(response.code === 200) {
+                NotifyUtil.success('工单已关闭');
+                await this._loadTicketDetail(this.state.currentTicket.ticketId);
+                await this._loadTickets();
+            } else {
+                NotifyUtil.error(response.msg || '关闭工单失败');
+            }
+        } catch(error) {
+            console.error('关闭工单失败:', error);
+            NotifyUtil.error('关闭工单失败');
+        }
     }
 
     /**

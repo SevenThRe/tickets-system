@@ -49,6 +49,7 @@ public class TicketServiceImpl implements TicketService {
     private final NotificationService notificationService;
     private final UserSettingsMapper userSettingsMapper;
     private final UserMapper userMapper;
+    private final UserRoleMapper userRoleMapper;
 
 
     public TicketServiceImpl(TicketMapper ticketMapper,
@@ -56,14 +57,15 @@ public class TicketServiceImpl implements TicketService {
                              TicketTypeMapper ticketTypeMapper,
                              NotificationService notificationService,
                              UserMapper userMapper,
-                             UserSettingsMapper userSettingsMapper
-    ) {
+                             UserSettingsMapper userSettingsMapper,
+                             UserRoleMapper userRoleMapper) {
         this.ticketMapper = ticketMapper;
         this.ticketRecordMapper = ticketRecordMapper;
         this.notificationService = notificationService;
         this.ticketTypeMapper = ticketTypeMapper;
         this.userMapper = userMapper;
         this.userSettingsMapper = userSettingsMapper;
+        this.userRoleMapper = userRoleMapper;
     }
 
 
@@ -78,6 +80,7 @@ public class TicketServiceImpl implements TicketService {
         }
         PageHelper.startPage(queryDTO.getPageNum(), queryDTO.getPageSize());
         List<Ticket> list = ticketMapper.selectTicketList(queryDTO);
+
         return new PageInfo<>(list);
     }
 
@@ -101,7 +104,7 @@ public class TicketServiceImpl implements TicketService {
     public Long createTicket(CreateTicketDTO createDTO) {
         // 1. 数据校验
         if(createDTO.getDepartmentId() == null || createDTO.getTypeId() == null) {
-            throw new BusinessException(TicketEnum.TICKET_INFO_ILLEGAL);
+            throw new BusinessException(TicketEnum.TICKET_INFO_ILLEGAL,"部门或工单类型不能为空");
         }
 
         // 2. 创建工单
@@ -113,7 +116,7 @@ public class TicketServiceImpl implements TicketService {
         ticket.setIsDeleted(0);
 
         if (ticketMapper.insertTicket(ticket) <= 0) {
-            throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED);
+            throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED,"工单创建失败");
         }
 
         // 3. 添加创建记录
@@ -126,9 +129,9 @@ public class TicketServiceImpl implements TicketService {
         record.setIsDeleted(0);
 
         if(ticketRecordMapper.insertRecord(record) <= 0) {
-            throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED);
+            throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED,"创建工单记录失败");
         }
-
+        log.info("创建工单记录成功: {}", record);
         if(ticket.getProcessorId() != null) {
             notificationService.createAssignNotification(
                     ticket.getTicketId(),
@@ -136,7 +139,7 @@ public class TicketServiceImpl implements TicketService {
                     String.format("您有新的工单待处理: %s", ticket.getTitle())
             );
         }
-
+        log.info("{} 创建工单成功: {}", ticket.getCreateBy(),ticket);
         return ticket.getTicketId();
     }
 
@@ -147,7 +150,7 @@ public class TicketServiceImpl implements TicketService {
         // 1. 查询工单
         Ticket ticket = ticketMapper.selectTicketById(updateDTO.getTicketId());
         if (ticket == null) {
-            throw new BusinessException(TicketEnum.TICKET_NOT_EXIST);
+            throw new BusinessException(TicketEnum.TICKET_NOT_EXIST,"工单不存在");
         }
 
         // 2. 校验状态流转
@@ -207,13 +210,21 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public void addTicketRecord(AddTicketRecordDTO recordDTO) {
-        // 1. 检查工单是否存在
+        // 检查工单是否存在
         Ticket ticket = ticketMapper.selectTicketById(recordDTO.getTicketId());
         if (ticket == null) {
             throw new BusinessException(TicketEnum.TICKET_NOT_EXIST);
         }
-
-        // 2. 添加处理记录
+        Long userId = SecurityUtils.getCurrentUserId();
+        // 校验工单是否可以被备注
+        if(!Objects.equals(ticket.getCreateBy(), userId)
+                && ticket.getStatus() != TicketStatus.CLOSED
+                && !Objects.equals(ticket.getProcessorId(), userId)
+                && !userRoleMapper.selectByUserId(userId, "ADMIN"))
+        {log.error("非创建人或处理人不能备注工单");
+            throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED, "校验不通过,不能进行备注");
+        }
+        // 添加处理记录
         TicketRecord record = new TicketRecord();
         BeanUtils.copyProperties(recordDTO, record);
         record.setCreateTime(LocalDateTime.now());

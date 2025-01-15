@@ -131,7 +131,18 @@
         <if test="query.departmentId != null">
             AND t.department_id = #{query.departmentId}
         </if>
-        ORDER BY t.create_time DESC
+        ORDER BY
+        CASE t.status
+        WHEN 2 THEN 3
+        WHEN 3 THEN 4
+        ELSE 1
+        END ASC,
+        CASE t.priority
+        WHEN 2 THEN 1
+        WHEN 1 THEN 2
+        ELSE 3
+        END ASC,
+        t.create_time ASC
     </select>
 
     <select id="selectTicketById" resultType="com.icss.etc.ticket.entity.Ticket">

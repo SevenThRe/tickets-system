@@ -1,15 +1,17 @@
 package com.icss.etc.ticket.mapper;
 
-import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.dto.DepartmentsQueryDTO;
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
 import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
+import com.icss.etc.ticket.entity.dto.UserQueryDTO;
+import com.icss.etc.ticket.entity.dto.user.UserCreateDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
 
 import java.util.List;
 
+import com.icss.etc.ticket.entity.vo.UserVO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import org.apache.ibatis.annotations.Param;
 
@@ -115,4 +117,27 @@ public interface UserMapper {
     List<User> selectOnlineProcessorsByDepartment(Long departmentId);
 
     Long selectDepartmentId(Long userId);
+
+    int deleteUserFromDepartment(Long userId);
+
+    List<UserVO> selectAllUsersInfo(@Param("queryDTO") UserQueryDTO queryDTO);
+
+    int changeUserStatus(Long userId);
+
+    /**
+     * 创建新用户
+     * @param user 用户信息
+     * @return 创建结果
+     */
+    int createANewUser(UserCreateDTO user);
+
+    int resetPassword(@Param("userId") Long userId, @Param("password") String password);
+
+    /**
+     * 更新用户信息
+     * @param userViewBackDTO 用户信息
+     * @return 更新结果
+     */
+    int updateUserInfo(@Param("userId") Long userId, @Param("dto") UserViewBackDTO userViewBackDTO);
+
 }

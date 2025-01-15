@@ -246,16 +246,109 @@ MyTickets.prototype._loadTicketDetail = function(ticketId) {
         headers: {
             'Authorization': 'Bearer ' + localStorage.getItem('token')
         }
-    }).done(function(response) {
+    }).done(async function (response) {
         if (response.code === 200) {
             self.state.currentTicket = response.data;
             self._renderTicketDetail();
+
+            await self._loadAttachments(ticketId);
             self.elements.ticketDetail.addClass('show');
         }
     }).fail(function(error) {
-        console.error('加载工单详情失败:', error);
-        NotifyUtil.error('加载详情失败');
+        NotifyUtil.error('加载详情失败',error);
     });
+};
+/**
+ * 获取状态样式类
+ * @param ticketId 工单ID
+ * @returns {*}
+ * @private
+ */
+MyTickets.prototype._loadAttachments = function(ticketId) {
+    let self = this;
+    return $.ajax({
+        url: `/api/files/ticket/${ticketId}`,
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        }
+    }).done(function(response) {
+        if (response.code === 200) {
+            self._renderAttachments(response.data);
+        }
+    }).fail(function(error) {
+        console.error('加载附件失败:', error);
+        NotifyUtil.error('加载附件失败');
+    });
+};
+
+/**
+ * 渲染附件列表
+ */
+MyTickets.prototype._renderAttachments = function(attachments) {
+    const $attachmentList = $('#ticketAttachments');
+    // 清空之前的附件显示
+    $attachmentList.empty();
+
+    if (!attachments || attachments.length === 0) {
+        $attachmentList.html('<div class="text-muted">暂无附件</div>');
+        return;
+    }
+
+    const html = attachments.map(attachment => {
+        const fileExt = attachment.fileName.split('.').pop().toLowerCase();
+        const iconClass = this._getFileIconClass(fileExt);
+
+        return `
+            <div class="attachment-item d-flex align-items-center mb-2">
+                <i class="bi ${iconClass} me-2"></i>
+                <div class="flex-grow-1">
+                    <div class="file-name">${this._escapeHtml(attachment.fileName)}</div>
+                    <div class="file-meta text-muted small">
+                        ${this._formatFileSize(attachment.fileSize)} 
+                        · ${this._formatDate(attachment.createTime)}
+                    </div>
+                </div>
+                <div class="attachment-actions">
+                    <button class="btn btn-sm btn-outline-primary me-2" 
+                            onclick="window.myTickets._downloadAttachment('${attachment.ticketId}', '${attachment.fileName}')">
+                        <i class="bi bi-download"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    $attachmentList.html(html);
+};
+
+
+/**
+ * 获取状态样式类
+ * @param ticketId 工单ID
+ * @param fileName  文件名
+ * @private
+ */
+MyTickets.prototype._downloadAttachment = function(ticketId, fileName) {
+    window.open(`/api/files/download/${ticketId}/${fileName}`, '_blank');
+};
+
+/**
+ * 获取文件图标
+ */
+MyTickets.prototype._getFileIconClass = function(fileExt) {
+    const iconMap = {
+        'pdf': 'bi-file-pdf',
+        'doc': 'bi-file-word',
+        'docx': 'bi-file-word',
+        'xls': 'bi-file-excel',
+        'xlsx': 'bi-file-excel',
+        'png': 'bi-file-image',
+        'jpg': 'bi-file-image',
+        'jpeg': 'bi-file-image',
+        'default': 'bi-file-earmark'
+    };
+    return iconMap[fileExt] || iconMap.default;
 };
 
 /**
@@ -291,13 +384,12 @@ MyTickets.prototype._renderTicketDetail = function() {
     }
 
     // 备注按钮控制 - 处理中状态可以添加备注
-    const canAddNote = ticket.status === 1;
+    const canAddNote = ticket.status === 1 || ticket.status === 0;
     $('#noteForm').toggle(canAddNote);
 
-    // 关闭按钮控制 - 非关闭状态且是创建人或处理人可以关闭
+    // 关闭按钮控制 - 非关闭状态且是创建人可以关闭
     const canClose = ticket.status !== 3 &&
-        (ticket.createBy === this.state.filters.userId ||
-            ticket.processorId === this.state.filters.userId);
+        (ticket.createBy === this.state.filters.userId );
 
     $('#closeTicketBtn').prop('disabled', !canClose);
 
@@ -521,12 +613,12 @@ MyTickets.prototype._handleCloseTicket = function() {
     $.ajax({
         url: `/api/tickets/${this.state.currentTicket.ticketId}/close`,
         method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify({
+        contentType: 'application/json;charset=UTF-8',
+        data: {
             ticketId: this.state.currentTicket.ticketId,
             content: content,
             operatorId: this.state.filters.userId
-        }),
+        },
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -623,16 +715,18 @@ MyTickets.prototype._handleCloseTicket = function() {
         return;
     }
 
+    const closeRequest = {
+        content: content,
+        operatorId: this.state.filters.userId,
+        tickedId: this.state.currentTicket.ticketId
+    };
+
     // 关闭工单请求
     $.ajax({
         url: `/api/tickets/${this.state.currentTicket.ticketId}/close`,
         method: 'PUT',
         contentType: 'application/json',
-        data: JSON.stringify({
-            ticketId: this.state.currentTicket.ticketId,
-            operatorId: this.state.filters.userId,
-            content: content
-        }),
+        data: JSON.stringify(closeRequest),
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -709,8 +803,9 @@ MyTickets.prototype._handleAddNote = function() {
     const self = this;
 
     // 验证工单状态
-    if(this.state.currentTicket.status !== 1) {
-        NotifyUtil.warning('只能对处理中的工单添加备注');
+    if(
+        this.state.currentTicket.status === 3) {
+        NotifyUtil.warning('无法对关闭的工单进行备注');
         return;
     }
 
@@ -727,7 +822,6 @@ MyTickets.prototype._handleAddNote = function() {
         data: JSON.stringify({
             ticketId: this.state.currentTicket.ticketId,
             operatorId: this.state.filters.userId,
-            operationType: 2, // 处理类型
             operationContent: content,
             evaluationScore: null,
             evaluationContent: null

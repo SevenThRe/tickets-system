@@ -6,9 +6,12 @@ import com.icss.etc.ticket.entity.UserRole;
 import com.icss.etc.ticket.entity.dto.DepartmentsQueryDTO;
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
 import com.icss.etc.ticket.entity.dto.UserPasswordDTO;
+import com.icss.etc.ticket.entity.dto.UserQueryDTO;
+import com.icss.etc.ticket.entity.dto.user.UserCreateDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.entity.vo.UserVO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.exceptions.BusinessException;
@@ -18,6 +21,7 @@ import com.icss.etc.ticket.mapper.UserMapper;
 import com.icss.etc.ticket.mapper.UserRoleMapper;
 import com.icss.etc.ticket.service.UserService;
 import com.icss.etc.ticket.util.GradeCalculator;
+import com.icss.etc.ticket.util.MD5Util;
 import com.icss.etc.ticket.util.PropertiesUtil;
 import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.PostConstruct;
@@ -45,6 +49,8 @@ public class UserServiceImpl implements UserService{
     private UserRoleMapper userRoleMapper;
     @Autowired
     private PropertiesUtil propertiesUtil;
+
+    private String DEFAULT_PASSWORD;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -220,6 +226,7 @@ public class UserServiceImpl implements UserService{
     @PostConstruct
     public void init() {
         AVATAR_PATH = propertiesUtil.getProperty("upload.avatarPath", "./src/main/resources/static/");
+        DEFAULT_PASSWORD = propertiesUtil.getProperty("default.password", "123456");
     }
     public void saveAvatar(MultipartFile file, Long userId, String username) throws IOException {
         // 确保目录存在
@@ -234,10 +241,99 @@ public class UserServiceImpl implements UserService{
 
         // 保存文件
         File dest = new File(filePath);
-        if (!dest.exists()) {
-            dest.createNewFile();
+        try {
+            if (!dest.exists()) {
+                dest.createNewFile();
+            }
+        } catch (IOException e) {
+            log.error("保存头像失败:", e);
+            throw new BusinessException(CodeEnum.SAVE_FAILED);
         }
         file.transferTo(dest);
+    }
+
+
+    @Transactional
+    @Override
+    public int deleteUserFromDepartment(Long departmentId, Long userId) {
+       try {
+           // 先删除部门下面的用户
+           int count = userMapper.deleteUserFromDepartment(userId);
+           if (userRoleMapper.selectByUserId(userId, "USER") && userRoleMapper.selectByUserId(userId, "ADMIN")) {
+               // 再删除用户的角色
+               count += userRoleMapper.transferUserToNormal(userId);
+               if (count != 2) {
+                   throw new BusinessException(CodeEnum.DELETE_MEMBER_FAILED);
+               }
+           }
+           log.info("{}user delete from department :{} count: {}", this.getClass().getSimpleName(), userId, count);
+           return count;
+       }catch (Exception e) {
+           log.error("{}user delete from department failed :{}", this.getClass().getSimpleName(), userId);
+              throw new BusinessException(CodeEnum.DELETE_MEMBER_FAILED);
+       }
+    }
+
+    @Override
+    public PageInfo<UserVO> selectAllUsersInfo(UserQueryDTO queryDTO) {
+        PageHelper.startPage(queryDTO.getPageNum(),queryDTO.getPageSize());
+        return new PageInfo<>(userMapper.selectAllUsersInfo(queryDTO));
+    }
+
+    @Override
+    public int changeUserStatus(Long userId) {
+        return userMapper.changeUserStatus(userId);
+    }
+
+    /**
+     * 新建用户功能
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public int createANewUser(UserCreateDTO user) {
+        // 密码加密
+        user.setPassword(MD5Util.getMD5(user.getPassword()));
+        // 创建用户
+        int result =0;
+        try {
+            result = userMapper.createANewUser(user);
+            result += userRoleMapper.insert(new UserRole(user.getUserId(), user.getRoleId()));
+            if (result != 2) {
+                throw new BusinessException(CodeEnum.CREATION_FAILED);
+            }
+        } catch (Exception e) {
+        log.error("创建用户失败:", e);
+        throw new BusinessException(CodeEnum.CREATION_FAILED);
+        }
+        return result;
+    }
+
+    @Override
+    public int resetPassword(Long userId) {
+        String md5 = MD5Util.getMD5("123456");
+        log.info("reset password userId:{}, password:{}", userId, DEFAULT_PASSWORD);
+        return userMapper.resetPassword(userId,md5);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int updateUserInfo(Long userId, UserViewBackDTO userViewBackDTO) {
+        int i = 0;
+        try{
+            i += userMapper.updateUserInfo(userId, userViewBackDTO);
+            if(userRoleMapper.selectByPrimaryKey(userId, userViewBackDTO.getRoleId()) != null){
+                return i;
+            }else {
+                i += userRoleMapper.insert(new UserRole(userId, userViewBackDTO.getRoleId()));
+            }
+            if (i != 2) {
+                throw new BusinessException(CodeEnum.UPDATE_FAILED);
+            }
+        }catch (BusinessException e){
+            log.error("更新用户信息失败: {}", e.getMessage());
+            throw e;
+        }
+        return i;
     }
 
     /**

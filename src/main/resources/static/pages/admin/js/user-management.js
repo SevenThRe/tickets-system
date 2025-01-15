@@ -1,24 +1,13 @@
 /**
- * UserManagement.js
- * 用户管理页面控制器
+ * 用户管理类
  */
 class UserManagement {
     constructor() {
-        // 缓存DOM元素引用
-        this.$container = $('#main');
-        this.$userList = $('#userList');
-        this.$searchForm = $('#searchForm');
-        this.$pagination = $('#pagination');
-        this.$totalCount = $('#totalCount');
-        this.$userForm = $('#userForm');
-
         // 状态管理
         this.state = {
             loading: false,
-            mode: 'create',  // create|edit
             users: [],
-            departments: [],
-            roles: [],
+            currentUser: null,
             pagination: {
                 current: 1,
                 pageSize: 10,
@@ -29,177 +18,168 @@ class UserManagement {
                 roleId: '',
                 departmentId: '',
                 status: ''
-            },
-            currentUser: null
-        };
-
-        // 初始化模态框
-        this.userModal = new bootstrap.Modal('#userModal');
-
-        // 表单验证规则
-        this.validationRules = {
-            username: {
-                required: true,
-                pattern: /^[a-zA-Z0-9_]{3,20}$/,
-                message: '用户名只能包含字母、数字和下划线，长度3-20位'
-            },
-            password: {
-                required: true,
-                minLength: 6,
-                message: '密码不能少于6位'
-            },
-            realName: {
-                required: true,
-                maxLength: 20,
-                message: '请输入真实姓名'
-            },
-            email: {
-                required: true,
-                pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                message: '请输入有效的邮箱地址'
-            },
-            role: {
-                required: true,
-                message: '请选择角色'
-            },
-            department: {
-                required: true,
-                message: '请选择部门'
             }
         };
 
-        // 绑定事件
-        this._bindEvents();
+        // DOM元素缓存
+        this.elements = {
+            container: $('#main'),
+            userList: $('#userList'),
+            searchForm: $('#searchForm'),
+            pagination: $('#pagination'),
+            totalCount: $('#totalCount'),
+            userModal: new bootstrap.Modal($('#userModal')[0])
+        };
+
+        // 用户状态常量
+        this.USER_STATUS = {
+            ENABLED: 1,
+            DISABLED: 0
+        };
+
+        this.$userInfoCard = $(`
+            <div class="user-info-card">
+                <div class="user-info-header">
+                    <div class="user-info-avatar">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div class="user-info-name">
+                        <h6></h6>
+                        <small></small>
+                    </div>
+                </div>
+                <div class="user-info-content">
+                    <div class="user-info-item">
+                        <div class="user-info-label">用户名</div>
+                        <div class="user-info-value username"></div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">真实姓名</div>
+                           <div class="user-info-value realname"></div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">部门</div>
+                        <div class="user-info-value department"></div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">手机号</div>
+                        <div class="user-info-value phone"></div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">角色</div>
+                        <div class="user-info-value role"></div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">邮箱</div>
+                        <div class="user-info-value email"></div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">创建时间</div>
+                        <div class="user-info-value createtime"></div>
+                    </div>
+                </div>
+            </div>
+        `).appendTo('body');
+
+        // 绑定鼠标移入移出事件
+        this._bindHoverEvents();
 
         // 初始化组件
         this.init();
     }
 
     /**
+     * 初始化方法
+     */
+    async init() {
+        try {
+            await Promise.all([
+                this._loadRoles(), // 加载角色数据
+                this._loadDepartments(), // 加载部门数据
+                this._loadUsers() // 加载用户列表
+            ]);
+
+            // 绑定事件
+            this._bindEvents();
+
+            // 检查URL参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('userId');
+            if (userId) {
+                this._loadUserDetail(userId);
+            }
+        } catch (error) {
+            console.error('初始化失败:', error);
+            NotifyUtil.error('加载失败，请刷新重试');
+        }
+    }
+
+    /**
      * 绑定事件处理
-     * @private
      */
     _bindEvents() {
-        // 搜索相关事件
-        this.$searchForm.on('submit', (e) => this._handleSearch(e));
+
+        // 重置按钮
         $('#resetBtn').on('click', () => this._handleReset());
 
-        // 用户操作事件
-        $('#createUserBtn').on('click', () => this._handleCreateUser());
-        $('#saveUserBtn').on('click', () => this._handleSaveUser());
+        // 创建用户按钮
+        $('#createUserBtn').on('click', () => this._showCreateModal());
 
-        // 编辑和删除事件
-        this.$userList.on('click', '.edit-user', (e) => {
+        // 用户列表操作
+        this.elements.userList.on('click', '.edit-user', (e) => {
             const userId = $(e.currentTarget).data('id');
             this._handleEditUser(userId);
         });
 
-        this.$userList.on('click', '.delete-user', (e) => {
-            const userId = $(e.currentTarget).data('id');
-            this._handleDeleteUser(userId);
-        });
-
-        // 禁用/启用事件
-        this.$userList.on('click', '.toggle-status', (e) => {
+        this.elements.userList.on('click', '.toggle-status', (e) => {
             const userId = $(e.currentTarget).data('id');
             const status = $(e.currentTarget).data('status');
             this._handleToggleStatus(userId, status);
         });
 
-        // 重置密码事件
-        this.$userList.on('click', '.reset-password', (e) => {
+        this.elements.userList.on('click', '.reset-password', (e) => {
             const userId = $(e.currentTarget).data('id');
             this._handleResetPassword(userId);
         });
+        let searchTimer;
 
-        // 部门联动事件
-        $('#department').on('change', () => this._handleDepartmentChange());
+        // 保存用户按钮
+        $('#saveUserBtn').on('click', () => this._handleSaveUser());
 
-        // 表单验证
-        this.$userForm.find('input,select').on('blur', (e) => {
-            this._validateField($(e.target).attr('name'));
+        // 表单筛选变化
+        $('#roleFilter, #departmentFilter, #statusFilter').on('change', (e) => {
+            if (searchTimer) {
+                clearTimeout(searchTimer);
+            }
+            searchTimer = setTimeout(() => {
+                this._handleSearch(e);
+            }, 500);
         });
-
-        // 分页事件
-        this.$pagination.on('click', '.page-link', (e) => {
+        // 搜索表单提交
+        this.elements.searchForm.on('submit', (e) => {
             e.preventDefault();
-            const page = $(e.currentTarget).data('page');
-            if (page && page !== this.state.pagination.current) {
-                this.state.pagination.current = page;
-                this._loadUsers();
+            if (searchTimer) {
+                clearTimeout(searchTimer);
             }
+            this._handleSearch(e);
         });
-    }
 
-    /**
-     * 初始化组件
-     */
-    async init() {
-        try {
-            // 并行加载数据
-            await Promise.all([
-                this._loadDepartments(),
-                this._loadRoles(),
-                this._loadUsers()
-            ]);
-        } catch (error) {
-            console.error('初始化失败:', error);
-            this._showError('页面初始化失败，请刷新重试');
-        }
-    }
-
-    /**
-     * 加载部门数据
-     * @private
-     */
-    async _loadDepartments() {
-        try {
-            const response = await $.ajax({
-                url: '/api/departments',
-                method: 'GET'
-            });
-
-            if(response.code === 200) {
-                this.state.departments = response.data;
-                this._renderDepartmentOptions();
-            } else {
-                throw new Error(response.message || '加载部门数据失败');
+        // 输入框值变化时也触发防抖搜索
+        $('#keyword').on('input', (e) => {
+            if (searchTimer) {
+                clearTimeout(searchTimer);
             }
-        } catch (error) {
-            console.error('加载部门数据失败:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * 加载角色数据
-     * @private
-     */
-    async _loadRoles() {
-        try {
-            const response = await $.ajax({
-                url: '/api/roles',
-                method: 'GET'
-            });
-
-            if(response.code === 200) {
-                this.state.roles = response.data;
-                this._renderRoleOptions();
-            } else {
-                throw new Error(response.message || '加载角色数据失败');
-            }
-        } catch (error) {
-            console.error('加载角色数据失败:', error);
-            throw error;
-        }
+            searchTimer = setTimeout(() => {
+                this._handleSearch(e);
+            }, 500);
+        });
     }
 
     /**
      * 加载用户列表
-     * @private
      */
     async _loadUsers() {
-        if(this.state.loading) return;
+        if (this.state.loading) return;
 
         try {
             this.state.loading = true;
@@ -212,23 +192,20 @@ class UserManagement {
             };
 
             const response = await $.ajax({
-                url: '/api/users',
+                url: '/api/users/list',
                 method: 'GET',
                 data: params
             });
 
-            if(response.code === 200) {
+            if (response.code === 200) {
                 this.state.users = response.data.list;
                 this.state.pagination.total = response.data.total;
-
                 this._renderUserList();
                 this._updatePagination();
-            } else {
-                throw new Error(response.message || '加载用户列表失败');
             }
         } catch (error) {
             console.error('加载用户列表失败:', error);
-            this._showError('加载用户列表失败');
+            NotifyUtil.error('加载用户列表失败');
         } finally {
             this.state.loading = false;
             this._hideLoading();
@@ -237,95 +214,138 @@ class UserManagement {
 
     /**
      * 渲染用户列表
-     * @private
      */
     _renderUserList() {
-        const html = this.state.users.map(user => `
-            <tr>
-                <td>${user.username}</td>
-                <td>${user.realName}</td>
-                <td>${this._getRoleName(user.roleId)}</td>
-                <td>${this._getDepartmentName(user.departmentId)}</td>
-                <td>${user.email}</td>
-                <td>
-                    <span class="status-badge status-${user.status ? 'active' : 'disabled'}">
-                        ${user.status ? '正常' : '禁用'}
-                    </span>
-                </td>
-                <td>${this._formatDate(user.createTime)}</td>
-                <td class="action-buttons">
-                    <button class="btn btn-sm btn-outline-primary edit-user" 
-                            data-id="${user.id}">
-                        编辑
+        this.elements.totalCount.text(this.state.pagination.total || 0);
+        if (!this.state.users || !this.state.users.length) {
+            this.elements.userList.html(
+                '<tr><td colspan="8" class="text-center">暂无用户数据</td></tr>'
+            );
+            return;
+        }
+        const getRoleBadgeClass = (baseRoleCode) => {
+            switch(baseRoleCode) {
+                case 'ADMIN': return 'role-badge role-admin';
+                case 'DEPT': return 'role-badge role-dept';
+                case 'USER': return 'role-badge role-user';
+                default: return 'role-badge role-user';
+            }
+        };
+        const html = this.state.users.map((user,index) => `
+        <tr data-index="${index}">
+            <td class="col-username"><span>${this._escapeHtml(user.username)}</span></td>
+            <td class="col-realname"><span>${this._escapeHtml(user.realName)}</span></td>
+            <td class="col-role">
+                <span class="${getRoleBadgeClass(user.baseRoleCode)}">
+                    ${this._escapeHtml(user.roleName)}
+                </span>
+            </td>
+            <td class="col-department"><span>${this._escapeHtml(user.departmentName)}</span></td>
+            <td class="col-email"><span>${this._escapeHtml(user.email)}</span></td>
+            <td class="col-status">
+                <span class="status-badge ${user.status === 1 ? 'status-enabled' : 'status-disabled'}">
+                    ${user.status === 1 ? '正常' : '禁用'}
+                </span>
+            </td>
+            <td class="col-createtime"><span>${this._formatDate(user.createTime)}</span></td>
+            <td class="col-actions">
+                <button class="btn btn-sm btn-outline-primary me-1 edit-user" data-id="${user.userId}">
+                        <i class="bi bi-pencil"></i> 编辑
                     </button>
-                    <button class="btn btn-sm btn-outline-warning reset-password"
-                            data-id="${user.id}">
-                        重置密码
+                    <button class="btn btn-sm btn-outline-warning me-1 reset-password" data-id="${user.userId}">
+                        <i class="bi bi-key"></i> 重置密码
                     </button>
-                    <button class="btn btn-sm btn-outline-danger toggle-status"
-                            data-id="${user.id}"
+                    <button class="btn btn-sm btn-outline-${user.status === 1 ? 'danger' : 'success'} toggle-status" 
+                            data-id="${user.userId}" 
                             data-status="${user.status}">
-                        ${user.status ? '禁用' : '启用'}
+                        <i class="bi bi-${user.status === 1 ? 'x-circle' : 'check-circle'}"></i>
+                        ${user.status === 1 ? '禁用' : '启用'}
                     </button>
-                </td>
-            </tr>
-        `).join('');
+            </td>t_role
+        </tr>
+    `).join('');
 
-        this.$userList.html(html || '<tr><td colspan="8" class="text-center">暂无数据</td></tr>');
-        this.$totalCount.text(this.state.pagination.total);
+        this.elements.userList.html(html);
+        this.elements.totalCount.text(this.state.pagination.total);
     }
 
-    /**
-     * 渲染部门选项
-     * @private
-     */
-    _renderDepartmentOptions() {
-        const options = this.state.departments.map(dept =>
-            `<option value="${dept.id}">${dept.name}</option>`
-        ).join('');
+    _showUserInfoCard(user, $row) {
+        // 更新卡片内容
+        const avatarSrc = `/images/${user.username}_${user.userId}_avatar.png`;
 
-        $('#departmentFilter, #department').html(
-            `<option value="">请选择部门</option>${options}`
-        );
+        // 创建一个临时Image对象检查头像是否存在
+        const img = new Image();
+        img.onload = () => {
+            // 头像存在,使用用户头像
+            this.$userInfoCard.find('.user-info-avatar').html(`
+            <img src="${avatarSrc}" alt="avatar" 
+                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+        `);
+        };
+        img.onerror = () => {
+            // 头像不存在,使用默认头像
+            this.$userInfoCard.find('.user-info-avatar').html(`
+            <img src="/images/default-avatar.png" alt="default avatar" 
+                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+        `);
+        };
+        img.src = avatarSrc;
+        this.$userInfoCard.find('.user-info-avatar h6').text(user.realName);
+        this.$userInfoCard.find('.user-info-name h6').text(user.realName);
+        this.$userInfoCard.find('.user-info-name small').text(user.roleName);
+        this.$userInfoCard.find('.username').text(user.username);
+        this.$userInfoCard.find('.realname').text(user.realName);
+        this.$userInfoCard.find('.department').text(user.departmentName || '无部门');
+        this.$userInfoCard.find('.role').text(user.roleName);
+        this.$userInfoCard.find('.phone').text(user.phone || '未填写');
+        this.$userInfoCard.find('.email').text(user.email);
+        this.$userInfoCard.find('.createtime').text(this._formatDate(user.createTime));
+
+        // 计算卡片位置
+        const rowOffset = $row.offset();
+        const rowHeight = $row.outerHeight();
+        const cardHeight = this.$userInfoCard.outerHeight();
+        const windowHeight = $(window).height();
+
+        // 判断卡片显示位置（上方还是下方）
+        let top = rowOffset.top + rowHeight + 5;
+        if (top + cardHeight > windowHeight) {
+            top = rowOffset.top - cardHeight - 5;
+        }
+
+        // 设置位置并显示卡片
+        this.$userInfoCard.css({
+            top: top,
+            left: rowOffset.left + 100
+        }).addClass('show');
     }
 
-    /**
-     * 渲染角色选项
-     * @private
-     */
-    _renderRoleOptions() {
-        const options = this.state.roles.map(role =>
-            `<option value="${role.id}">${role.name}</option>`
-        ).join('');
-
-        $('#roleFilter, #role').html(
-            `<option value="">请选择角色</option>${options}`
-        );
+    _hideUserInfoCard() {
+        this.$userInfoCard.removeClass('show');
     }
 
     /**
      * 处理搜索
-     * @private
      */
     _handleSearch(e) {
         e.preventDefault();
-        const formData = new FormData(e.target);
+
         this.state.filters = {
-            keyword: formData.get('keyword'),
-            roleId: formData.get('roleFilter'),
-            departmentId: formData.get('departmentFilter'),
-            status: formData.get('statusFilter')
+            keyword: $('#keyword').val() || '',
+            roleId: $('#roleFilter').val() || '',
+            departmentId: $('#departmentFilter').val() || '',
+            status: $('#statusFilter').val() || ''
         };
+
         this.state.pagination.current = 1;
         this._loadUsers();
     }
 
     /**
      * 处理重置
-     * @private
      */
     _handleReset() {
-        this.$searchForm[0].reset();
+        this.elements.searchForm[0].reset();
         this.state.filters = {
             keyword: '',
             roleId: '',
@@ -337,145 +357,176 @@ class UserManagement {
     }
 
     /**
-     * 处理创建用户
-     * @private
-     */
-    _handleCreateUser() {
-        this.state.mode = 'create';
-        this.state.currentUser = null;
-        this._resetForm();
-        $('#userModal .modal-title').text('新建用户');
-        this.userModal.show();
-    }
-
-    /**
-     * 处理编辑用户
-     * @private
-     */
-    async _handleEditUser(userId) {
-        try {
-            const response = await $.ajax({
-                url: `/api/users/${userId}`,
-                method: 'GET'
-            });
-
-            if(response.code === 200) {
-                this.state.currentUser = response.data;
-                this.state.mode = 'edit';
-                this._fillForm(response.data);
-                $('#userModal .modal-title').text('编辑用户');
-                this.userModal.show();
-            } else {
-                throw new Error(response.message || '加载用户信息失败');
-            }
-        } catch (error) {
-            console.error('加载用户信息失败:', error);
-            this._showError('加载用户信息失败');
-        }
-    }
-
-    /**
-     * 处理删除用户
-     * @private
-     */
-    async _handleDeleteUser(userId) {
-        if(!confirm('确定要删除此用户吗？此操作不可恢复！')) {
-            return;
-        }
-
-        try {
-            const response = await $.ajax({
-                url: `/api/users/${userId}`,
-                method: 'DELETE'
-            });
-
-            if(response.code === 200) {
-                this._showSuccess('删除成功');
-                await this._loadUsers();
-            } else {
-                throw new Error(response.message || '删除失败');
-            }
-        } catch (error) {
-            console.error('删除用户失败:', error);
-            this._showError('删除失败：' + error.message);
-        }
-    }
-
-    /**
      * 处理保存用户
-     * @private
      */
     async _handleSaveUser() {
-        if (!this._validateForm()) {
+        const formData = this._getFormData();
+        if (!this._validateForm(formData)) {
             return;
         }
 
-        const formData = this._getFormData();
-        const isEdit = this.state.mode === 'edit';
-
         try {
-            this._disableForm(true);
+            const isEdit = this.state.currentUser != null;
+            const url = isEdit ? `/api/users/${this.state.currentUser.userId}` : '/api/users';
+            const method = isEdit ? 'PUT' : 'POST';
 
             const response = await $.ajax({
-                url: isEdit ? `/api/users/${this.state.currentUser.id}` : '/api/users',
-                method: isEdit ? 'PUT' : 'POST',
+                url,
+                method,
                 contentType: 'application/json',
                 data: JSON.stringify(formData)
             });
 
-            if(response.code === 200) {
-                this._showSuccess(`${isEdit ? '更新' : '创建'}成功`);
-                this.userModal.hide();
+            if (response.code === 200) {
+                NotifyUtil.success(`${isEdit ? '更新' : '创建'}成功`);
+                this.elements.userModal.hide();
                 await this._loadUsers();
-            } else {
-                throw new Error(response.message || `${isEdit ? '更新' : '创建'}失败`);
             }
         } catch (error) {
-            console.error(`${isEdit ? '更新' : '创建'}用户失败:`, error);
-            this._showError(`${isEdit ? '更新' : '创建'}失败：` + error.message);
-        } finally {
-            this._disableForm(false);
+            console.error('保存用户失败:', error);
+            NotifyUtil.error(`${this.state.currentUser ? '更新' : '创建'}失败，请重试`);
         }
+    }
+    /**
+     * 显示创建用户模态框
+     */
+    _showCreateModal() {
+        this.state.currentUser = null;
+        this._resetForm();
+        $('#userModalTitle').text('新建用户');
+
+        // 重置启用状态为不勾选
+        $('#status').prop('checked', false);
+
+        // 启用密码输入
+        $('#password').prop('disabled', false).prop('required', true);
+
+        this.elements.userModal.show();
     }
 
     /**
-     * 处理切换用户状态
-     * @private
+     * 处理编辑用户
      */
-    async _handleToggleStatus(userId, currentStatus) {
-        const newStatus = currentStatus === 1 ? 0 : 1;
-        const actionText = newStatus === 1 ? '启用' : '禁用';
-
-        if(!confirm(`确定要${actionText}此用户吗？`)) {
-            return;
-        }
-
+    async _handleEditUser(userId) {
         try {
             const response = await $.ajax({
-                url: `/api/users/${userId}/status`,
-                method: 'PUT',
-                contentType: 'application/json',
-                data: JSON.stringify({ status: newStatus })
+                url: `/api/users/${userId}/info`,
+                method: 'GET'
             });
 
-            if(response.code === 200) {
-                this._showSuccess(`${actionText}成功`);
-                await this._loadUsers();
-            } else {
-                throw new Error(response.message || `${actionText}失败`);
+            if (response.code === 200) {
+                this.state.currentUser = response.data;
+                this._fillForm(response.data);
+                $('#userModalTitle').text('编辑用户');
+
+                // 根据当前状态设置启用复选框
+                $('#status').prop('checked', response.data.status === 1);
+
+                // 编辑时禁用密码输入
+                $('#password').prop('disabled', true).prop('required', false);
+
+                this.elements.userModal.show();
             }
         } catch (error) {
-            console.error(`${actionText}用户失败:`, error);
-            this._showError(`${actionText}失败：` + error.message);
+            console.error('加载用户信息失败:', error);
+            NotifyUtil.error('加载用户信息失败');
         }
+    }
+
+
+    /**
+     * 填充表单数据
+     */
+    _fillForm(user) {
+        $('#username').val(user.username);
+        $('#realName').val(user.realName);
+        $('#email').val(user.email);
+        $('#phone').val(user.phone || '');
+        $('#role').val(user.roleId || '');
+        $('#department').val(user.departmentId || '');
+
+        $('#status').prop('checked', user.status === 1);
+    }
+
+    /**
+     * 获取表单数据
+     */
+    _getFormData() {
+        const formData = {
+            username: $('#username').val().trim(),
+            realName: $('#realName').val().trim(),
+            phone: $('#phone').val().trim() || null,
+            email: $('#email').val().trim(),
+            status: $('#status').prop('checked') ? 1 : 0
+        };
+
+        // 只有当用户选择了角色时才添加roleId
+        const roleId = $('#role').val();
+        if (roleId) {
+            formData.roleId = roleId;
+        }
+
+        // 只有当用户选择了部门时才添加departmentId
+        const departmentId = $('#department').val();
+        if (departmentId) {
+            formData.departmentId = departmentId;
+        }
+
+        // 创建用户时的密码处理
+        if (!this.state.currentUser && $('#password').val()) {
+            formData.password = $('#password').val();
+        }
+
+        return formData;
+    }
+
+    /**
+     * 表单验证
+     */
+    _validateForm(formData) {
+        // 用户名验证
+        if (!formData.username || formData.username.length < 3) {
+            NotifyUtil.warning('用户名至少需要3个字符');
+            return false;
+        }
+
+        // 真实姓名验证
+        if (!formData.realName) {
+            NotifyUtil.warning('请输入真实姓名');
+            return false;
+        }
+
+        // 邮箱格式验证
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (formData.email && !emailRegex.test(formData.email)) {
+            NotifyUtil.warning('请输入有效的邮箱地址');
+            return false;
+        }
+
+        // 新建用户时的密码验证
+        if (!this.state.currentUser) {
+            if (!formData.password || formData.password.length < 6) {
+                NotifyUtil.warning('密码至少需要6个字符');
+                return false;
+            }
+        }
+
+        if (formData.phone) {
+            const phoneRegex = /^1[3-9]\d{9}$/;
+            if (!phoneRegex.test(formData.phone)) {
+                NotifyUtil.warning('请输入有效的手机号');
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
      * 处理重置密码
-     * @private
      */
     async _handleResetPassword(userId) {
-        if(!confirm('确定要重置该用户的密码吗？')) {
+        if (!confirm('确定要重置该用户的密码吗？')) {
             return;
         }
 
@@ -485,175 +536,149 @@ class UserManagement {
                 method: 'POST'
             });
 
-            if(response.code === 200) {
-                this._showSuccess('密码重置成功');
-            } else {
-                throw new Error(response.message || '重置密码失败');
+            if (response.code === 200) {
+                NotifyUtil.success('密码重置成功');
             }
         } catch (error) {
             console.error('重置密码失败:', error);
-            this._showError('重置密码失败：' + error.message);
+            NotifyUtil.error('密码重置失败，请重试');
         }
     }
 
     /**
-     * 处理部门变更
-     * @private
+     * 处理状态切换
      */
-    _handleDepartmentChange() {
-        this._validateField('department');
+    async _handleToggleStatus(userId, currentStatus) {
+        const newStatus = currentStatus === 1 ? 0 : 1;
+        const actionText = newStatus === 1 ? '启用' : '禁用';
+
+        if (!confirm(`确定要${actionText}该用户吗？`)) {
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: `/api/users/${userId}/status`,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    status: newStatus
+                })
+            });
+
+            if (response.code === 200) {
+                NotifyUtil.success(`${actionText}成功`);
+                await this._loadUsers();
+            }
+        } catch (error) {
+            console.error(`${actionText}用户失败:`, error);
+            NotifyUtil.error(`${actionText}失败，请重试`);
+        }
+    }
+
+
+    /**
+     * 加载角色列表
+     */
+    async _loadRoles() {
+        try {
+            const response = await $.ajax({
+                url: '/api/roles/list',
+                method: 'GET'
+            });
+
+            if (response.code === 200) {
+                const options = response.data.map(role =>
+                    `<option value="${role.roleId}">${role.roleName}</option>`
+                ).join('');
+
+                // 不设置默认值,只提供选择项
+                const defaultOption = '<option value="">请选择角色</option>';
+                $('#roleFilter, #role').html(defaultOption + options);
+            }
+        } catch (error) {
+            console.error('加载角色列表失败:', error);
+            NotifyUtil.error('加载角色列表失败');
+        }
     }
 
     /**
-     * 验证表单
-     * @private
+     * 加载部门列表
      */
-    _validateForm() {
-        let isValid = true;
-        const formData = this._getFormData();
+    async _loadDepartments() {
+        try {
+            const response = await $.ajax({
+                url: '/api/departments/list',
+                method: 'GET'
+            });
 
-        // 遍历所有验证规则
-        Object.keys(this.validationRules).forEach(field => {
-            if (!this._validateField(field, formData[field])) {
-                isValid = false;
+            if (response.code === 200) {
+                const options = response.data.map(dept =>
+                    `<option value="${dept.departmentId}">${dept.departmentName}</option>`
+                ).join('');
+
+                // 不设置默认值,只提供选择项
+                const defaultOption = '<option value="">请选择部门</option>';
+                $('#departmentFilter, #department').html(defaultOption + options);
             }
+        } catch (error) {
+            console.error('加载部门列表失败:', error);
+            NotifyUtil.error('加载部门列表失败');
+        }
+    }
+
+    _bindHoverEvents() {
+        let hoverTimer;
+        const showDelay = 300; // 显示延迟，防止鼠标快速划过时频繁显示
+
+        this.elements.userList.on('mouseenter', 'tr', (e) => {
+            const $row = $(e.currentTarget);
+            const user = this.state.users[parseInt($row.data('index'))];
+
+            clearTimeout(hoverTimer);
+            hoverTimer = setTimeout(() => {
+                if (user) {
+                    this._showUserInfoCard(user, $row);
+                }
+            }, showDelay);
         });
 
-        return isValid;
+        this.elements.userList.on('mouseleave', 'tr', () => {
+            clearTimeout(hoverTimer);
+            this._hideUserInfoCard();
+        });
+
+        // 防止鼠标移入卡片时卡片消失
+        this.$userInfoCard.on('mouseenter', () => {
+            clearTimeout(hoverTimer);
+        }).on('mouseleave', () => {
+            this._hideUserInfoCard();
+        });
     }
 
-    /**
-     * 验证单个字段
-     * @private
-     */
-    _validateField(field, value) {
-        const rules = this.validationRules[field];
-        const $field = $(`#${field}`);
-        let isValid = true;
-        let errorMessage = '';
 
-        // 获取字段值（如果未传入）
-        if (value === undefined) {
-            value = $field.val();
-        }
-
-        // 必填验证
-        if (rules.required && !value) {
-            isValid = false;
-            errorMessage = rules.message;
-        }
-
-        // 长度验证
-        if (isValid && rules.minLength && value.length < rules.minLength) {
-            isValid = false;
-            errorMessage = rules.message;
-        }
-
-        if (isValid && rules.maxLength && value.length > rules.maxLength) {
-            isValid = false;
-            errorMessage = rules.message;
-        }
-
-        // 正则验证
-        if (isValid && rules.pattern && !rules.pattern.test(value)) {
-            isValid = false;
-            errorMessage = rules.message;
-        }
-
-        // 更新字段状态
-        this._updateFieldStatus($field, isValid, errorMessage);
-        return isValid;
-    }
-
-    /**
-     * 更新字段验证状态
-     * @private
-     */
-    _updateFieldStatus($field, isValid, errorMessage = '') {
-        const $formGroup = $field.closest('.mb-3');
-        $field.toggleClass('is-invalid', !isValid);
-
-        let $feedback = $formGroup.find('.invalid-feedback');
-        if (!$feedback.length) {
-            $feedback = $('<div class="invalid-feedback"></div>').appendTo($formGroup);
-        }
-        $feedback.text(errorMessage);
-    }
-
-    /**
-     * 获取表单数据
-     * @private
-     */
-    _getFormData() {
-        return {
-            username: $('#username').val().trim(),
-            password: $('#password').val(),
-            realName: $('#realName').val().trim(),
-            email: $('#email').val().trim(),
-            roleId: $('#role').val(),
-            departmentId: $('#department').val(),
-            status: $('#status').prop('checked') ? 1 : 0
-        };
-    }
-
-    /**
-     * 填充表单数据
-     * @private
-     */
-    _fillForm(user) {
-        $('#username').val(user.username);
-        $('#password').val('').prop('disabled', true);  // 编辑时禁用密码字段
-        $('#realName').val(user.realName);
-        $('#email').val(user.email);
-        $('#role').val(user.roleId);
-        $('#department').val(user.departmentId);
-        $('#status').prop('checked', user.status === 1);
-    }
-
-    /**
-     * 重置表单
-     * @private
-     */
-    _resetForm() {
-        this.$userForm[0].reset();
-        $('#password').prop('disabled', false);  // 新建时启用密码字段
-        $('.is-invalid').removeClass('is-invalid');
-        $('.invalid-feedback').remove();
-    }
 
     /**
      * 更新分页
-     * @private
      */
     _updatePagination() {
         const { current, pageSize, total } = this.state.pagination;
         const totalPages = Math.ceil(total / pageSize);
 
-        let html = '';
-
-        // 上一页
-        html += `
-            <li class="page-item ${current === 1 ? 'disabled' : ''}">
+        let html = `
+            <li class="page-item ${current <= 1 ? 'disabled' : ''}">
                 <a class="page-link" href="#" data-page="${current - 1}">上一页</a>
             </li>
         `;
 
-        // 页码
         for (let i = 1; i <= totalPages; i++) {
-            if (
-                i === 1 ||
-                i === totalPages ||
-                (i >= current - 2 && i <= current + 2)
-            ) {
+            if (i === 1 || i === totalPages || (i >= current - 2 && i <= current + 2)) {
                 html += `
                     <li class="page-item ${i === current ? 'active' : ''}">
                         <a class="page-link" href="#" data-page="${i}">${i}</a>
                     </li>
                 `;
-            } else if (
-                i === current - 3 ||
-                i === current + 3
-            ) {
+            } else if (i === current - 3 || i === current + 3) {
                 html += `
                     <li class="page-item disabled">
                         <span class="page-link">...</span>
@@ -662,147 +687,81 @@ class UserManagement {
             }
         }
 
-        // 下一页
         html += `
-            <li class="page-item ${current === totalPages ? 'disabled' : ''}">
+            <li class="page-item ${current >= totalPages ? 'disabled' : ''}">
                 <a class="page-link" href="#" data-page="${current + 1}">下一页</a>
             </li>
         `;
 
-        this.$pagination.html(html);
+        this.elements.pagination.html(html);
+
+        // 绑定分页点击事件
+        this.elements.pagination.find('.page-link').on('click', (e) => {
+            e.preventDefault();
+            const page = $(e.currentTarget).data('page');
+            if (page && page !== current) {
+                this.state.pagination.current = page;
+                this._loadUsers();
+            }
+        });
     }
 
     /**
-     * 获取角色名称
-     * @private
-     */
-    _getRoleName(roleId) {
-        const role = this.state.roles.find(r => r.id === roleId);
-        return role ? role.name : '-';
-    }
-
-    /**
-     * 获取部门名称
-     * @private
-     */
-    _getDepartmentName(departmentId) {
-        const dept = this.state.departments.find(d => d.id === departmentId);
-        return dept ? dept.name : '-';
-    }
-
-    /**
-     * 格式化日期
-     * @private
-     */
-    _formatDate(date) {
-        return new Date(date).toLocaleString();
-    }
-
-    /**
-     * 禁用/启用表单
-     * @private
-     */
-    _disableForm(disabled) {
-        this.$userForm.find('input,select,textarea,button').prop('disabled', disabled);
-        if (disabled) {
-            $('#saveUserBtn').html(
-                '<span class="spinner-border spinner-border-sm me-1"></span>保存中...'
-            );
-        } else {
-            $('#saveUserBtn').text('保存');
-        }
-    }
-
-    /**
-     * 显示加载状态
-     * @private
+     * Loading相关方法
      */
     _showLoading() {
-        if (!this.loadingEl) {
-            this.loadingEl = $('<div class="loading-overlay">')
-                .append('<div class="spinner-border text-primary">')
-                .appendTo('body');
+        if (!this.$loading) {
+            this.$loading = $(`
+                <div class="loading-overlay">
+                    <div class="spinner-border text-primary"></div>
+                    <div class="loading-text">加载中...</div>
+                </div>
+            `).appendTo('body');
         }
-        this.loadingEl.show();
+        this.$loading.show();
     }
 
-    /**
-     * 隐藏加载状态
-     * @private
-     */
     _hideLoading() {
-        if (this.loadingEl) {
-            this.loadingEl.hide();
+        if (this.$loading) {
+            this.$loading.hide();
         }
     }
 
     /**
-     * 显示错误消息
-     * @private
+     * 工具方法
      */
-    _showError(message) {
-        const alertHtml = `
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        this.$container.prepend(alertHtml);
-
-        // 3秒后自动关闭
-        setTimeout(() => {
-            $('.alert').alert('close');
-        }, 3000);
+    _formatDate(dateString) {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 
-    /**
-     * 显示成功消息
-     * @private
-     */
-    _showSuccess(message) {
-        const alertHtml = `
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        this.$container.prepend(alertHtml);
-
-        // 3秒后自动关闭
-        setTimeout(() => {
-            $('.alert').alert('close');
-        }, 3000);
+    _escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 
-    /**
-     * 组件销毁
-     * @public
-     */
+    _resetForm() {
+        $('#userForm')[0].reset();
+        $('.is-invalid').removeClass('is-invalid');
+        $('#status').prop('checked', false);
+    }
+
     destroy() {
-        // 解绑所有事件
-        this.$container.find('button').off('click');
-        this.$container.find('input').off('input change');
-        this.$userList.off('click');
-        this.$searchForm.off('submit');
-        this.$pagination.off('click');
-
-        // 销毁模态框
-        if (this.userModal) {
-            this.userModal.dispose();
+        if (this.$userInfoCard) {
+            this.$userInfoCard.remove();
         }
-
-        // 清理DOM引用
-        if (this.loadingEl) {
-            this.loadingEl.remove();
-            this.loadingEl = null;
-        }
-
-        // 清理状态
-        this.state = null;
     }
 }
 
-// 页面加载完成后初始化
+// 初始化实例
 $(document).ready(() => {
     window.userManagement = new UserManagement();
 });

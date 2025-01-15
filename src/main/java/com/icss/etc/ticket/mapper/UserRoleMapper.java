@@ -61,4 +61,19 @@ public interface UserRoleMapper {
     int updateBatchSelective(@Param("list") List<UserRole> list);
 
     int batchInsert(@Param("list") List<UserRole> list);
+
+    /**
+     * 将用户变更为普通用户
+     * @param userId 用户ID
+     * @return update count
+     */
+    int transferUserToNormal(Long userId);
+
+    /**
+     * 根据用户ID和角色编码查询是否有角色
+     * @param userId 用户ID
+     * @param baseRoleCode 角色编码
+     * @return 是否有角色
+     */
+    boolean selectByUserId(@Param("userId") Long userId, @Param("baseRoleCode") String baseRoleCode);
 }

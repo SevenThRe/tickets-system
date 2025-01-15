@@ -143,27 +143,9 @@ public class TicketController {
     @PostMapping("/create")
     public R<Long> createTicket(
             @RequestParam("attachments") MultipartFile file,
-            @Valid CreateTicketDTO createDTO) {
+            CreateTicketDTO createDTO) {
         try {
-            // 写完才发现写到了controller里 controller最好不要放业务逻辑，我懒得改了
             Long ticketId = ticketService.createTicket(createDTO);
-            //如果工单创建成功 查询工单是否有附件
-//            String filePath = "";
-//            if (!file.isEmpty() || file.getSize() > 0){
-//                if (FILE_PATH == null) {
-//                    throw new BusinessException(CodeEnum.INTERNAL_ERROR, "文件上传路径未配置");
-//                }
-//                File f = new File(FILE_PATH);
-//                if (!f.exists() && f.isDirectory()) {
-//                    f.mkdirs();
-//                }
-//                String fileName = file.getOriginalFilename();
-//                String suffix = fileName.substring(fileName.lastIndexOf("."));
-//                String newFileName = String.format("%s%s", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")), suffix);
-//                filePath = FILE_PATH + newFileName;
-//                file.transferTo(new File(filePath));
-//            }
-
             String filePath =
                     fileService.uploadFile(file,ticketId).substring("/api/files/".length());
 
@@ -192,7 +174,7 @@ public class TicketController {
      * 更新工单状态
      */
     @PutMapping("/status")
-    public R<Void> updateTicketStatus(@RequestBody @Valid UpdateTicketStatusDTO updateDTO) {
+    public R<Void> updateTicketStatus(UpdateTicketStatusDTO updateDTO) {
         try {
             ticketService.updateTicketStatus(updateDTO);
             return R.OK();
@@ -312,7 +294,7 @@ public class TicketController {
             AddTicketRecordDTO recordDTO = new AddTicketRecordDTO();
             recordDTO.setTicketId(ticketId);
             recordDTO.setOperatorId(SecurityUtils.getCurrentUserId());
-            recordDTO.setOperationType(OperationType.HANDLE);
+            recordDTO.setOperationType(OperationType.Note);
             recordDTO.setOperationContent(note);
 
             ticketService.addTicketRecord(recordDTO);
@@ -330,10 +312,10 @@ public class TicketController {
      * 关闭工单
      */
     @PutMapping("/{ticketId}/close")
-    public R<Void> closeTicket( CloseTicketRequest request) {
+    public R<Void> closeTicket(@PathVariable Long ticketId, @RequestBody @Valid CloseTicketRequest request) {
         try {
             UpdateTicketStatusDTO updateDTO = new UpdateTicketStatusDTO();
-            updateDTO.setTicketId(request.getTickedId());
+            updateDTO.setTicketId(ticketId);
             updateDTO.setStatus(TicketStatus.CLOSED);
             updateDTO.setOperatorId(request.getOperatorId());
             updateDTO.setContent(request.getContent());

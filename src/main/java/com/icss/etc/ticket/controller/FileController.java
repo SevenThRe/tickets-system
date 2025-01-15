@@ -60,9 +60,19 @@ public class FileController {
             if (attachment == null) {
                 return R.OK(false);
             }
-
+            String uploadPath = propertiesUtil.getProperty("upload.path");
+            if (uploadPath == null) {
+                throw new BusinessException(CodeEnum.INTERNAL_ERROR,"上传路径未配置");
+            }
+            if (!uploadPath.endsWith("\\")) {
+                uploadPath += "\\";
+            }
+            String filePath = attachment.getFilePath();
             // 验证物理文件
-            File file = new File(propertiesUtil.getProperty("upload.path") + fileName);
+            File file = new File(uploadPath + filePath);
+            if (!file.exists()) {
+                throw new BusinessException(CodeEnum.NOT_FOUND,"文件不存在");
+            }
             return R.OK(file.exists());
         } catch (Exception e) {
             log.error("检查文件是否存在失败: {}", fileName, e);

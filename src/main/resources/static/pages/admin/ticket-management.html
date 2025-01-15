@@ -227,6 +227,12 @@
                 <div class="modal-body">
                     <form id="ticketForm">
                         <div class="mb-3">
+                            <label class="form-label">工单类型</label>
+                            <select class="form-select" id="typeId" name="typeId" required>
+                                <option value="">请选择工单类型</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label">标题</label>
                             <input type="text" class="form-control" id="title" required>
                         </div>
@@ -244,9 +250,9 @@
                             <div class="col-md-6">
                                 <label class="form-label">优先级</label>
                                 <select class="form-select" id="priority" required>
-                                    <option value="LOW">低</option>
-                                    <option value="MEDIUM">中</option>
-                                    <option value="HIGH">高</option>
+                                    <option value="NORMAL">低</option>
+                                    <option value="URGENT">中</option>
+                                    <option value="EXTREMELY_URGENT">高</option>
                                 </select>
                             </div>
                         </div>
