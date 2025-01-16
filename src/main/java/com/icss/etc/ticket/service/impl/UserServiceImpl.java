@@ -34,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 @Service
@@ -344,6 +345,11 @@ public class UserServiceImpl implements UserService{
     @Override
     public List<UserVO> searchUser(String keyword) {
         return userMapper.searchUser(keyword);
+    }
+
+    @Override
+    public Integer addMembers(Map<String, Object> map) {
+        return userMapper.addMembers(map);
     }
 
     /**

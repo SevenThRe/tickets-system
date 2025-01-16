@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>工单系统 - 部门管理</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="/css/navbar.css" rel="stylesheet">
@@ -38,6 +39,21 @@
                     </div>
                 </div>
             </div>
+            <div class="modal fade" id="iconModal" tabindex="-1" >
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content"  style="z-index: 1050">
+                        <div class="modal-header">
+                            <h5 class="modal-title">选择图标</h5>
+                            <button class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="icon-grid">
+                                <!-- 图标将通过JS动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- 右侧部门详情 -->
             <div class="col-md-8">
@@ -60,10 +76,18 @@
                                 <div class="col-md-6">
                                     <label class="form-label">部门ID</label>
                                     <input type="text" class="form-control"
-                                           id="departmentId" name="departmentId" required readonly>
+                                           disabled id="departmentId" name="departmentId" readonly>
                                 </div>
                             </div>
-
+                            <div class="mb-3" id="iconSelectGroup">
+                                <label class="form-label">部门图标</label>
+                                <div class="icon-selector">
+                                    <button class="btn btn-outline-secondary" id="iconSelectBtn" type="button">
+                                        <i class="fas fa-folder" id="selectedIcon"></i>
+                                        <span class="ms-2">选择图标</span>
+                                    </button>
+                                </div>
+                            </div>
                             <div class="mb-3">
                                 <label class="form-label">部门层级</label>
                                 <input type="number" class="form-control"
@@ -106,7 +130,6 @@
                                     <label class="form-check-label" for="status">启用部门</label>
                                 </div>
                             </div>
-
                             <div class="form-actions">
                                 <button type="submit" class="btn btn-primary" id="saveDepartmentBtn">保存</button>
                                 <button type="button" class="btn btn-danger ms-2" id="deleteDepartmentBtn">删除</button>
@@ -120,23 +143,21 @@
         </div>
     </main>
 
-    <!-- 新增/编辑部门模态框 -->
+    <!-- 新增部门模态框 -->
     <div class="modal fade" id="departmentModal" tabindex="-1">
         <div class="modal-dialog">
-            <div class="modal-content">
+            <div class="modal-content" style="z-index: 1000">
                 <div class="modal-header">
                     <h5 class="modal-title">新增部门</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="departmentModalForm">
-                        <!-- 表单内容与部门详情表单相同 -->
-                    </form>
+                    <div id="modalFormContainer"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="saveDepartmentModalBtn">保存</button>
-                </div>
+<!--                <div class="modal-footer">-->
+<!--                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>-->
+<!--                    <button type="button" class="btn btn-primary" id="saveDepartmentModalBtn">保存</button>-->
+<!--                </div>-->
             </div>
         </div>
     </div>

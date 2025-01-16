@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public interface UserService {
     //  注册
@@ -81,7 +82,7 @@ public interface UserService {
     /**
      * 更新用户头像
      * @param userId 用户ID
-     * @param fileName  文件名
+     * @param file  文件
      */
     void saveAvatar(MultipartFile file, Long userId, String username) throws IOException;
 
@@ -122,4 +123,11 @@ public interface UserService {
     List<UserVO> getDeptMembersInDept( Long departmentId);
 
     List<UserVO> searchUser(String keyword);
+
+    /**
+     * 添加部门成员
+     * @param map 部门成员信息
+     * @return 返回结果
+     */
+    Integer addMembers(Map<String, Object> map);
 }

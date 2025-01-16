@@ -7,14 +7,17 @@ import com.icss.etc.ticket.entity.dto.DepartmentsQueryDTO;
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
 import com.icss.etc.ticket.service.DepartmentService;
 import com.icss.etc.ticket.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
 @RequestMapping("/departments")
+@Slf4j
 public class DepartmentController {
     @Autowired
     private DepartmentService departmentService;
@@ -158,6 +161,11 @@ public class DepartmentController {
     @DeleteMapping("{departmentId}/members/{userId}")
     public R deleteMember(@PathVariable("departmentId") Long departmentId, @PathVariable("userId") Long userId) {
         return R.OK(userService.deleteUserFromDepartment(departmentId, userId));
+    }
+
+    @PostMapping("/addMembers")
+    public R addMembers(Map<String, Object> map) {
+        return R.OK(userService.addMembers(map));
     }
 
 

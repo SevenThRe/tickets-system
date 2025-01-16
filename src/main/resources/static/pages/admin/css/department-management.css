@@ -44,6 +44,85 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+/* 添加到 department-management.css */
+.search-results-header {
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.search-results-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.search-result-item {
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.search-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 10px;
+    padding: 15px;
+}
+
+.icon-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.icon-item:hover {
+    background-color: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.icon-item i {
+    font-size: 1.5rem;
+}
+
+.icon-selector .btn i {
+    font-size: 1.2rem;
+}
+
+.user-name {
+    font-weight: 500;
+}
+
+.user-role {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.user-email {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.form-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.form-check-input {
+    margin-top: 4px;
+}
 
 .member-avatar {
     width: 40px;

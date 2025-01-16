@@ -10,6 +10,7 @@ import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
 
 import java.util.List;
+import java.util.Map;
 
 import com.icss.etc.ticket.entity.vo.UserVO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
@@ -155,5 +156,12 @@ public interface UserMapper {
      */
     List<UserVO> getDeptMembersInDept(Long departmentId);
 
+    /**
+     * 通过关键词 检索用户
+     * @param keyword 关键词
+     * @return 用户列表
+     */
     List<UserVO> searchUser(@Param("keyword") String keyword);
+
+    Integer addMembers(Map<String, Object> map);
 }
