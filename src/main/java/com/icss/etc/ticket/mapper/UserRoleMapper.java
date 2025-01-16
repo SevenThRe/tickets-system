@@ -1,10 +1,12 @@
 package com.icss.etc.ticket.mapper;
 
+import com.icss.etc.ticket.entity.UserPermission;
 import com.icss.etc.ticket.entity.UserRole;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.icss.etc.ticket.entity.dto.ticket.CheckOperationDTO;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -76,4 +78,11 @@ public interface UserRoleMapper {
      * @return 是否有角色
      */
     boolean selectByUserId(@Param("userId") Long userId, @Param("baseRoleCode") String baseRoleCode);
+
+    /**
+     * 检查操作权限
+     * @param checkOperationDTO 检查操作权限DTO
+     * @return 是否有权限
+     */
+     UserPermission checkOperationPermission(CheckOperationDTO checkOperationDTO);
 }

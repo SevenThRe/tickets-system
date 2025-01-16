@@ -53,6 +53,9 @@
     justify-content: center;
     border-radius: 50%;
     background-color: #f0f2f5;
+    background-size: cover; /* 确保图像覆盖整个容器 */
+    background-position: center; /* 确保图像居中 */
+    background-repeat: no-repeat;
 }
 
 .member-info {

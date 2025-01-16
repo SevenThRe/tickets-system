@@ -294,7 +294,7 @@ public class TicketController {
             AddTicketRecordDTO recordDTO = new AddTicketRecordDTO();
             recordDTO.setTicketId(ticketId);
             recordDTO.setOperatorId(SecurityUtils.getCurrentUserId());
-            recordDTO.setOperationType(OperationType.Note);
+            recordDTO.setOperationType(OperationType.COMMENT);
             recordDTO.setOperationContent(note);
 
             ticketService.addTicketRecord(recordDTO);
@@ -312,7 +312,8 @@ public class TicketController {
      * 关闭工单
      */
     @PutMapping("/{ticketId}/close")
-    public R<Void> closeTicket(@PathVariable Long ticketId, @RequestBody @Valid CloseTicketRequest request) {
+    public R<Void> closeTicket(@PathVariable Long ticketId,
+                               @RequestBody CloseTicketRequest request) {
         try {
             UpdateTicketStatusDTO updateDTO = new UpdateTicketStatusDTO();
             updateDTO.setTicketId(ticketId);
@@ -431,6 +432,23 @@ public class TicketController {
             return R.OK(stats);
         } catch (Exception e) {
             log.error("获取待办统计失败:", e);
+            return R.FAIL();
+        }
+    }
+
+    /**
+     * 查询权限列表
+     * @param checkOperationDTO 检查DTO
+     * @return  R<List>
+     */
+    @PostMapping("/checkOperation/{ticketId}")
+    public R checkOperationPermission(
+            @PathVariable Long ticketId,
+            @RequestBody @Valid CheckOperationDTO checkOperationDTO) {
+        try {
+            return R.OK(ticketService.checkOperationPermission(checkOperationDTO));
+        } catch (Exception e) {
+            log.error("检查操作权限失败:", e);
             return R.FAIL();
         }
     }

@@ -119,11 +119,15 @@ public class DepartmentController {
         return R.OK(userService.queryByDepartmentId(departmentsQueryDTO));
     }
 
-    @GetMapping("/members")
-    public R getDeptMembersInDept(DepartmentsQueryDTO departmentsQueryDTO){
-        return R.OK(userService.queryByDepartmentId(departmentsQueryDTO));
+    /**
+     *department-management.html
+     * 部门成员列表
+     * @return R 部门成员列表
+     */
+    @GetMapping("/members/{departmentId}")
+    public R getDeptMembersInDept(@PathVariable("departmentId") Long departmentId){
+        return R.OK(userService.getDeptMembersInDept(departmentId));
     }
-
 
     @PostMapping("/addUser")
     public R addUser(DeptMemberDTO deptMemberDTO) {
@@ -161,7 +165,7 @@ public class DepartmentController {
      * @param userId
      * @return
      */
-    @GetMapping("/members/{userId}")
+    @GetMapping("/member/{userId}")
     public R getDeptMemberDetial(@PathVariable Long userId){
         return R.OK(userService.getDeptMemberDetial(userId));
     }

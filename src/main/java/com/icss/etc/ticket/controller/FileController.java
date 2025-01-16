@@ -7,7 +7,6 @@ import com.icss.etc.ticket.exceptions.BusinessException;
 import com.icss.etc.ticket.mapper.AttachmentMapper;
 import com.icss.etc.ticket.service.FileService;
 import com.icss.etc.ticket.util.PropertiesUtil;
-import com.icss.etc.ticket.util.SecurityUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +20,6 @@ import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -45,20 +43,21 @@ public class FileController {
     @Autowired
     private PropertiesUtil propertiesUtil;
 
-    @GetMapping("/check/{ticketId}/{fileName}")
-    public R<Boolean> checkFile(@PathVariable Long ticketId, @PathVariable String fileName) {
+    @GetMapping("/check/{ticketId}/{filePath}")
+    public R<Boolean> checkFile(@PathVariable Long ticketId, @PathVariable String filePath) {
         try {
             // 先从数据库验证附件记录
             Attachment attachment = attachmentMapper.selectByAll(
                     Attachment.builder()
                             .ticketId(ticketId)
-                            .fileName(fileName)
+                            .filePath(filePath)
                             .isDeleted(0)
                             .build()
             ).stream().findFirst().orElse(null);
 
             if (attachment == null) {
-                return R.OK(false);
+                log.error("附件不存在: {}", filePath);
+                return R.FAIL(CodeEnum.NOT_FOUND);
             }
             String uploadPath = propertiesUtil.getProperty("upload.path");
             if (uploadPath == null) {
@@ -67,46 +66,57 @@ public class FileController {
             if (!uploadPath.endsWith("\\")) {
                 uploadPath += "\\";
             }
-            String filePath = attachment.getFilePath();
+
             // 验证物理文件
             File file = new File(uploadPath + filePath);
             if (!file.exists()) {
+                log.error("文件不存在: {}", file.getAbsoluteFile());
                 throw new BusinessException(CodeEnum.NOT_FOUND,"文件不存在");
             }
             return R.OK(file.exists());
         } catch (Exception e) {
-            log.error("检查文件是否存在失败: {}", fileName, e);
+            log.error("检查文件是否存在失败: {}", filePath, e);
             return R.FAIL(CodeEnum.INTERNAL_ERROR);
         }
     }
 
-    @GetMapping("/download/{ticketId}/{fileName}")
+    @GetMapping("/download/{ticketId}/{filePath}")
     public R downloadFile(@PathVariable Long ticketId,
-                             @PathVariable String fileName,
+                             @PathVariable String filePath,
                              HttpServletResponse response) {
         try {
             // 验证附件记录
             Attachment attachment = attachmentMapper.selectByAll(
                     Attachment.builder()
                             .ticketId(ticketId)
-                            .fileName(fileName)
+                            .filePath(filePath)
                             .isDeleted(0)
                             .build()
             ).stream().findFirst().orElse(null);
 
             if (attachment == null) {
+                log.error("附件不存在: {}", filePath);
                 return R.FAIL(CodeEnum.NOT_FOUND);
             }
 
-            File file = new File(propertiesUtil.getProperty("upload.path") + fileName);
+            String property = propertiesUtil.getProperty("upload.path");
+            if (property == null) {
+                throw new BusinessException(CodeEnum.INTERNAL_ERROR,"上传路径未配置");
+            }
+            if (!property.endsWith("\\")) {
+                property += "\\";
+            }
+
+            File file = new File(property + filePath);
             if (!file.exists()) {
+                log.error("文件不存在: {}", file.getAbsoluteFile());
                 return R.FAIL(CodeEnum.NOT_FOUND);
             }
 
             // 设置响应头
             response.setContentType(Files.probeContentType(file.toPath()));
             response.setHeader("Content-Disposition", "attachment; filename=" +
-                    URLEncoder.encode(fileName, StandardCharsets.UTF_8));
+                    URLEncoder.encode(filePath, StandardCharsets.UTF_8));
 
             try (InputStream in = new FileInputStream(file);
                  OutputStream out = response.getOutputStream()) {
@@ -118,7 +128,7 @@ public class FileController {
                 out.flush();
             }
         } catch (Exception e) {
-            log.error("文件下载失败: {}", fileName, e);
+            log.error("文件下载失败: {}", filePath, e);
             R.FAIL(CodeEnum.INTERNAL_ERROR);
         }
         return R.OK();

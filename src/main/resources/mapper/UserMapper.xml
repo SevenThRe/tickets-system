@@ -539,4 +539,45 @@
     </set>
     where user_id = #{userId}
   </update>
+
+
+  <select id="selectDepartmentProcessors" resultMap="BaseResultMap">
+    SELECT u.user_id, u.username, u.`password`, u.real_name, u.department_id, u.email, u.phone, u.`status`, u.is_deleted, u.create_by, u.update_by, u.create_time, u.update_time
+    FROM t_user u
+           JOIN t_user_role ur ON u.user_id = ur.user_id
+    WHERE u.department_id = #{departmentId}
+      AND u.status = 1
+      AND ur.role_id IN (SELECT role_id FROM t_role WHERE base_role_code IN ('USER', 'DEPT', 'ADMIN'))
+  </select>
+
+  <select id="getDeptMembersInDept" resultType="com.icss.etc.ticket.entity.vo.UserVO">
+    SELECT u.user_id, u.username, u.real_name, u.email, u.phone, u.`status`, u.create_time,
+      r.role_name, r.role_id, r.base_role_code,
+        d.department_name, d.department_id
+    FROM t_user u
+           JOIN t_user_role ur ON u.user_id = ur.user_id
+       JOIN t_role r ON ur.role_id = r.role_id
+        JOIN t_department d ON u.department_id = d.department_id
+    WHERE u.department_id = #{departmentId}
+      AND u.status = 1
+  </select>
+
+  <select id="searchUser" resultType="com.icss.etc.ticket.entity.vo.UserVO" parameterType="java.lang.String">
+    SELECT u.user_id, u.username, u.real_name, u.email, u.phone, u.`status`, u.create_time,
+      r.role_name, r.role_id, r.base_role_code,
+        d.department_name, d.department_id
+    FROM t_user u
+           JOIN t_user_role ur ON u.user_id = ur.user_id
+       JOIN t_role r ON ur.role_id = r.role_id
+        JOIN t_department d ON u.department_id = d.department_id
+    WHERE u.status = 1 AND u.is_deleted = 0 and u.department_id = 0
+      <if test="keyword != null and keyword != ''">
+        AND (u.username LIKE CONCAT('%', #{keyword}, '%')
+        OR u.real_name LIKE CONCAT('%', #{keyword}, '%')
+        OR u.email LIKE CONCAT('%', #{keyword}, '%')
+        OR r.role_name LIKE CONCAT('%', #{keyword}, '%')
+        OR d.department_name LIKE CONCAT('%', #{keyword}, '%'))
+      </if>
+    ORDER BY u.create_time DESC
+  </select>
 </mapper>

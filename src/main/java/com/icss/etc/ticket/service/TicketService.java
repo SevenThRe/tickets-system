@@ -3,6 +3,7 @@ package com.icss.etc.ticket.service;
 import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.entity.TicketType;
+import com.icss.etc.ticket.entity.UserPermission;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
 import com.icss.etc.ticket.entity.vo.TodoStatsVO;
@@ -101,20 +102,6 @@ public interface TicketService {
      */
     TodoStatsVO getTodoStats(Long userId);
 
-    /**
-     * 分配工单处理人
-     * @param ticketId 工单ID
-     * @param processorId 处理人ID
-     */
-    void assignProcessor(Long ticketId, Long processorId);
-
-    /**
-     * 自动分配工单处理人
-     * @param ticketId 工单ID
-     * @param departmentId 部门ID
-     * @return 是否成功分配
-     */
-    boolean autoAssignProcessor(Long ticketId, Long departmentId);
 
 
     /**
@@ -135,4 +122,16 @@ public interface TicketService {
 
     boolean canEvaluate(@NotNull(message = "工单ID不能为空") Long ticketId, @NotNull(message = "评价人不能为空") Long evaluatorId);
 
+    /**
+     * 自动分配待处理工单
+     */
+    void autoAssignPendingTickets();
+
+    /**
+     * 检查操作权限
+     *
+     * @param checkOperationDTO 检查DTO
+     * @return true：有权限，false：无权限
+     */
+    UserPermission checkOperationPermission(CheckOperationDTO checkOperationDTO);
 }

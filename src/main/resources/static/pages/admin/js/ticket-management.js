@@ -14,6 +14,9 @@ class TicketManagement {
                 pageSize: 10,
                 total: 0
             },
+            checkPermission: {
+
+            },
             filters: {
                 keyword: '',
                 status: '',
@@ -21,11 +24,18 @@ class TicketManagement {
                 departmentId: '',
                 startTime: '',
                 endTime: ''
-            }
+            },
+            userInfo: JSON.parse(localStorage.getItem('userInfo') || '{}')
+
         };
 
         // DOM元素缓存
         this.elements = {
+            commentContent: $('#commentContent'),
+            evaluationScore: $('#evaluationScore'),
+            evaluationContent: $('#evaluationContent'),
+            commentBtn: $('#commentBtn'),
+            evaluateBtn: $('#evaluateBtn'),
             container: $('#main'),
             ticketList: $('#ticketList'),
             searchForm: $('#searchForm'),
@@ -57,7 +67,8 @@ class TicketManagement {
 
         // 初始化组件
         this.init();
-        this._initModals();
+        this._initModals()
+        this._initActionButtons();
     }
 
     /**
@@ -116,12 +127,58 @@ class TicketManagement {
             // 绑定转交相关事件
             this._bindTransferEvents();
 
+            // esc关闭文件预览
+            $(document).on('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    $('.file-preview-modal').hide();
+                    $('.file-preview-modal .file-preview-body').empty();
+                }
+            });
 
 
         } catch(error) {
             console.error('初始化失败:', error);
             NotifyUtil.error('加载失败，请刷新重试');
         }
+    }
+
+    /**
+     * 不知道为什么在bindEvents中绑定的事件无法触发，所以在这里重新绑定一次
+     * @private
+     */
+    _initActionButtons() {
+        // 先解绑之前的事件
+        $('#processBtn, #commentBtn, #transferBtn, #closeBtn, #evaluateBtn').off('click');
+        // 重新绑定事件
+        $('#processBtn').on('click', () => {
+            if (this.state.checkPermission.canProcess) {
+                this._handleProcess();
+            }
+        });
+
+        $('#commentBtn').on('click', () => {
+            if (this.state.checkPermission.canComment) {
+                this._handleComment();
+            }
+        });
+
+        $('#transferBtn').on('click', () => {
+            if (this.state.checkPermission.canTransfer) {
+                this._handleTransfer();
+            }
+        });
+
+        $('#closeBtn').on('click', () => {
+            if (this.state.checkPermission.canClose) {
+                this._handleClose();
+            }
+        });
+
+        $('#evaluateBtn').on('click', () => {
+            if (this.state.checkPermission.canEvaluate) {
+                this._handleEvaluate();
+            }
+        });
     }
 
     /**
@@ -133,7 +190,7 @@ class TicketManagement {
         $(document).ready(() => {
             const ticketModalEl = document.getElementById('ticketModal');
             const processModalEl = document.getElementById('processModal');
-
+            const transferModalEl = document.getElementById('transferModal');
             if (ticketModalEl) {
                 this.modals.ticketModal = new bootstrap.Modal(ticketModalEl, {
                     keyboard: false
@@ -142,6 +199,12 @@ class TicketManagement {
 
             if (processModalEl) {
                 this.modals.processModal = new bootstrap.Modal(processModalEl, {
+                    keyboard: false
+                });
+            }
+
+            if (transferModalEl) {
+                this.modals.transferModal = new bootstrap.Modal(transferModalEl, {
                     keyboard: false
                 });
             }
@@ -223,29 +286,6 @@ class TicketManagement {
             await this._loadProcessors(departmentId);
         });
 
-        // 工单操作按钮
-        $('#processBtn').on('click', () => {
-            if (this._canProcess()) {
-                this._handleProcess();
-            }
-        });
-
-        $('#resolveBtn').on('click', () => {
-            if (this._canResolve()) {
-                this._handleResolve();
-            }
-        });
-
-        $('#closeBtn').on('click', () => {
-            if (this._canClose()) {
-                this._handleClose();
-            }
-        });
-
-        // 工单详情操作按钮
-        $('#transferBtn').on('click', () => {if (this._canResolve()) {
-            this._handleTransfer();
-        }});
 
         // 关闭详情面板
         $('#closeDetailBtn').on('click', () => {
@@ -309,41 +349,108 @@ class TicketManagement {
         }
     }
 
+    _formatFileSize(bytes) {
+        if(bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+    }
+
     /**
-     * 显示转交模态框
+     * 处理评论
      */
-    async _handleTransfer() {
-        if (!this._canTransfer()) return;
+    async _handleComment() {
+        if (!this.state.checkPermission.canComment) {
+            NotifyUtil.warning('您没有评论该工单的权限');
+            return;
+        }
+
+        const content = $('#operationContent').val()?.trim();
+        if (!content) {
+            NotifyUtil.warning('请输入评论内容');
+            return;
+        }
 
         try {
-            // 加载部门列表
             const response = await $.ajax({
-                url: '/api/departments/list',
-                method: 'GET'
+                url: `/api/tickets/${this.state.currentTicket.ticketId}/note`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(content),  // 直接发送内容字符串
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
             });
 
             if (response.code === 200) {
-                const options = response.data.map(dept =>
-                    `<option value="${dept.departmentId}">${dept.departmentName}</option>`
-                ).join('');
-
-                $('#transferDepartment')
-                    .html('<option value="">请选择部门</option>' + options);
-
-                // 重置处理人选择和说明
-                $('#transferProcessor').html('<option value="">请先选择部门</option>').prop('disabled', true);
-                $('#transferNote').val('');
-
-                // 显示模态框
-                if (this.modals.transferModal) {
-                    this.modals.transferModal.show();
-                }
+                NotifyUtil.success('评论成功');
+                $('#operationContent').val(''); // 清空输入框
+                await this._loadTicketDetail(this.state.currentTicket.ticketId);
+                await this._loadTickets();
             }
         } catch (error) {
-            console.error('加载部门列表失败:', error);
-            NotifyUtil.error('加载部门列表失败');
+            console.error('评论失败:', error);
+            NotifyUtil.error('评论失败，请重试');
         }
     }
+
+
+    /**
+     * 处理评价
+     */
+    _handleEvaluate() {
+        const score = $('#evaluationScore').val();
+        const content = $('#evaluationContent').val()?.trim();
+
+        if (!score) {
+            NotifyUtil.warning('请选择评分');
+            return;
+        }
+        if (!content) {
+            NotifyUtil.warning('请输入评价内容');
+            return;
+        }
+
+        this._addTicketRecord({
+            ticketId: this.state.currentTicket.ticketId,
+            operatorId: this.userInfo.userId,
+            operationType: this.OPERATION_TYPE.EVALUATE,
+            operationContent: content,
+            evaluationScore: parseInt(score),
+            evaluationContent: content
+        });
+    }
+
+    // 添加工单记录的通用方法
+    async _addTicketRecord(record) {
+        try {
+            const response = await $.ajax({
+                url: '/api/tickets/records',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(record),
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.code === 200) {
+                NotifyUtil.success('操作成功');
+                // 清空输入
+                $('#operationContent').val('');
+                $('#evaluationScore').val('');
+                $('#evaluationContent').val('');
+                // 重新加载详情和列表
+                await this._loadTicketDetail(this.state.currentTicket.ticketId);
+                await this._loadTickets();
+            }
+        } catch (error) {
+            console.error('操作失败:', error);
+            NotifyUtil.error('操作失败，请重试');
+        }
+    }
+
 
     /**
      * 加载转交处理人列表
@@ -360,7 +467,7 @@ class TicketManagement {
                 method: 'GET'
             });
 
-            if (response.code === 200) {
+            if (response.code === 200 && response.data) {
                 const options = response.data.map(user =>
                     `<option value="${user.userId}">${user.realName}(${user.roleName})</option>`
                 ).join('');
@@ -389,7 +496,7 @@ class TicketManagement {
         }
 
         if (!processorId) {
-            NotifyUtil.warning('请选择处理人');
+            NotifyUtil.warning('请选择转交处理人');
             return;
         }
 
@@ -404,11 +511,14 @@ class TicketManagement {
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    departmentId,
-                    processorId,
-                    note,
+                    departmentId: departmentId,
+                    processorId: processorId,
+                    note: note,
                     updateBy: this.userInfo.userId
-                })
+                }),
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
             });
 
             if (response.code === 200) {
@@ -420,24 +530,11 @@ class TicketManagement {
                 await this._loadTickets();
             }
         } catch (error) {
-            console.error('转交工单失败:', error);
+            console.error('转交失败:', error);
             NotifyUtil.error('转交失败，请重试');
         }
     }
 
-    /**
-     * 检查是否可以转交
-     */
-    _canTransfer() {
-        if (!this.state.currentTicket) return false;
-        const status = this.state.currentTicket.status;
-        if (status === 'COMPLETED' || status === 'CLOSED' ||
-            status === '2' || status === '3') {
-            NotifyUtil.warning('已完成或关闭的工单不能转交');
-            return false;
-        }
-        return true;
-    }
 
     /**
      * 加载处理人列表
@@ -476,70 +573,160 @@ class TicketManagement {
     /**
      * 状态检查方法
      */
-    _canProcess() {
-        if (!this.state.currentTicket) return false;
-        return this.state.currentTicket.status === 'PENDING' ||
-            this.state.currentTicket.status === '0';
+    async _checkOperationPermission(ticketId) {
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/checkOperation/${ticketId}`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ticketId: ticketId,
+                    userId: this.state.userInfo.userId
+                }),
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if(response.code === 200) {
+                // 更新权限状态
+                this.state.checkPermission = response.data;
+                // 更新按钮状态
+                this._updateActionButtons();
+            }
+        } catch(error) {
+            console.error('检查操作权限失败:', error);
+            NotifyUtil.error('加载权限失败');
+        }
     }
 
-    _canResolve() {
-        if (!this.state.currentTicket) return false;
-        return this.state.currentTicket.status === 'PROCESSING' ||
-            this.state.currentTicket.status === '1';
+    /**
+     * 处理工单
+     */
+    async _handleProcess() {
+        if (!this.state.checkPermission.canProcess) {
+            NotifyUtil.warning('您没有处理该工单的权限');
+            return;
+        }
+        const content = $('#operationContent').val()?.trim();
+        if (!content) {
+            NotifyUtil.warning('请输入处理说明');
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: '/api/tickets/status',
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ticketId: this.state.currentTicket.ticketId,
+                    status: 'PROCESSING',
+                    operatorId: this.userInfo.userId,
+                    content: content
+                }),
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.code === 200) {
+                NotifyUtil.success('已开始处理');
+                $('#operationContent').val(''); // 清空输入框
+                await this._loadTicketDetail(this.state.currentTicket.ticketId);
+                await this._loadTickets();
+            }
+        } catch (error) {
+            console.error('处理失败:', error);
+            NotifyUtil.error('处理失败');
+        }
     }
 
-    _canClose() {
-        if (!this.state.currentTicket) return false;
-        const status = this.state.currentTicket.status;
-        return status !== 'CLOSED' && status !== 'COMPLETED' &&
-            status !== '2' && status !== '3';
-    }
+    /**
+     * 工单类型枚举
+     * @type {{CREATE: number, ASSIGN: number, HANDLE: number, COMPLETE: number, CLOSE: number, TRANSFER: number, COMMENT: number, EVALUATE: number}}
+     */
+    OPERATION_TYPE = {
+        CREATE: 0,
+        ASSIGN: 1,
+        HANDLE: 2,
+        COMPLETE: 3,
+        CLOSE: 4,
+        TRANSFER: 5,
+        COMMENT: 6,
+        EVALUATE: 7
+    };
 
+    /**
+     * 转交工单
+     */
+    async _handleTransfer() {
+        if (!this.state.checkPermission.canTransfer) {
+            NotifyUtil.warning('您没有转交该工单的权限');
+            return;
+        }
+
+        try {
+            // 加载部门列表
+            const response = await $.ajax({
+                url: '/api/departments/list',
+                method: 'GET'
+            });
+
+            if (response.code === 200) {
+                const options = response.data.map(dept =>
+                    `<option value="${dept.departmentId}">${dept.departmentName}</option>`
+                ).join('');
+
+                $('#transferDepartment')
+                    .html('<option value="">请选择部门</option>' + options);
+
+                // 重置处理人选择和说明
+                $('#transferProcessor').html('<option value="">请先选择部门</option>').prop('disabled', true);
+                $('#transferNote').val('');
+
+                // 显示模态框
+                if (this.modals.transferModal) {
+                    this.modals.transferModal.show();
+                }
+            }
+        } catch (error) {
+            console.error('加载部门列表失败:', error);
+            NotifyUtil.error('加载部门列表失败');
+        }
+    }
 
     /**
      * 更新操作按钮状态
      */
-    _updateActionButtons(status) {
-        const $processBtn = $('#processBtn');
-        const $resolveBtn = $('#resolveBtn');
-        const $transferBtn = $('#transferBtn');
-        const $closeBtn = $('#closeBtn');
+    _updateActionButtons() {
+        const { canProcess, canComment, canClose, canTransfer, canEvaluate } = this.state.checkPermission;
 
-        // 重置所有按钮状态
-        $processBtn.prop('disabled', true).removeClass('btn-primary').addClass('btn-secondary');
-        $resolveBtn.prop('disabled', true).removeClass('btn-success').addClass('btn-secondary');
-        $transferBtn.prop('disabled', true).removeClass('btn-warning').addClass('btn-secondary');
-        $closeBtn.prop('disabled', true).removeClass('btn-danger').addClass('btn-secondary');
+        // 处理按钮
+        $('#processBtn').prop('disabled', !canProcess)
+            .toggleClass('btn-primary', canProcess)
+            .toggleClass('btn-secondary', !canProcess);
 
-        // 根据状态启用相应按钮
-        const numericStatus = typeof status === 'string' ?
-            Object.keys(this.TICKET_STATUS).indexOf(status) : status;
+        // 评论按钮
+        $('#commentBtn').prop('disabled', !canComment)
+            .toggleClass('btn-success', canComment)
+            .toggleClass('btn-secondary', !canComment);
 
-        switch(String(numericStatus)) {
-            case '0':
-            case 'PENDING':
-                $processBtn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-primary');
-                $transferBtn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-warning');
-                $closeBtn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-danger');
-                break;
+        // 转交按钮
+        $('#transferBtn').prop('disabled', !canTransfer)
+            .toggleClass('btn-warning', canTransfer)
+            .toggleClass('btn-secondary', !canTransfer);
 
-            case '1':
-            case 'PROCESSING':
-                $resolveBtn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-success');
-                $transferBtn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-warning');
-                $closeBtn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-danger');
-                break;
+        // 关闭按钮
+        $('#closeBtn').prop('disabled', !canClose)
+            .toggleClass('btn-danger', canClose)
+            .toggleClass('btn-secondary', !canClose);
 
-            case '2':
-            case '3':
-            case 'COMPLETED':
-            case 'CLOSED':
-                // 所有按钮保持禁用状态
-                break;
-        }
+        // 评价按钮
+        $('#evaluateBtn').prop('disabled', !canEvaluate)
+            .toggleClass('btn-info', canEvaluate)
+            .toggleClass('btn-secondary', !canEvaluate);
     }
-
-
     /**
      * 渲染工单列表
      */
@@ -589,7 +776,13 @@ class TicketManagement {
      * 加载工单详情
      */
     async _loadTicketDetail(ticketId) {
+        $('#ticketAttachments').empty();
+        $('.preview-container').remove();
+        $('#ticketTimeline').empty();
+
+
         try {
+            // 加载工单详情
             const response = await $.ajax({
                 url: `/api/tickets/${ticketId}`,
                 method: 'GET'
@@ -597,8 +790,11 @@ class TicketManagement {
 
             if(response.code === 200) {
                 this.state.currentTicket = response.data;
+                // 加载操作权限
+                await this._checkOperationPermission(ticketId);
+                // 渲染详情
                 this._renderTicketDetail();
-                // 加载附件信息
+                // 加载附件
                 await this._loadTicketAttachments(ticketId);
                 this.elements.ticketDetail.addClass('show');
             }
@@ -614,44 +810,60 @@ class TicketManagement {
     _renderTicketDetail() {
         const ticket = this.state.currentTicket;
         if(!ticket) return;
+        console.log('渲染工单详情:', ticket);
 
-        // 基本信息渲染
-        $('#ticketCode').text(ticket.ticketId);
-        $('#ticketTitle').text(ticket.title);
-        $('#ticketContent').text(ticket.content);
-        $('#createTime').text(this._formatDate(ticket.createTime));
-        $('#expectFinishTime').text(this._formatDate(ticket.expectFinishTime));
-
-        // 状态和优先级渲染
+        // 渲染基本信息
+        $('#ticketType').text(ticket.typeName).addClass(`bg-secondary`);
         $('#ticketStatus').html(`
         <span class="badge bg-${this._getStatusClass(ticket.status)}">
             ${this._getStatusText(ticket.status)}
         </span>
     `);
-
         $('#ticketPriority').html(`
-        <span class="priority-badge priority-${this._getPriorityClass(ticket.priority)}">
+        <span class="badge bg-${this._getPriorityClass(ticket.priority)}">
             ${this._getPriorityText(ticket.priority)}
         </span>
     `);
 
-        const attachmentsArea = `
-        <div class="mb-3">
-            <label class="form-label">附件列表</label>
-            <div id="ticketAttachments" class="attachments-list"></div>
-        </div>
-    `;
+        $('#ticketTitle').text(ticket.title);
+        $('#ticketCode').text(ticket.ticketId);
+        $('#createTime').text(this._formatDate(ticket.createTime));
+        $('#expectFinishTime').text(this._formatDate(ticket.expectFinishTime));
+
+        $('#departmentName').text(ticket.departmentName || '-');
+        $('#processorName').text(ticket.processorName || '-');
+        $('#creatorName').text(ticket.creatorName || '-');
+
+        $('#ticketContent').text(ticket.content);
 
         // 处理记录渲染
         this._renderTicketRecords(ticket.records);
 
-
-
-        // 将附件区域插入到指定位置
-        $('#ticketContent').parent().after(attachmentsArea);
-
         // 更新操作按钮状态
-        this._updateActionButtons(ticket.status);
+        this._updateActionButtons();
+
+        // 评价表单显示控制
+        this._updateEvaluationForm();
+    }
+
+    _updateEvaluationForm() {
+        const ticket = this.state.currentTicket;
+        // 检查是否已评价
+        const hasEvaluation = ticket.records?.some(record =>
+            record.operationType === this.OPERATION_TYPE.EVALUATE && record.evaluationScore
+        );
+
+        const canEvaluate = !hasEvaluation &&
+            ticket.createBy === this.userInfo.userId &&
+            ticket.status === 2; // 已完成状态
+
+        // 显示/隐藏评价表单
+        const $evaluationForm = $('#evaluationForm');
+        if (canEvaluate) {
+            $evaluationForm.show();
+        } else {
+            $evaluationForm.hide();
+        }
     }
 
     /**
@@ -873,74 +1085,49 @@ class TicketManagement {
         this._loadTickets();
     }
 
-    /**
-     * 处理开始处理
-     */
-    async _handleProcess() {
-        const content = $('#processNote').val().trim();
-        if(!content) {
-            NotifyUtil.warning('请输入处理说明');
-            return;
-        }
 
-        await this._handleStatusUpdate('PROCESSING', content);
-    }
 
-    /**
-     * 处理完成操作
-     */
-    async _handleResolve() {
-        const content = $('#processNote').val().trim();
-        if(!content) {
-            NotifyUtil.warning('请输入完成说明');
-            return;
-        }
-
-        await this._handleStatusUpdate('COMPLETED', content);
-    }
-
-    /**
-     * 处理关闭操作
-     */
     async _handleClose() {
-        const content = $('#processNote').val().trim();
-        if(!content) {
+        if (!this.state.checkPermission.canClose) {
+            NotifyUtil.warning('您没有关闭该工单的权限');
+            return;
+        }
+
+
+        const content = $('#operationContent').val()?.trim();
+        if (!content) {
             NotifyUtil.warning('请输入关闭说明');
             return;
         }
 
-        if(!confirm('确定要关闭此工单吗？')) {
+        if (!confirm('确定要关闭此工单吗？')) {
             return;
         }
 
         try {
-            // 构造请求数据，字段名与后端CloseTicketRequest匹配
-            const closeRequest = {
-                content: content,
-                operatorId: this.userInfo.userId,
-                ticketId: this.state.currentTicket.ticketId
-            };
-
             const response = await $.ajax({
                 url: `/api/tickets/${this.state.currentTicket.ticketId}/close`,
                 method: 'PUT',
                 contentType: 'application/json',
-                data: JSON.stringify(closeRequest),
+                data: JSON.stringify({
+                    content: content,
+                    operatorId: this.userInfo.userId,
+                    ticketId: this.state.currentTicket.ticketId
+                }),
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
 
-            if(response.code === 200) {
+            if (response.code === 200) {
                 NotifyUtil.success('工单已关闭');
+                $('#operationContent').val(''); // 清空输入框
                 await this._loadTicketDetail(this.state.currentTicket.ticketId);
                 await this._loadTickets();
-            } else {
-                NotifyUtil.error(response.msg || '关闭工单失败');
             }
-        } catch(error) {
-            console.error('关闭工单失败:', error);
-            NotifyUtil.error('关闭工单失败');
+        } catch (error) {
+            console.error('关闭失败:', error);
+            NotifyUtil.error('关闭失败');
         }
     }
 
@@ -1093,48 +1280,8 @@ class TicketManagement {
         }
     }
 
-    /**
-     * 工单转交处理
-     */
-    // async _handleTransfer() {
-    //     if(!this.state.currentTicket) return;
-    //
-    //     try {
-    //         const departmentId = $('#transferDept').val();
-    //         const note = $('#transferNote').val().trim();
-    //
-    //         if(!departmentId) {
-    //             NotifyUtil.warning('请选择转交部门');
-    //             return;
-    //         }
-    //
-    //         if(!note) {
-    //             NotifyUtil.warning('请输入转交说明');
-    //             return;
-    //         }
-    //
-    //         const response = await $.ajax({
-    //             url: `/api/tickets/${this.state.currentTicket.ticketId}/transfer`,
-    //             method: 'POST',
-    //             contentType: 'application/json',
-    //             data: JSON.stringify({
-    //                 departmentId,
-    //                 note,
-    //                 updateBy: this.userInfo.userId
-    //             })
-    //         });
-    //
-    //         if(response.code === 200) {
-    //             NotifyUtil.success('工单转交成功');
-    //             this.elements.processModal.hide();
-    //             await this._loadTicketDetail(this.state.currentTicket.ticketId);
-    //             await this._loadTickets();
-    //         }
-    //     } catch(error) {
-    //         console.error('工单转交失败:', error);
-    //         NotifyUtil.error('转交失败，请重试');
-    //     }
-    // }
+
+
 
 
 
@@ -1172,27 +1319,27 @@ class TicketManagement {
             const iconClass = this._getFileIconClass(fileExt);
 
             return `
-                <div class="attachment-item d-flex align-items-center mb-2">
-                    <i class="bi ${iconClass} me-2"></i>
-                    <div class="flex-grow-1">
-                        <div class="file-name">${attachment.fileName}</div>
-                        <div class="file-meta text-muted small">
-                            ${TicketUtil.formatFileSize(attachment.fileSize)} 
-                            · ${TicketUtil.formatDate(attachment.createTime)}
-                        </div>
-                    </div>
-                    <div class="attachment-actions">
-                        <button class="btn btn-sm btn-outline-primary me-2" 
-                                onclick="window.ticketManagement._downloadFile('${attachment.filePath}', '${attachment.fileName}')">
-                            <i class="bi bi-download"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" 
-                                onclick="window.ticketManagement._previewFile('${attachment.filePath}', '${attachment.fileName}')">
-                            <i class="bi bi-eye"></i>
-                        </button>
+            <div class="attachment-item d-flex align-items-center mb-2">
+                <i class="bi ${iconClass} me-2"></i>
+                <div class="flex-grow-1">
+                    <div class="file-name">${this._escapeHtml(attachment.fileName)}</div>
+                    <div class="file-meta text-muted small">
+                        ${TicketUtil.formatFileSize(attachment.fileSize)} 
+                        · ${TicketUtil.formatDate(attachment.createTime)}
                     </div>
                 </div>
-            `;
+                <div class="attachment-actions">
+                    <button class="btn btn-sm btn-outline-primary me-2" 
+                            onclick="window.ticketManagement._downloadAttachment(${attachment.ticketId}, '${attachment.filePath}', '${attachment.fileName}')">
+                        <i class="bi bi-download"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" 
+                            onclick="window.ticketManagement._previewFile(${attachment.ticketId}, '${attachment.filePath}', '${attachment.fileName}')">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+        `;
         }).join('');
 
         $('#ticketAttachments').html(html);
@@ -1200,6 +1347,7 @@ class TicketManagement {
 
     /**
      * 处理工单评价
+     * 管理员禁用此功能
      */
     async _handleEvaluation() {
         if(!this.state.currentTicket) return;
@@ -1247,38 +1395,31 @@ class TicketManagement {
         try {
             this._showLoading();
 
-            // 构建导出参数
             const params = new URLSearchParams({
                 ...this.state.filters,
                 pageSize: 1000
-            }).toString();
+            });
 
             const response = await $.ajax({
-                url: `/api/tickets/export?${params}`,
+                url: `/api/tickets/export?${params.toString()}`,
                 method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Accept': 'application/octet-stream'
-                },
                 xhrFields: {
                     responseType: 'blob'
+                },
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
 
-            // 创建下载链接
-            const blob = new Blob([response], {
-                type: 'application/vnd.ms-excel'
-            });
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.download = `工单列表_${new Date().getTime()}.xlsx`;
-
-            // 触发下载
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(downloadUrl);
+            const blob = new Blob([response], { type: 'application/vnd.ms-excel' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `工单列表_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
 
             NotifyUtil.success('导出成功');
         } catch(error) {
@@ -1325,50 +1466,106 @@ class TicketManagement {
     /**
      * 文件下载处理
      */
-    async _downloadFile(filePath, fileName) {
-        try {
-            const response = await $.ajax({
-                url: `/api/files/check/${this.state.currentTicket.ticketId}/${fileName}`,
-                method: 'GET'
-            });
-
-            if(response.code === 200 && response.data) {
-                window.open(`/api/files/download/${this.state.currentTicket.ticketId}/${fileName}`, '_blank');
+    _downloadAttachment(ticketId, filePath, fileName) {
+        $.ajax({
+            url: `/api/files/check/${ticketId}/${filePath}`,
+            method: 'GET'
+        }).done((response) => {
+            if (response.code === 200 && response.data) {
+                $.ajax({
+                    url: `/api/files/download/${ticketId}/${filePath}`,
+                    method: 'GET',
+                    xhrFields: {
+                        responseType: 'blob'
+                    }
+                }).done((blob) => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }).fail(() => {
+                    NotifyUtil.error("下载失败");
+                });
             } else {
-                NotifyUtil.error(`文件"${fileName}"已失效`);
+                NotifyUtil.error("文件已失效");
             }
-        } catch(error) {
-            NotifyUtil.error('文件下载失败，请重试');
-        }
+        }).fail(() => {
+            NotifyUtil.error("校验文件失败");
+        });
     }
 
     /**
      * 文件预览处理
      */
-    _previewFile(filePath, fileName) {
-        const fileExt = fileName.split('.').pop().toLowerCase();
-        const previewUrl = `/api/files/preview/${fileName}`;
+    _previewFile(ticketId, filePath, fileName) {
+        if (!ticketId || !filePath || !fileName) {
+            NotifyUtil.error("文件信息不完整");
+            return;
+        }
 
-        // 图片和PDF直接预览
-        if(['jpg', 'jpeg', 'png', 'gif', 'pdf'].includes(fileExt)) {
+        const fileExt = fileName.split('.').pop().toLowerCase();
+        const $modal = $('.file-preview-modal');
+        const $container = $modal.find('.file-preview-container');
+        const $body = $modal.find('.file-preview-body');
+        const $fileName = $modal.find('.file-name');
+
+        // 设置文件名
+        $fileName.text(fileName);
+
+        // 清空预览内容
+        $body.empty();
+
+        // 绑定关闭事件
+        $modal.find('.btn-close').off('click').on('click', () => {
+            $modal.hide();
+            $body.empty();
+        });
+
+        // 点击模态框背景关闭
+        $modal.off('click').on('click', (e) => {
+            if ($(e.target).is($modal)) {
+                $modal.hide();
+                $body.empty();
+            }
+        });
+
+        if (['jpg', 'jpeg', 'png', 'gif', 'pdf'].includes(fileExt)) {
             $.ajax({
-                url: `/api/files/preview/${fileName}`,
+                url: `/api/files/preview/${filePath}`,
                 type: 'GET',
                 xhrFields: {
-                    responseType: 'blob' // 设置响应类型为blob
-                },
-                success: function(blob) {
-                    const url = window.URL.createObjectURL(blob);
-                    const previewElement = $(`<${fileExt === 'pdf' ? 'iframe' : 'img'} src="${url}">`);
-                    $('body').append(previewElement); // 将预览元素添加到页面中
-                },
-                error: function() {
-                    NotifyUtil.error('文件预览失败');
+                    responseType: 'blob'
                 }
+            }).done((blob) => {
+                const url = window.URL.createObjectURL(blob);
+
+                if (fileExt === 'pdf') {
+                    $body.html(`<iframe src="${url}" style="width:100%;height:80vh;"></iframe>`);
+                } else {
+                    const $img = $('<img>', {
+                        src: url,
+                        alt: fileName,
+                        style: 'max-width:100%;max-height:80vh;'
+                    });
+                    $body.html($img);
+                }
+
+                // 显示模态框
+                $modal.show();
+
+                // 在预览窗口关闭时释放 blob URL
+                $modal.one('hidden.bs.modal', () => {
+                    window.URL.revokeObjectURL(url);
+                });
+            }).fail(() => {
+                NotifyUtil.error("预览失败");
             });
         } else {
-            // 其他类型文件尝试直接下载
-            this._downloadFile(filePath, fileName);
+            this._downloadAttachment(ticketId, filePath, fileName);
         }
     }
 

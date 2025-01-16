@@ -1,9 +1,16 @@
 package com.icss.etc.ticket.config;
 
+import com.icss.etc.ticket.handler.LocalDateTimeToStringConverter;
 import com.icss.etc.ticket.interceptors.AuthInterceptor;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericToStringSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
@@ -58,9 +65,7 @@ public class AppConfig implements WebMvcConfigurer {
                         "/api/auth/register",
                         "/css/**",
                         "/js/**",
-                        "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js",
                         "/images/**"
                 );
     }
-
 }

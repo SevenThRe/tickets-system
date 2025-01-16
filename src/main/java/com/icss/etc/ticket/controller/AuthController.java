@@ -7,6 +7,7 @@ import com.icss.etc.ticket.entity.dto.AuthDTO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.service.UserService;
+import com.icss.etc.ticket.service.impl.OnlineUserManager;
 import com.icss.etc.ticket.util.JWTUtils;
 import com.icss.etc.ticket.util.MD5Util;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,9 @@ import java.util.Map;
 public class AuthController {
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private OnlineUserManager onlineUserManager;
 
     @PostMapping("/register")
     public R register(@RequestBody RegisteredDTO user) {
@@ -42,6 +46,9 @@ public class AuthController {
         UserViewBackDTO u = userService.login(user.username());
         if (u != null && u.getPassword().equals(MD5Util.getMD5(user.password()))) {
             String token = JWTUtils.generateToken(u.getUserId().toString(), "AuthToken", u.getPassword());
+
+            onlineUserManager.userOnline(u.getUserId());
+
             Map<String, Object> map = new HashMap<>();
             map.put("token", token);
             u.setPassword("");
@@ -55,7 +62,28 @@ public class AuthController {
 
     @RequestMapping("/logout")
     public R logout(User user) {
-        userService.logout(user);
-        return R.OK("登出成功");
+        Long userId = user.getUserId();
+        try {
+            onlineUserManager.userOffline(userId);
+            userService.logout(user);
+            return R.OK("登出成功");
+        } catch (Exception e) {
+            log.error("用户登出失败: {}", userId, e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
+        }
+    }
+
+    /**
+     * 心跳接口
+     */
+    @PostMapping("/heartbeat")
+    public R heartbeat(@RequestParam("userId") Long userId) {
+        try {
+            onlineUserManager.updateUserStatus(userId);
+            return R.OK();
+        } catch (Exception e) {
+            log.error("心跳更新失败: {}", userId, e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
+        }
     }
 }

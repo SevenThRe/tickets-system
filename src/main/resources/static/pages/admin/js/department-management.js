@@ -15,7 +15,7 @@ class DepartmentManagement {
         this.$departmentForm = $('#departmentForm');
         this.$searchResults = $('#memberSearchResults')
         this.$memberBody = $('#memberBody');
-
+        this.debounceTimer = null;
 
         this.validationRules = {
             departmentName: {
@@ -107,9 +107,9 @@ class DepartmentManagement {
             // 在这里缓存 DOM 元素，确保它们已经加载
             this.$departmentTree = $('#departmentTree');
             this._renderDepartmentTree(this.state.departmentsTrees);
+            this._updateParentOptions(this.state.currentDepartment);
         } catch (error) {
-            NotifyUtil.error('初始化失败:', error);
-            this._showError('页面初始化失败，请刷新重试');
+            NotifyUtil.error('页面初始化失败，请刷新重试',error);
         }
     }
 
@@ -170,14 +170,15 @@ class DepartmentManagement {
 
     /**
      * 填充部门表单
-     * @param {Object} department - 部门信息
+     * @param {Object} da - 部门信息
      */
-    _fillDepartmentForm(department) {
+    _fillDepartmentForm(da) {
+        const department = da.department;
         $('#departmentId').val(department.departmentId);  // 隐藏字段，仅用于回显
         $('#departmentName').val(department.departmentName);
-        $('#managerId').val(department.managerId);
+        $('#managerId').val(da.charge ? charge.userId : '请选择部门负责人');
 
-        department.parentId ? $('#parentDepartment').val(department.parentId) :$('#parentDepartment').val('');
+        department.parentId ? $('#parentDepartment').val(department.parentId) :$('#parentDepartment').val('无上级部门');
 
         $('#deptLevel').val(department.deptLevel);
         $('#description').val(department.description);
@@ -238,7 +239,7 @@ class DepartmentManagement {
                 throw new Error(response.message);
             }
         } catch (error) {
-            this._showError(error.message || '保存失败');
+            NotifyUtil.error(error.message || '保存失败');
         } finally {
             this._disableForm(false);
         }
@@ -300,7 +301,7 @@ class DepartmentManagement {
     _bindEvents() {
         // 部门相关事件
         $('#addDepartmentBtn').on('click', () => this._handleAddDepartment());
-        $('#saveDepartmentBtn').on('click', () => this._handleSaveDepartment());
+        $('#saveDepartmentBtn').on('click', (e) => this._handleSaveDepartment(e));
         $('#deleteDepartmentBtn').on('click', () => this._handleDeleteDepartment());
         // 部门树事件
         this.$departmentTree.on('click', '.department-node-header i', (e) => {
@@ -320,8 +321,12 @@ class DepartmentManagement {
         // 成员相关事件
         $('#addMemberBtn').on('click', () => this._handleAddMember());
         $('#confirmAddMemberBtn').on('click', () => this._handleConfirmAddMember());
-        $('#memberSearch').on('input', (e) => this._handleMemberSearch(e));
-
+        $('#memberSearch').on('input', (e) => {
+            clearTimeout(debounceTimer); // 清除之前的计时器
+            this.debounceTimer = setTimeout(() => {
+                this._handleMemberSearch(e);
+            }, 300); // 延迟300毫秒执行
+        });
         // 表单提交事件
         this.$departmentForm.on('submit', (e) => this._handleSubmitDepartment(e));
         this.$departmentForm.find('input, select').on('blur', (e) => {
@@ -485,7 +490,7 @@ class DepartmentManagement {
             }
         } catch (error) {
             NotifyUtil.error('加载部门成员失败:', error);
-            this._showError('加载部门成员失败');
+            NotifyUtil.error('加载部门成员失败');
         }
     }
 
@@ -505,10 +510,10 @@ class DepartmentManagement {
                 }
 
                 options.push(`
-                    <option value="${dept.departmentId}">
-                        ${'　'.repeat(level)}${dept.departmentName}
-                    </option>
-                `);
+                <option value="${dept.departmentId}">
+                    ${'　'.repeat(level)}${dept.departmentName}
+                </option>
+            `);
 
                 if (dept.children?.length) {
                     options.push(buildOptions(dept.children, level + 1));
@@ -521,15 +526,39 @@ class DepartmentManagement {
         const options = ['<option value="">无上级部门</option>'];
         options.push(buildOptions(this.state.departmentsTrees));
         $('#parentDepartment').html(options.join(''));
+
+        // 选择正确的上级部门
+        const selectedParentId = currentDepartment ? currentDepartment.parentId || '' : '';
+        $('#parentDepartment').val(selectedParentId);
     }
 
-    _renderMembersList() {
-        const cardHtml = this.state.members.map(member => `
+    async _getAvatarUrl(member) {
+        const avatarUrl = `/images/${member.username}_${member.userId}_avatar.png`;
+        try {
+            const response = await fetch(avatarUrl, { method: 'HEAD' });
+            if (response.ok) {
+                return avatarUrl; // 文件存在，返回该 URL
+            } else {
+                return '/images/default-avatar.png'; // 文件不存在，返回默认 URL
+            }
+        } catch (error) {
+            return '/images/default-avatar.png'; // 请求出错，返回默认 URL
+        }
+    }
+
+
+
+    async _renderMembersList() {
+        const avatarUrls = await Promise.all(this.state.members.map(member => this._getAvatarUrl(member)));
+        // 使用 map 生成 HTML 字符串
+        const cardHtml = this.state.members.map((member, index) => {
+            const avatarUrl = avatarUrls[index];
+            return `
             <div class="col-md-4 mb-3">
                 <div class="card member-card">
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-2">
-                            <div class="member-avatar me-2" style="background-image: url(${member.avatarUrl || 'images/default-avatar.png'});">
+                            <div class="member-avatar me-2" style="background-image: url(${avatarUrl});">
                                 <i class="bi bi-person-circle fs-4"></i>
                             </div>
                             <div>
@@ -553,7 +582,8 @@ class DepartmentManagement {
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
 
         const containerHtml = `
             <div class="member-section mt-4">
@@ -580,7 +610,7 @@ class DepartmentManagement {
         // 重新绑定添加成员按钮事件
         $('#addMemberBtn').on('click', () => this._handleAddMember());
 
-      
+
     }
 
     /**
@@ -626,7 +656,7 @@ class DepartmentManagement {
 
         } catch (error) {
             NotifyUtil.error(`${isEdit ? '更新' : '创建'}部门失败:`, error);
-            this._showError(error.message);
+            NotifyUtil.error(error.message);
         } finally {
             this._disableForm(false);
         }
@@ -638,7 +668,7 @@ class DepartmentManagement {
      */
     _handleAddMember() {
         if (!this.state.currentDepartment) {
-            this._showError('请先选择部门');
+            NotifyUtil.error('请先选择部门');
             return;
         }
 
@@ -647,7 +677,6 @@ class DepartmentManagement {
         this.state.searchResults = [];
         this.state.selectedMembers.clear();
         this._renderSearchResults();
-
         this.addMemberModal.show();
     }
 
@@ -690,7 +719,7 @@ class DepartmentManagement {
      */
     async _handleConfirmAddMember() {
         if (!this.state.selectedMembers.size) {
-            this._showError('请选择要添加的成员');
+            NotifyUtil.error('请选择要添加的成员');
             return;
         }
 
@@ -714,7 +743,7 @@ class DepartmentManagement {
 
         } catch (error) {
             NotifyUtil.error('添加成员失败:', error);
-            this._showError(error.message || '添加成员失败');
+            NotifyUtil.error(error.message || '添加成员失败');
         }
     }
 
@@ -742,7 +771,7 @@ class DepartmentManagement {
 
         } catch (error) {
             NotifyUtil.error('移除成员失败:', error);
-            this._showError(error.message || '移除成员失败');
+            NotifyUtil.error(error.message || '移除成员失败');
         }
     }
 
@@ -762,19 +791,19 @@ class DepartmentManagement {
 
         // 部门名称验证
         if (formData.departmentName.length < 2 || formData.departmentName.length > 50) {
-            this._showError('部门名称长度必须在2-50个字符之间');
+            NotifyUtil.error('部门名称长度必须在2-50个字符之间');
             return false;
         }
 
         // 部门编码验证
         if (!/^[A-Z0-9]{2,10}$/.test(formData.departmentCode)) {
-            this._showError('部门编码必须为2-10位大写字母或数字');
+            NotifyUtil.error('部门编码必须为2-10位大写字母或数字');
             return false;
         }
 
         // 排序号验证
         if (!Number.isInteger(Number(formData.orderNum)) || Number(formData.orderNum) < 0) {
-            this._showError('排序号必须是非负整数');
+            NotifyUtil.error('排序号必须是非负整数');
             return false;
         }
 
@@ -887,6 +916,7 @@ class DepartmentManagement {
 
         const departmentId = selectedNode.id;
         this._selectDepartment(departmentId); // 加载部门详情和成员
+        this._updateParentOptions(this.state.currentDepartment);
     }
 
     /**
@@ -919,7 +949,7 @@ class DepartmentManagement {
             if(response.code === 200) {
                 this.state.currentDepartment = response.data;
                 // 回填表单数据
-                this._fillDepartmentForm(response.data.department);
+                this._fillDepartmentForm(response.data);
                 // 加载部门成员
                 this.state.currentDepartment.departmentId = departmentId;
                 await this._loadDepartmentMembers();
@@ -928,7 +958,7 @@ class DepartmentManagement {
             }
 
         } catch(error) {
-            this._showError('加载部门信息失败:' + error.message);
+            NotifyUtil.error('加载部门信息失败:' + error.message);
         } finally {
             this._hideLoading();
         }
@@ -943,7 +973,7 @@ class DepartmentManagement {
      */
     async _handleDeleteDepartment() {
         if(!this.state.currentDepartment) {
-            this._showError('请先选择部门');
+            NotifyUtil.error('请先选择部门');
             return;
         }
 
@@ -970,7 +1000,7 @@ class DepartmentManagement {
             }
 
         } catch(error) {
-            this._showError('删除失败:' + error.message);
+            NotifyUtil.error('删除失败:' + error.message);
         }
     }
 
@@ -993,22 +1023,23 @@ class DepartmentManagement {
         // 显示弹窗
         this.departmentModal.show();
     }
-
-    /**
-     * 处理编辑部门
-     * @private
-     */
-    _handleEditDepartment() {
-        if(!this.state.currentDepartment) {
-            this._showError('请先选择部门');
-            return;
-        }
-
-        // 回填当前部门数据
-        this._fillDepartmentForm(this.state.currentDepartment);
-        // 显示弹窗
-        this.departmentModal.show();
-    }
+    //
+    // /**
+    //  * 处理编辑部门
+    //  * @private
+    //  */
+    // _handleEditDepartment() {
+    //     if(!this.state.currentDepartment) {
+    //         NotifyUtil.error('请先选择部门');
+    //         return;
+    //     }
+    //
+    //     // 回填当前部门数据
+    //     this._fillDepartmentForm(this.state.currentDepartment);
+    //     this._updateParentOptions(this.state.currentDepartment);
+    //     // 显示弹窗
+    //     this.departmentModal.show();
+    // }
 
 
 
@@ -1038,7 +1069,7 @@ class DepartmentManagement {
             }
         } catch (error) {
             NotifyUtil.error('搜索用户失败:', error);
-            this._showError('搜索用户失败');
+            NotifyUtil.error('搜索用户失败');
         }
     }
 
@@ -1072,38 +1103,21 @@ class DepartmentManagement {
         return isValid;
     }
 
-    /**
-     * 重置表单验证状态
-     * @private
-     */
-    _resetFormValidation() {
-        this.$departmentForm
-            .find('.is-valid, .is-invalid')
-            .removeClass('is-valid is-invalid');
-        this.$departmentForm
-            .find('.invalid-feedback')
-            .remove();
-    }
+    // /**
+    //  * 重置表单验证状态
+    //  * @private
+    //  */
+    // _resetFormValidation() {
+    //     this.$departmentForm
+    //         .find('.is-valid, .is-invalid')
+    //         .removeClass('is-valid is-invalid');
+    //     this.$departmentForm
+    //         .find('.invalid-feedback')
+    //         .remove();
+    // }
 
 
 
-    // 显示错误信息
-    _showError(message) {
-        // const alertHtml = `
-        //     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        //         ${message}
-        //         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        //     </div>
-        // `;
-        // $('#main').prepend(alertHtml);
-        //
-        // // 3秒后自动消失
-        // setTimeout(() => {
-        //     $('.alert').alert('close');
-        // }, 3000);
-        //
-        NotifyUtil.error(message);
-        }
 }
 
 // 页面加载完成后初始化
