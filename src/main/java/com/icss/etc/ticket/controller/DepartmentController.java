@@ -119,10 +119,11 @@ public class DepartmentController {
         return R.OK(userService.queryByDepartmentId(departmentsQueryDTO));
     }
 
-    @GetMapping("/members/{userId}")
+    @GetMapping("/members")
     public R getDeptMembersInDept(DepartmentsQueryDTO departmentsQueryDTO){
         return R.OK(userService.queryByDepartmentId(departmentsQueryDTO));
     }
+
 
     @PostMapping("/addUser")
     public R addUser(DeptMemberDTO deptMemberDTO) {
@@ -153,6 +154,16 @@ public class DepartmentController {
     @DeleteMapping("{departmentId}/members/{userId}")
     public R deleteMember(@PathVariable("departmentId") Long departmentId, @PathVariable("userId") Long userId) {
         return R.OK(userService.deleteUserFromDepartment(departmentId, userId));
+    }
+
+    /**
+     * dept-members.html 的查询详情
+     * @param userId
+     * @return
+     */
+    @GetMapping("/members/{userId}")
+    public R getDeptMemberDetial(@PathVariable Long userId){
+        return R.OK(userService.getDeptMemberDetial(userId));
     }
 
 

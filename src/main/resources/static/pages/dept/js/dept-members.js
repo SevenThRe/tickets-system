@@ -91,8 +91,16 @@ function loadMemberList(page) {
                         <td>${member.averageProcessingTime || 'N/A'}小时</td>
                         <td>${member.satisfaction || 'N/A'}</td>
                         <td>${member.monthlyPerformance || 'N/A'}</td>
-                        <td><button type="button" class="btn btn-sm btn-primary view-member-btn" data-member-id="${member.employeeId || 'N/A'}">查看</button></td></tr>`;
+                        <td><button type="button" class="btn btn-sm btn-primary view-member-btn" data-member-id="${member.userId}">查看</button></td></tr>`;
                     $('#memberTableBody').append(row);
+                });
+                $('#memberTableBody').on('click', '.view-member-btn', function() {
+                    // var memberId = $(this).data('member-id');
+                    var memberId = $(this).data('member-id');
+                    var member = response.data.find(m => m.userId === memberId); // 查找对应的成员信息
+
+                    // memberId
+                    seleselectModal(member);
                 });
                 if (response.pagination) {
                     renderPagination(response.pagination);
@@ -105,6 +113,18 @@ function loadMemberList(page) {
             NotifyUtil.error('加载成员列表失败：' + jqXHR.responseText);
         }
     });
+}
+// 弹出框查看详情
+function seleselectModal(member){
+    $("#Modal").modal('show');
+    console.log(member);
+    $("#userId1").val(member.userId|| '无');
+    $("#realName1").val(member.realName || '无');
+    $("#currentWorkload1").val(member.currentWorkload|| '0');
+    $("#processingEfficiency1").val(member.processingEfficiency|| 'D');
+    $("#averageProcessingTime1").val(member.averageProcessingTime|| '0小时');
+    $("#satisfaction1").val(member.satisfaction|| 'N/A');
+    $("#monthlyPerformance1").val(member.monthlyPerformance|| 'N/A');
 }
 
 // 渲染分页控件
@@ -145,65 +165,46 @@ function exportMemberList() {
     });
 }
 
+
 // 查看成员详情
 $(document).on('click', '.view-member-btn', function() {
     var memberId = $(this).data('member-id');
     $.ajax({
-        url: '/api/members/' + memberId,
+        url: '/api/departments/members/' + memberId,
         type: 'GET',
         success: function (response) {
-            $('#memberName').text(response.name);
-            $('#memberPosition').text(response.position);
-            $('#totalTickets').text(response.totalTickets);
-            $('#currentWorkload').text(response.currentWorkload);
-            $('#avgProcessTime').text(response.avgProcessTime + '小时');
-            $('#completionRate').text(response.completionRate + '%');
-            $('#memberAvatar').attr('src', response.avatar);
-
-            // 加载近期工单
-            $('#recentTicketsList').empty();
-            $.each(response.recentTickets, function (index, ticket) {
-                var ticketItem = '<div class="ticket-item">' +
-                    '<h6 class="ticket-title">' + ticket.title + '</h6>' +
-                    '<p class="ticket-status">' + ticket.status + '</p>' +
-                    '<p class="ticket-time">' + ticket.processTime + '小时</p>' +
-                    '</div>';
-                $('#recentTicketsList').append(ticketItem);
-            });
-
-            // 加载效率分析图表
-            var efficiencyData = {
-                labels: response.efficiencyChart.labels,
-                datasets: [{
-                    label: '效率趋势',
-                    data: response.efficiencyChart.data,
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
-            };
-            var efficiencyOptions = {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            };
-            var ctx = $('#memberEfficiencyChart').get(0).getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: efficiencyData,
-                options: efficiencyOptions
-            });
-
-            // 显示成员详情抽屉
-            $('#memberDrawer').addClass('open');
+            // 更新成员 ID 信息
+            $('#memberID1').text(response.userId || '无');
+            // 更新成员名称信息
+            $('#memberName1').text(response.name || '无');
+            // 更新成员职位信息
+            $('#memberPosition1').text(response.position || '无');
+            // 更新总票数信息，并将其转换为数字，如果无法转换则显示 0
+            $('#totalTickets1').text(parseInt(response.totalTickets) || 0);
+            // 更新当前工作量信息，并将其转换为数字，如果无法转换则显示 0
+            $('#currentWorkload1').text(parseFloat(response.currentWorkload) || 0);
+            // 更新平均处理时间信息，并添加小时后缀
+            $('#avgProcessTime1').text((response.avgProcessTime || 0) + '小时');
+            // 更新完成率信息
+            $('#completionRate1').text(response.completionRate || 0);
         },
         error: function (jqXHR, textStatus, errorThrown) {
-            NotifyUtil.error('加载成员详情失败：' + jqXHR.responseText);
+            if (typeof NotifyUtil === 'object' && typeof NotifyUtil.error === 'function') {
+                if (jqXHR.status === 404) {
+                    NotifyUtil.error('未找到成员信息，请检查成员 ID 是否正确。');
+                } else if (jqXHR.status === 500) {
+                    NotifyUtil.error('服务器内部错误，请联系管理员。');
+                } else {
+                    NotifyUtil.error('查看成员详情失败：' + jqXHR.responseText);
+                }
+            } else {
+                console.error('查看成员详情失败：', jqXHR.status, jqXHR.responseText);
+            }
         }
     });
 })
+
+
 
 // 关闭成员详情抽屉
 $('#closeDrawerBtn').on('click', function() {

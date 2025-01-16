@@ -122,6 +122,8 @@ public interface UserMapper {
 
     List<UserVO> selectAllUsersInfo(@Param("queryDTO") UserQueryDTO queryDTO);
 
+    UserVO selectUserVO (@Param("userId") Long userId);
+
     int changeUserStatus(Long userId);
 
     /**

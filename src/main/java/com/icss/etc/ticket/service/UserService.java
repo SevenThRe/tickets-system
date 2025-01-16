@@ -9,6 +9,7 @@ import com.icss.etc.ticket.entity.dto.user.UserCreateDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.entity.vo.DeptMembersDetailVO;
 import com.icss.etc.ticket.entity.vo.UserVO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import org.apache.ibatis.annotations.Param;
@@ -113,4 +114,6 @@ public interface UserService {
      * @return 返回结果
      */
     int updateUserInfo(Long userId, UserViewBackDTO userViewBackDTO);
+
+    DeptMembersDetailVO getDeptMemberDetial(Long userId);
 }

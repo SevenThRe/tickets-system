@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
 import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
+import com.icss.etc.ticket.entity.vo.DeptMembersDetailVO;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -98,8 +99,6 @@ public interface DepartmentMapper {
      * @return 部门负责人列表
      */
     List<DepartmentChargeVO> selectManagerByDepartmentId(Long department_id);
-
-
 
 
 }
