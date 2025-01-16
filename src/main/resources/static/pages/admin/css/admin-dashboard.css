@@ -207,8 +207,199 @@
     background-color: #dcfce7;
     color: #15803d;
 }
+/* admin-dashboard.css 添加以下样式 */
+.satisfaction-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
 
-/* 优先级指示器样式 */
+.star {
+    color: #fbbf24; /* 星星颜色 */
+    font-size: 1.5rem;
+}
+
+.star-empty {
+    color: #d1d5db; /* 未填充星星颜色 */
+}
+
+/* 优先级样式统一 */
+.priority-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+
+/* 用户链接样式 */
+.user-link {
+    color: #3b82f6;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.user-link:hover {
+    text-decoration: underline;
+}
+
+/* 用户信息卡片样式 */
+.user-info-card {
+    position: fixed;
+    display: none;
+    z-index: 1050;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    padding: 16px;
+    min-width: 300px;
+}
+
+.user-info-card.show {
+    display: block;
+}
+
+/* 优先级样式统一 */
+.priority-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* user-info-card样式 */
+.user-link {
+    color: #3b82f6;
+    text-decoration: none;
+    cursor: pointer;
+    position: relative;
+}
+
+.user-link:hover {
+    text-decoration: underline;
+}
+
+.user-info-card {
+    position: fixed;
+    display: none;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 16px;
+    min-width: 280px;
+    z-index: 1000;
+}
+
+.user-info-card.show {
+    display: block;
+}
+
+.user-info-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.user-info-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin-right: 12px;
+    overflow: hidden;
+    background-color: #f3f4f6;
+}
+
+.user-info-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-info-name h6 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.user-info-name small {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.user-info-content {
+    font-size: 14px;
+}
+
+.user-info-item {
+    display: flex;
+    margin-bottom: 8px;
+}
+
+.user-info-label {
+    width: 80px;
+    color: #6b7280;
+}
+
+.user-info-value {
+    flex: 1;
+    color: #111827;
+}
+
+/* 状态样式与ticket-management保持一致 */
+.status-pending {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.status-processing {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.status-completed {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+.status-closed {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+/* 优先级样式统一 */
+.priority-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.priority-normal {
+    background-color: #28a745;
+    color: white;
+}
+
+.priority-urgent {
+    background-color: #ffc107;
+    color: black;
+}
+
+.priority-extremely-urgent {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* 状态标签样式 */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 9999px;
+}
+
+/* 优先级指示器 */
 .priority-indicator {
     width: 8px;
     height: 8px;
@@ -217,18 +408,9 @@
     margin-right: 8px;
 }
 
-.priority-high {
-    background-color: #ef4444;
-}
-
-.priority-medium {
-    background-color: #f59e0b;
-}
-
-.priority-low {
-    background-color: #10b981;
-}
-
+.priority-indicator.priority-normal { background-color: #28a745; }
+.priority-indicator.priority-urgent { background-color: #ffc107; }
+.priority-indicator.priority-extremely-urgent { background-color: #dc3545; }
 /* 响应式调整 */
 @media (max-width: 768px) {
     .stat-card {

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.etc.ticket.mapper.DashboardMapper">
+
+    <!-- 统计工单状态数量 -->
+    <select id="countTicketsByStatus" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM t_ticket
+        WHERE status = #{status}
+        AND is_deleted = 0
+    </select>
+
+    <!-- 获取平均评价分数 -->
+    <select id="getAverageSatisfactionScore" resultType="java.lang.Double">
+        SELECT AVG(tr.evaluation_score)
+        FROM t_ticket_record tr
+                 INNER JOIN t_ticket t ON tr.ticket_id = t.ticket_id
+        WHERE tr.evaluation_score IS NOT NULL
+          AND tr.is_deleted = 0
+          AND t.is_deleted = 0
+    </select>
+
+    <!-- 获取工单趋势统计 -->
+    <select id="getTicketTrendStats" resultType="java.util.Map">
+        SELECT
+        DATE(t.create_time) as date,
+        COUNT(t.ticket_id) as new_count,
+        COUNT(CASE WHEN t.status = 2 THEN 1 ELSE NULL END) as completed_count
+        FROM t_ticket t
+        WHERE t.create_time BETWEEN #{startDate} AND #{endDate}
+        AND t.is_deleted = 0
+        GROUP BY DATE(t.create_time)
+        ORDER BY date ASC
+    </select>
+
+    <!-- 获取工单类型分布 -->
+    <select id="getTicketTypeStats" resultType="java.util.Map">
+        SELECT
+            tt.type_name,
+            COUNT(t.ticket_id) as count,
+            ROUND(COUNT(t.ticket_id) * 100.0 /
+                  (SELECT COUNT(1) FROM t_ticket WHERE is_deleted = 0), 2) as proportion
+        FROM t_ticket t
+                 INNER JOIN t_ticket_type tt ON t.type_id = tt.type_id
+        WHERE t.is_deleted = 0
+          AND tt.is_deleted = 0
+        GROUP BY tt.type_id, tt.type_name
+        ORDER BY count DESC
+    </select>
+
+    <!-- 获取最近工单列表 -->
+    <select id="getRecentTickets" resultType="java.util.Map">
+        SELECT
+        t.ticket_id,
+        t.title,
+        t.status,
+        COALESCE(tt.type_name, '-') as type_name,
+        t.create_by as creator_id,
+        COALESCE(t.processor_id, -1) as processor_id,
+        t.priority,
+        t.create_time as createTime,
+        COALESCE(u.real_name, '-') as creator_name,
+        COALESCE(d.department_name, '-') as department_name,
+        COALESCE(processor.real_name, '未分配') as processor_name
+        FROM t_ticket t
+        LEFT JOIN t_user u ON t.create_by = u.user_id
+        LEFT JOIN t_ticket_type tt ON t.type_id = tt.type_id
+        LEFT JOIN t_user processor ON t.processor_id = processor.user_id
+        LEFT JOIN t_department d ON t.department_id = d.department_id
+        WHERE t.is_deleted = 0
+        ORDER BY t.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

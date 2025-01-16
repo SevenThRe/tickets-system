@@ -3,11 +3,13 @@ package com.icss.etc.ticket.controller;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.dto.ticket.RecentTicketDTO;
 import com.icss.etc.ticket.entity.dto.ticket.TicketRecentDTO;
+import com.icss.etc.ticket.entity.vo.RecentTicketVO;
 import com.icss.etc.ticket.entity.vo.ticket.DashboardStatsVO;
 import com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO;
 import com.icss.etc.ticket.entity.vo.ticket.SystemOverviewVO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.enums.TicketStatus;
+import com.icss.etc.ticket.service.DashboardService;
 import com.icss.etc.ticket.service.DepartmentService;
 import com.icss.etc.ticket.service.TicketService;
 import com.icss.etc.ticket.service.UserService;
@@ -41,28 +43,13 @@ public class AdminDashboardController {
     @Autowired
     private UserService userService;
 
-    /**
-     * 获取仪表板统计数据
-     */
+    @Autowired
+    private DashboardService dashboardService;
+
     @GetMapping("/stats")
     public R<DashboardStatsVO> getStats() {
         try {
-            DashboardStatsVO stats = new DashboardStatsVO();
-
-            // 获取工单数量统计
-            stats.setPendingCount(ticketService.countByStatus(TicketStatus.PENDING));
-            stats.setProcessingCount(ticketService.countByStatus(TicketStatus.PROCESSING));
-            stats.setCompletedCount(ticketService.countByStatus(TicketStatus.COMPLETED));
-
-            // 获取平均满意度
-            stats.setAvgSatisfaction(ticketService.calculateAvgSatisfaction());
-
-            // 获取工单趋势数据（最近7天）
-            stats.setTrends(ticketService.getTicketTrends(7));
-
-            // 获取工单类型分布
-            stats.setTypes(ticketService.getTicketTypeDistribution());
-
+            DashboardStatsVO stats = dashboardService.getDashboardStats();
             return R.OK(stats);
         } catch (Exception e) {
             log.error("获取仪表板统计数据失败:", e);
@@ -70,48 +57,14 @@ public class AdminDashboardController {
         }
     }
 
-    /**
-     * 获取最近工单列表
-     */
     @GetMapping("/recent-tickets")
-    public R<List<RecentTicketDTO>> getRecentTickets(
+    public R<List<RecentTicketVO>> getRecentTickets(
             @RequestParam(defaultValue = "10") Integer limit) {
         try {
-            List<RecentTicketDTO> tickets = ticketService.getRecentTickets(limit);
+            List<RecentTicketVO> tickets = dashboardService.getRecentTickets(limit);
             return R.OK(tickets);
         } catch (Exception e) {
             log.error("获取最近工单列表失败:", e);
-            return R.FAIL(CodeEnum.INTERNAL_ERROR);
-        }
-    }
-
-    /**
-     * 获取部门工作量统计
-     */
-    @GetMapping("/department-stats")
-    public R<List<DepartmentWorkloadVO>> getDepartmentStats() {
-        try {
-            List<DepartmentWorkloadVO> stats = departmentService.getWorkloadStats();
-            return R.OK(stats);
-        } catch (Exception e) {
-            log.error("获取部门工作量统计失败:", e);
-            return R.FAIL(CodeEnum.INTERNAL_ERROR);
-        }
-    }
-
-    /**
-     * 获取系统概览数据
-     */
-    @GetMapping("/system-overview")
-    public R<SystemOverviewVO> getSystemOverview() {
-        try {
-            SystemOverviewVO overview = new SystemOverviewVO();
-//            overview.setTotalUsers(userService.countActiveUsers());
-//            overview.setTotalDepartments(departmentService.countDepartments());
-//            overview.setTotalTickets(ticketService.countTotalTickets());
-            return R.OK(overview);
-        } catch (Exception e) {
-            log.error("获取系统概览数据失败:", e);
             return R.FAIL(CodeEnum.INTERNAL_ERROR);
         }
     }
