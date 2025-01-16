@@ -1,304 +1,291 @@
-                                            <!DOCTYPE html>
-                                            <html lang="zh-CN">
-                                            <head>
-                                                <meta charset="UTF-8">
-                                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                                <title>工单系统 - 部门成员管理</title>
-                                                <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-                                                <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-                                                <link href="/css/navbar.css" rel="stylesheet">
-                                                <link href="/css/notify.css" rel="stylesheet">
-                                                <link href="/pages/dept/css/dept-members.css" rel="stylesheet">
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工单系统 - 部门成员管理</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/navbar.css" rel="stylesheet">
+    <link href="/css/notify.css" rel="stylesheet">
+    <link href="/pages/dept/css/dept-members.css" rel="stylesheet">
 
 
-                                            </head>
+</head>
 
-                                    <body>
-                                            <!-- 导航栏 -->
-                                            <nav id="navbar" class="navbar-container"></nav>
+<body>
+<!-- 导航栏 -->
+<nav id="navbar" class="navbar-container"></nav>
 
-                                            <!-- 主内容区 -->
-                                            <main id="main" class="main-content">
-                                                <!-- 页面标题 -->
-                                                <div class="page-header mb-4">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <h4>部门成员管理</h4>
-                                                        <div class="header-actions">
-                                                            <button type="button" class="btn btn-outline-secondary me-2" id="refreshBtn">
-                                                                <i class="bi bi-arrow-clockwise"></i> 刷新
-                                                            </button>
-                                                            <button type="button" class="btn btn-primary" id="exportBtn">
-                                                                <i class="bi bi-download"></i> 导出
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
+<!-- 主内容区 -->
+<main id="main" class="main-content">
+    <!-- 页面标题 -->
+    <div class="page-header mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4>部门成员管理</h4>
+            <div class="header-actions">
+                <button type="button" class="btn btn-outline-secondary me-2" id="refreshBtn">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                </button>
+                <button type="button" class="btn btn-primary" id="exportBtn">
+                    <i class="bi bi-download"></i> 导出
+                </button>
+            </div>
+        </div>
+    </div>
 
-                                                <!-- 成员统计卡片 -->
-                                                <div class="row g-3 mb-4">
-                                                    <div class="col-md-3">
-                                                        <div class="stat-card">
-                                                            <div class="stat-icon">
-                                                                <i class="bi bi-people"></i>
-                                                            </div>
-                                                            <div class="stat-content">
-                                                                <h3 class="stat-value" id="totalMembers">0</h3>
-                                                                <p class="stat-label">部门成员</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <div class="stat-card">
-                                                            <div class="stat-icon">
-                                                                <i class="bi bi-briefcase"></i>
-                                                            </div>
-                                                            <div class="stat-content">
-                                                                <h3 class="stat-value" id="avgWorkload">0</h3>
-                                                                <p class="stat-label">平均工作量</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <div class="stat-card">
-                                                            <div class="stat-icon">
-                                                                <i class="bi bi-stopwatch"></i>
-                                                            </div>
-                                                            <div class="stat-content">
-                                                                <h3 class="stat-value" id="avgEfficiency">0%</h3>
-                                                                <p class="stat-label">处理效率</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <div class="stat-card">
-                                                            <div class="stat-icon">
-                                                                <i class="bi bi-star"></i>
-                                                            </div>
-                                                            <div class="stat-content">
-                                                                <h3 class="stat-value" id="avgSatisfaction">0</h3>
-                                                                <p class="stat-label">满意度评分</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+    <!-- 成员统计卡片 -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="totalMembers">0</h3>
+                    <p class="stat-label">部门成员</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-briefcase"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="avgWorkload">0</h3>
+                    <p class="stat-label">平均工作量</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-stopwatch"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="avgEfficiency">0%</h3>
+                    <p class="stat-label">处理效率</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-star"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-value" id="avgSatisfaction">0</h3>
+                    <p class="stat-label">满意度评分</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                                                <!-- 成员列表和绩效管理 -->
-                                                <div class="card">
-                                                    <div class="card-header">
-                                                        <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                                                            <li class="nav-item">
-                                                                <a class="nav-link active" data-bs-toggle="tab" href="#memberList">
-                                                                    <i class="bi bi-list-ul"></i> 成员列表
-                                                                </a>
-                                                            </li>
+    <!-- 成员列表和绩效管理 -->
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#memberList">
+                        <i class="bi bi-list-ul"></i> 成员列表
+                    </a>
+                </li>
 
-                                                        </ul>
-                                                    </div>
+            </ul>
+        </div>
 
-                                                    <div class="card-body">
-                                                        <div class="tab-content">
-                                                            <!-- 成员列表标签页 -->
-                                                            <div class="tab-pane fade show active" id="memberList">
-                                                                <!-- 搜索和筛选 -->
-                                                                <div class="member-filters mb-4">
-                                                                    <div class="row g-3">
-                                                                        <div class="col-md-4">
-                                                                            <input type="text" class="form-control" id="searchKeyword"
-                                                                                   placeholder="搜索成员姓名/工号">
-                                                                        </div>
-                                                                        <div class="col-md-3">
-                                                                            <select class="form-select" id="workloadFilter">
-                                                                                <option value="">工作量筛选</option>
-                                                                                <option value="low">较低 (1-2)</option>
-                                                                                <option value="normal">适中 (3-4)</option>
-                                                                                <option value="high">较高 (>=5)</option>
-                                                                            </select>
-                                                                        </div>
-                                                                        <div class="col-md-3">
-                                                                            <select class="form-select" id="processingEfficiency">
-                                                                                <option value="">绩效等级</option>
-                                                                                <option value="A">A (优秀)</option>
-                                                                                <option value="B">B (良好)</option>
-                                                                                <option value="C">C (一般)</option>
-                                                                                <option value="D">D (待改进)</option>
-                                                                            </select>
-                                                                        </div>
-                                                                        <div class="col-md-2">
-                                                                            <button type="button" class="btn btn-primary w-100" id="searchBtn">
-                                                                                <i class="bi bi-search"></i> 搜索
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
+        <div class="card-body">
+            <div class="tab-content">
+                <!-- 成员列表标签页 -->
+                <div class="tab-pane fade show active" id="memberList">
+                    <!-- 搜索和筛选 -->
+                    <div class="member-filters mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="searchKeyword"
+                                       placeholder="搜索成员姓名/工号">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-primary w-100" id="searchBtn">
+                                    <i class="bi bi-search"></i> 搜索
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
-                                                                <!-- 成员列表 -->
-                                                                <div class="table-responsive">
-                                                                    <table class="table">
-                                                                        <thead>
-                                                                        <tr>
-                                                                            <th>工号</th>
-                                                                            <th>姓名</th>
-                                                                            <th>当前工作量</th>
-                                                                            <th>处理效率</th>
-                                                                            <th>平均用时</th>
-                                                                            <th>满意度</th>
-                                                                            <th>本月绩效</th>
-                                                                            <th>操作</th>
-                                                                        </tr>
-                                                                        </thead>
-                                                                        <tbody id="memberTableBody">
-                                                                        <!-- 通过JS动态填充 -->
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
+                    <!-- 成员列表 -->
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>工号</th>
+                                <th>姓名</th>
+                                <th>当前工作量</th>
+                                <th>处理效率</th>
+                                <th>平均用时</th>
+                                <th>满意度</th>
+                                <th>本月绩效</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody id="memberTableBody">
+                            <!-- 通过JS动态填充 -->
+                            </tbody>
+                        </table>
+                    </div>
 
-                                                                <!-- 分页控件 -->
-                                                                <div class="d-flex justify-content-between align-items-center mt-4">
-                                                                    <div class="page-info">
-                                                                        共 <span id="totalCount">0</span> 条记录
-                                                                    </div>
-                                                                    <ul class="pagination mb-0" id="pagination"></ul>
-                                                                </div>
-                                                            </div>
+                    <!-- 分页控件 -->
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div class="page-info">
+                            共 <span id="totalCount">0</span> 条记录
+                        </div>
+                        <ul class="pagination mb-0" id="pagination"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
+    <!-- 成员详情抽屉 -->
+    <div class="member-drawer" id="memberDrawer">
+        <div class="drawer-header">
+            <h5 class="mb-0">成员详情</h5>
+            <button type="button" class="btn-close" id="closeDrawerBtn"></button>
+        </div>
+        <div class="drawer-body">
+            <!-- 基本信息 -->
+            <div class="member-info mb-4">
+                <div class="member-avatar">
+                    <img src="/images/default-avatar.png" alt="成员头像" id="memberAvatar">
+                </div>
+                <div class="member-basic-info">
+                    <h5 id="memberName"></h5>
+                    <p class="text-muted mb-0" id="memberPosition"></p>
+                </div>
+            </div>
 
-                                            <!-- 成员详情抽屉 -->
-                                            <div class="member-drawer" id="memberDrawer">
-                                                <div class="drawer-header">
-                                                    <h5 class="mb-0">成员详情</h5>
-                                                    <button type="button" class="btn-close" id="closeDrawerBtn"></button>
-                                                </div>
-                                                <div class="drawer-body">
-                                                    <!-- 基本信息 -->
-                                                    <div class="member-info mb-4">
-                                                        <div class="member-avatar">
-                                                            <img src="/images/default-avatar.png" alt="成员头像" id="memberAvatar">
-                                                        </div>
-                                                        <div class="member-basic-info">
-                                                            <h5 id="memberName"></h5>
-                                                            <p class="text-muted mb-0" id="memberPosition"></p>
-                                                        </div>
-                                                    </div>
+            <!-- 工作统计 -->
+            <div class="stats-section mb-4">
+                <h6 class="section-title">工作统计</h6>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="stat-item">
+                            <div class="stat-label">处理工单数</div>
+                            <div class="stat-value" id="totalTickets">0</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-item">
+                            <div class="stat-label">当前工作量</div>
+                            <div class="stat-value" id="currentWorkload">0</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-item">
+                            <div class="stat-label">平均处理时长</div>
+                            <div class="stat-value" id="avgProcessTime">0小时</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-item">
+                            <div class="stat-label">及时完成率</div>
+                            <div class="stat-value" id="completionRate">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                                                    <!-- 工作统计 -->
-                                                    <div class="stats-section mb-4">
-                                                        <h6 class="section-title">工作统计</h6>
-                                                        <div class="row g-3">
-                                                            <div class="col-6">
-                                                                <div class="stat-item">
-                                                                    <div class="stat-label">处理工单数</div>
-                                                                    <div class="stat-value" id="totalTickets">0</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <div class="stat-item">
-                                                                    <div class="stat-label">当前工作量</div>
-                                                                    <div class="stat-value" id="currentWorkload">0</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <div class="stat-item">
-                                                                    <div class="stat-label">平均处理时长</div>
-                                                                    <div class="stat-value" id="avgProcessTime">0小时</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <div class="stat-item">
-                                                                    <div class="stat-label">及时完成率</div>
-                                                                    <div class="stat-value" id="completionRate">0%</div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+            <!-- 近期工单 -->
+            <div class="recent-tickets mb-4">
+                <h6 class="section-title">近期工单</h6>
+                <div class="ticket-list" id="recentTicketsList"></div>
+            </div>
 
-                                                    <!-- 近期工单 -->
-                                                    <div class="recent-tickets mb-4">
-                                                        <h6 class="section-title">近期工单</h6>
-                                                        <div class="ticket-list" id="recentTicketsList"></div>
-                                                    </div>
+            <!-- 效率分析 -->
+            <div class="efficiency-analysis">
+                <h6 class="section-title">效率分析</h6>
+                <canvas id="memberEfficiencyChart"></canvas>
+            </div>
+        </div>
+    </div>
+</main>
 
-                                                    <!-- 效率分析 -->
-                                                    <div class="efficiency-analysis">
-                                                        <h6 class="section-title">效率分析</h6>
-                                                        <canvas id="memberEfficiencyChart"></canvas>
-                                                    </div>
-                                                </div>
-                                            </div>
+<!-- 查看详细成员信息 -->
+<div class="modal fade" id="Modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleModalTitle">查看员工信息</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm" class="needs-validation" novalidate>
 
-
-                                            <!-- 查看详细成员信息 -->
-                                            <div class="modal fade" id="Modal" tabindex="-1">
-                                                <div class="modal-dialog">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title" id="roleModalTitle">查看员工信息</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <form id="userForm" class="needs-validation" novalidate>
-
-                                                                <div class="mb-3">
-                                                                    <label class="form-label required">工号</label>
-                                                                    <input type="text" class="form-control" id="userId1" name="userId1"
-                                                                           required maxlength="50">
-                                                                    <div class="invalid-feedback">工号</div>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label required">姓名</label>
-                                                                    <input type="text" class="form-control" id="realName1" name="realName1"
-                                                                           required maxlength="50">
-                                                                    <div class="invalid-feedback">姓名</div>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                <label class="form-label required">当前工作量</label>
-                                                                <input type="text" class="form-control" id="currentWorkload1" name="currentWorkload1"
-                                                                       required maxlength="50">
-                                                                <div class="invalid-feedback">当前工作量</div>
-                                                            </div>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label required">处理效率</label>
-                                                                    <input type="text" class="form-control" id="processingEfficiency1" name="processingEfficiency1"
-                                                                           required maxlength="50">
-                                                                    <div class="invalid-feedback">处理效率</div>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label required">平均用时</label>
-                                                                    <input type="text" class="form-control" id="averageProcessingTime1" name="averageProcessingTime1"
-                                                                           required maxlength="50">
-                                                                    <div class="invalid-feedback">平均用时</div>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label required">满意度</label>
-                                                                    <input type="text" class="form-control" id="satisfaction1" name="satisfaction1"
-                                                                           required maxlength="50">
-                                                                    <div class="invalid-feedback">满意度</div>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label required">本月绩效</label>
-                                                                    <input type="text" class="form-control" id="monthlyPerformance1" name="monthlyPerformance1"
-                                                                           required maxlength="50">
-                                                                    <div class="invalid-feedback">本月绩效</div>
-                                                                </div>
-                                                            </form>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Scripts -->
-                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-                                            <script src="/js/utils/notify-util.js"></script>
-                                            <script src="/config/constants.js"></script>
-                                            <script src="/js/utils/validator-util.js"></script>
-                                            <script src="/js/components/layout/navbar.js"></script>
-                                            <script src="/pages/dept/js/dept-members.js"></script>
+                    <div class="mb-3">
+                        <label class="form-label required">工号</label>
+                        <input type="text" class="form-control" id="userId1" name="userId1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">工号</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">姓名</label>
+                        <input type="text" class="form-control" id="realName1" name="realName1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">姓名</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">当前工作量</label>
+                        <input type="text" class="form-control" id="currentWorkload1" name="currentWorkload1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">当前工作量</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">处理效率</label>
+                        <input type="text" class="form-control" id="processingEfficiency1" name="processingEfficiency1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">处理效率</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">平均用时</label>
+                        <input type="text" class="form-control" id="averageProcessingTime1" name="averageProcessingTime1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">平均用时</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">满意度</label>
+                        <input type="text" class="form-control" id="satisfaction1" name="satisfaction1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">满意度</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">本月绩效</label>
+                        <input type="text" class="form-control" id="monthlyPerformance1" name="monthlyPerformance1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">本月绩效</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
-                                            </body>
-                                            </html>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+<script src="/js/utils/notify-util.js"></script>
+<script src="/config/constants.js"></script>
+<script src="/js/utils/validator-util.js"></script>
+<script src="/js/components/layout/navbar.js"></script>
+<script src="/pages/dept/js/dept-members.js"></script>
+
+
+</body>
+</html>
