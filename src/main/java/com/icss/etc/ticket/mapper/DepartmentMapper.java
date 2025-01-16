@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
 import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
+import com.icss.etc.ticket.entity.vo.DeptMembersDetailVO;
 import com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO;
 import org.apache.ibatis.annotations.Param;
 

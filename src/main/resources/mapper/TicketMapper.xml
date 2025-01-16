@@ -437,14 +437,12 @@
     </update>
 <!--    获取用户当前工作量-->
     <select id="countCrrentWorkload" resultType="integer">
-        <![CDATA[
         select count(1)
         from t_ticket
         where is_deleted = 0
           and processor_id = #{userId}
           and status = 1
-        HAVING count(1) <= #{workloadFilter}
-        ]]>
+        <if test="workloadFilter != null">HAVING count(1) <![CDATA[<=]]> #{workloadFilter}</if>
     </select>
 
     <!-- 获取个人工单统计 -->

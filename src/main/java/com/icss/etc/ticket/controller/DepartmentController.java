@@ -168,6 +168,16 @@ public class DepartmentController {
         return R.OK(userService.addMembers(map));
     }
 
+    /**
+     * dept-members.html 的查询详情
+     * @param userId
+     * @return
+     */
+    @GetMapping("/member/{userId}")
+    public R getDeptMemberDetial(@PathVariable Long userId){
+        return R.OK(userService.getDeptMemberDetial(userId));
+    }
+
 
 
 

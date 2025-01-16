@@ -11,6 +11,7 @@ import com.icss.etc.ticket.entity.dto.user.UserCreateDTO;
 import com.icss.etc.ticket.entity.vo.DeptMemberVO;
 import com.icss.etc.ticket.entity.dto.RegisteredDTO;
 import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.entity.vo.DeptMembersDetailVO;
 import com.icss.etc.ticket.entity.vo.UserVO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.enums.CodeEnum;
@@ -335,6 +336,25 @@ public class UserServiceImpl implements UserService{
             throw e;
         }
         return i;
+    }
+
+    @Override
+    public DeptMembersDetailVO getDeptMemberDetial(Long userId) {
+        UserVO user = userMapper.selectUserVO(userId);
+        Double avgProcessTime = ticketMapper.getAvgProcessTime(userId, "");
+        if(avgProcessTime == null ) avgProcessTime = 0.0;
+        return DeptMembersDetailVO.builder().userId(userId)
+                .realName(user.getRealName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .status(user.getStatus())
+                .roleName(user.getRoleName())
+                .currentWorkload(ticketMapper.countCrrentWorkload(userId, 0))
+                .processingEfficiency(GradeCalculator.getGrade(avgProcessTime))
+                .averageProcessingTime(avgProcessTime)
+                .satisfaction(ticketMapper.getSatisfaction(userId))
+                .monthlyPerformance(ticketMapper.getMonthlyPerformance(userId))
+                .build();
     }
 
     @Override

@@ -483,6 +483,19 @@
     </if>
     order by u.create_time desc ,u.username desc
   </select>
+  <select id="selectUserVO" resultType="com.icss.etc.ticket.entity.vo.UserVO">
+    select
+    u.user_id,u.username,u.real_name,u.create_time,u.status,u.email,u.phone,
+    r.role_name,r.role_id,r.base_role_code,
+    d.department_name,d.department_id
+    from t_user u,t_user_role ur,t_role r,t_department d
+    where u.user_id = ur.user_id
+    and ur.role_id = r.role_id
+    and d.department_id = u.department_id
+    and u.is_deleted = 0
+    and u.user_id = #{userId}
+    order by u.create_time desc ,u.username desc
+  </select>
 
   <update id="changeUserStatus">
     update t_user

@@ -106,12 +106,6 @@ class Navbar {
             ],
             'DEPT': [
                 {
-                    id: 'dept-workspace',
-                    title: '部门工作台',
-                    icon: 'bi bi-grid',
-                    url: '/pages/dept/dept-workspace.html'
-                },
-                {
                     id: 'dept-members',
                     title: '部门成员',
                     icon: 'bi bi-people',

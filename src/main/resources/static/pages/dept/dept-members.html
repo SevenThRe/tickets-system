@@ -9,6 +9,8 @@
     <link href="/css/navbar.css" rel="stylesheet">
     <link href="/css/notify.css" rel="stylesheet">
     <link href="/pages/dept/css/dept-members.css" rel="stylesheet">
+
+
 </head>
 
 <body>
@@ -89,11 +91,7 @@
                         <i class="bi bi-list-ul"></i> 成员列表
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="tab" href="#performance">
-                        <i class="bi bi-graph-up"></i> 绩效分析
-                    </a>
-                </li>
+
             </ul>
         </div>
 
@@ -107,23 +105,6 @@
                             <div class="col-md-4">
                                 <input type="text" class="form-control" id="searchKeyword"
                                        placeholder="搜索成员姓名/工号">
-                            </div>
-                            <div class="col-md-3">
-                                <select class="form-select" id="workloadFilter">
-                                    <option value="">工作量筛选</option>
-                                    <option value="low">较低 (1-2)</option>
-                                    <option value="normal">适中 (3-4)</option>
-                                    <option value="high">较高 (>=5)</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <select class="form-select" id="performanceFilter">
-                                    <option value="">绩效等级</option>
-                                    <option value="A">A (优秀)</option>
-                                    <option value="B">B (良好)</option>
-                                    <option value="C">C (一般)</option>
-                                    <option value="D">D (待改进)</option>
-                                </select>
                             </div>
                             <div class="col-md-2">
                                 <button type="button" class="btn btn-primary w-100" id="searchBtn">
@@ -162,114 +143,149 @@
                         <ul class="pagination mb-0" id="pagination"></ul>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- 绩效分析标签页 -->
-                <div class="tab-pane fade" id="performance">
-                    <div class="row g-4">
-                        <!-- 整体绩效分布 -->
-                        <div class="col-md-6">
-                            <div class="performance-chart-card">
-                                <h6 class="chart-title">绩效等级分布</h6>
-                                <canvas id="performanceDistChart"></canvas>
-                            </div>
+
+    <!-- 成员详情抽屉 -->
+    <div class="member-drawer" id="memberDrawer">
+        <div class="drawer-header">
+            <h5 class="mb-0">成员详情</h5>
+            <button type="button" class="btn-close" id="closeDrawerBtn"></button>
+        </div>
+        <div class="drawer-body">
+            <!-- 基本信息 -->
+            <div class="member-info mb-4">
+                <div class="member-avatar">
+                    <img src="/images/default-avatar.png" alt="成员头像" id="memberAvatar">
+                </div>
+                <div class="member-basic-info">
+                    <h5 id="memberName"></h5>
+                    <p class="text-muted mb-0" id="memberPosition"></p>
+                </div>
+            </div>
+
+            <!-- 工作统计 -->
+            <div class="stats-section mb-4">
+                <h6 class="section-title">工作统计</h6>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="stat-item">
+                            <div class="stat-label">处理工单数</div>
+                            <div class="stat-value" id="totalTickets">0</div>
                         </div>
-
-                        <!-- 工作量分布 -->
-                        <div class="col-md-6">
-                            <div class="performance-chart-card">
-                                <h6 class="chart-title">工作量分布</h6>
-                                <canvas id="workloadDistChart"></canvas>
-                            </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-item">
+                            <div class="stat-label">当前工作量</div>
+                            <div class="stat-value" id="currentWorkload">0</div>
                         </div>
-
-                        <!-- 效率趋势 -->
-                        <div class="col-md-12">
-                            <div class="performance-chart-card">
-                                <h6 class="chart-title">效率趋势</h6>
-                                <canvas id="efficiencyTrendChart"></canvas>
-                            </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-item">
+                            <div class="stat-label">平均处理时长</div>
+                            <div class="stat-value" id="avgProcessTime">0小时</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-item">
+                            <div class="stat-label">及时完成率</div>
+                            <div class="stat-value" id="completionRate">0%</div>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- 近期工单 -->
+            <div class="recent-tickets mb-4">
+                <h6 class="section-title">近期工单</h6>
+                <div class="ticket-list" id="recentTicketsList"></div>
+            </div>
+
+            <!-- 效率分析 -->
+            <div class="efficiency-analysis">
+                <h6 class="section-title">效率分析</h6>
+                <canvas id="memberEfficiencyChart"></canvas>
             </div>
         </div>
     </div>
 </main>
 
-<!-- 成员详情抽屉 -->
-<div class="member-drawer" id="memberDrawer">
-    <div class="drawer-header">
-        <h5 class="mb-0">成员详情</h5>
-        <button type="button" class="btn-close" id="closeDrawerBtn"></button>
-    </div>
-    <div class="drawer-body">
-        <!-- 基本信息 -->
-        <div class="member-info mb-4">
-            <div class="member-avatar">
-                <img src="/images/default-avatar.png" alt="成员头像" id="memberAvatar">
+<!-- 查看详细成员信息 -->
+<div class="modal fade" id="Modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleModalTitle">查看员工信息</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="member-basic-info">
-                <h5 id="memberName"></h5>
-                <p class="text-muted mb-0" id="memberPosition"></p>
+            <div class="modal-body">
+                <form id="userForm" class="needs-validation" novalidate>
+
+                    <div class="mb-3">
+                        <label class="form-label required">工号</label>
+                        <input type="text" class="form-control" id="userId1" name="userId1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">工号</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">姓名</label>
+                        <input type="text" class="form-control" id="realName1" name="realName1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">姓名</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">当前工作量</label>
+                        <input type="text" class="form-control" id="currentWorkload1" name="currentWorkload1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">当前工作量</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">处理效率</label>
+                        <input type="text" class="form-control" id="processingEfficiency1" name="processingEfficiency1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">处理效率</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">平均用时</label>
+                        <input type="text" class="form-control" id="averageProcessingTime1" name="averageProcessingTime1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">平均用时</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">满意度</label>
+                        <input type="text" class="form-control" id="satisfaction1" name="satisfaction1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">满意度</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">本月绩效</label>
+                        <input type="text" class="form-control" id="monthlyPerformance1" name="monthlyPerformance1"
+                               required maxlength="50">
+                        <div class="invalid-feedback">本月绩效</div>
+                    </div>
+                </form>
             </div>
-        </div>
-
-        <!-- 工作统计 -->
-        <div class="stats-section mb-4">
-            <h6 class="section-title">工作统计</h6>
-            <div class="row g-3">
-                <div class="col-6">
-                    <div class="stat-item">
-                        <div class="stat-label">处理工单数</div>
-                        <div class="stat-value" id="totalTickets">0</div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="stat-item">
-                        <div class="stat-label">当前工作量</div>
-                        <div class="stat-value" id="currentWorkload">0</div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="stat-item">
-                        <div class="stat-label">平均处理时长</div>
-                        <div class="stat-value" id="avgProcessTime">0小时</div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="stat-item">
-                        <div class="stat-label">及时完成率</div>
-                        <div class="stat-value" id="completionRate">0%</div>
-                    </div>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
             </div>
-        </div>
-
-        <!-- 近期工单 -->
-        <div class="recent-tickets mb-4">
-            <h6 class="section-title">近期工单</h6>
-            <div class="ticket-list" id="recentTicketsList"></div>
-        </div>
-
-        <!-- 效率分析 -->
-        <div class="efficiency-analysis">
-            <h6 class="section-title">效率分析</h6>
-            <canvas id="memberEfficiencyChart"></canvas>
         </div>
     </div>
 </div>
+
+
 
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
 <script src="/js/utils/notify-util.js"></script>
-<script src="/js/utils/heartbeat-manager.js"></script>
-
 <script src="/config/constants.js"></script>
 <script src="/js/utils/validator-util.js"></script>
 <script src="/js/components/layout/navbar.js"></script>
 <script src="/pages/dept/js/dept-members.js"></script>
+
 
 </body>
 </html>
