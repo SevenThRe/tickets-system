@@ -3,6 +3,7 @@ package com.icss.etc.ticket.service;
 import com.icss.etc.ticket.entity.Department;
 import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
 import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
+import com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -97,5 +98,7 @@ public interface DepartmentService {
 
     List<Map<String, Object>> getDepartmentTree();
 
+
+    List<DepartmentWorkloadVO> getWorkloadStats();
 
 }

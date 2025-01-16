@@ -8,8 +8,10 @@ import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
 import com.icss.etc.ticket.entity.vo.TodoStatsVO;
 import com.icss.etc.ticket.entity.vo.ticket.TicketStatisticsVO;
+import com.icss.etc.ticket.enums.TicketStatus;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -110,6 +112,31 @@ public interface TicketService {
      * @return 类型名称
      */
     Map<String, Integer> countByStatus(Long userId);
+
+    /**
+     * 统计指定状态的工单数量
+     */
+    Long countByStatus(TicketStatus status);
+
+    /**
+     * 计算平均满意度
+     */
+    BigDecimal calculateAvgSatisfaction();
+
+    /**
+     * 获取工单趋势数据
+     */
+    List<RecentTicketDTO> getTicketTrends(int days);
+
+    /**
+     * 获取工单类型分布
+     */
+    List<TicketTypeStatsDTO> getTicketTypeDistribution();
+
+    /**
+     * 获取最近工单列表
+     */
+    List<RecentTicketDTO> getRecentTickets(int limit);
 
     /**
      * 根据工单Id查询工单是否没有被评价过

@@ -622,6 +622,35 @@
         where is_deleted = 0 and status = 0
     </select>
 
+    <delete id="countBySS">
+        SELECT COUNT(1) FROM t_ticket WHERE status = #{status} AND is_deleted = 0
+    </delete>
+
+    <select id="calAvgSatisfaction" resultType="java.math.BigDecimal">
+        SELECT AVG(evaluation_score)
+        FROM t_ticket_record
+        WHERE evaluation_score IS NOT NULL AND is_deleted = 0
+    </select>
+
+    <select id="selectRecentTickets" resultType="com.icss.etc.ticket.entity.dto.ticket.RecentTicketDTO">
+        SELECT DATE(create_time) AS date,
+        COUNT(1) AS created,
+        SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed
+        FROM t_ticket
+        WHERE create_time >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+        AND is_deleted = 0
+        GROUP BY DATE(create_time)
+        ORDER BY date
+    </select>
+
+    <select id="getTicketTypeDistribution" resultType="com.icss.etc.ticket.entity.dto.ticket.TicketTypeStatsDTO">
+        SELECT t.type_id, tt.type_name, COUNT(1) AS count
+        FROM t_ticket t
+                 LEFT JOIN t_ticket_type tt ON t.type_id = tt.type_id
+        WHERE t.is_deleted = 0
+        GROUP BY t.type_id, tt.type_name
+    </select>
+
     <!--    <select id="countCompletedTickets" resultType="java.lang.Integer">-->
 <!--        SELECT COUNT(1)-->
 <!--        FROM t_ticket-->

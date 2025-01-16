@@ -59,7 +59,7 @@ class Dashboard {
             this.updateCurrentTime();
         } catch (error) {
             console.error('仪表板初始化失败:', error);
-            this._showError('加载数据失败，请刷新页面重试');
+            NotifyUtil.error('加载数据失败，请刷新页面重试');
         }
     }
 
@@ -157,24 +157,43 @@ class Dashboard {
      * 获取趋势图数据
      */
     getTrendChartData() {
-        const trends = this.state.stats.trends;
+        const trends = this.state.stats?.trends || [];
+        const days = 7; // 显示最近7天
+        const dates = [];
+        const created = [];
+        const completed = [];
+
+        // 生成日期和数据
+        for(let i = days - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            dates.push(date.toLocaleDateString());
+
+            const trend = trends.find(t =>
+                new Date(t.date).toLocaleDateString() === date.toLocaleDateString()
+            );
+            created.push(trend?.created || 0);
+            completed.push(trend?.completed || 0);
+        }
 
         return {
-            labels: trends.map(item => item.date),
+            labels: dates,
             datasets: [
                 {
                     label: '新建工单',
-                    data: trends.map(item => item.created),
+                    data: created,
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4
+                    tension: 0.4,
+                    fill: true
                 },
                 {
                     label: '完成工单',
-                    data: trends.map(item => item.completed),
+                    data: completed,
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.4
+                    tension: 0.4,
+                    fill: true
                 }
             ]
         };
@@ -251,20 +270,30 @@ class Dashboard {
      */
     updateStats() {
         const { stats } = this.state;
+        if (!stats) return;
 
-        // 更新数值
-        Object.entries(this.$statsCards).forEach(([key, element]) => {
-            const value = stats[key];
-            element.text(typeof value === 'number' ?
-                value.toLocaleString() : value);
-        });
+        // 更新统计卡片
+        this.$statsCards.pending.text(stats.pendingCount || 0);
+        this.$statsCards.processing.text(stats.processingCount || 0);
+        this.$statsCards.completed.text(stats.completedCount || 0);
 
-        // 更新图表
-        this.charts.trend.data = this.getTrendChartData();
-        this.charts.trend.update();
+        // 格式化满意度显示
+        const satisfaction = stats.avgSatisfaction || 0;
+        this.$statsCards.avgSatisfaction.text(
+            satisfaction.toFixed(1) + ' / 5.0'
+        );
 
-        this.charts.type.data = this.getTypeChartData();
-        this.charts.type.update();
+        // 更新工单趋势图
+        if (this.charts.trend) {
+            this.charts.trend.data = this.getTrendChartData();
+            this.charts.trend.update();
+        }
+
+        // 更新工单类型分布图
+        if (this.charts.type) {
+            this.charts.type.data = this.getTypeChartData();
+            this.charts.type.update();
+        }
     }
 
     /**
@@ -307,13 +336,36 @@ class Dashboard {
         if (this.state.loading) return;
 
         try {
-            await this.loadInitialData();
+            this.state.loading = true;
+            this._showLoading();
+
+            const [stats, tickets] = await Promise.all([
+                this.loadStats(),
+                this.loadRecentTickets()
+            ]);
+
+            this.state.stats = stats;
+            this.state.recentTickets = tickets;
+
+            // 更新UI
             this.updateStats();
             this.renderTicketList();
+            this._updateLastUpdateTime();
+
         } catch (error) {
             console.error('刷新数据失败:', error);
-            this._showError('刷新数据失败，请重试');
+            NotifyUtil.error('刷新数据失败，请重试');
+        } finally {
+            this.state.loading = false;
+            this._hideLoading();
         }
+    }
+
+    _updateLastUpdateTime() {
+        const now = new Date();
+        $('#lastUpdateTime').text(
+            `最后更新: ${now.toLocaleTimeString()}`
+        );
     }
 
     /**
@@ -330,27 +382,20 @@ class Dashboard {
         window.location.href = `/admin/ticket-management.html?id=${ticketId}`;
     }
 
+
     /**
      * 获取状态文本
      */
     getStatusText(status) {
-        return {
-            'PENDING': '待处理',
-            'PROCESSING': '处理中',
-            'COMPLETED': '已完成',
-            'CLOSED': '已关闭'
-        }[status] || status;
+        return TicketUtil.getStatusText(status);
     }
 
     /**
      * 获取优先级文本
      */
     getPriorityText(priority) {
-        return {
-            'HIGH': '高',
-            'MEDIUM': '中',
-            'LOW': '低'
-        }[priority] || priority;
+        return TicketUtil.getPriorityText(priority);
+
     }
 
     /**
@@ -378,45 +423,30 @@ class Dashboard {
     }
 
     /**
-     * 显示错误消息
-     * @private
-     */
-    _showError(message) {
-        const alertHtml = `
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        this.$container.prepend(alertHtml);
-
-        // 3秒后自动关闭
-        setTimeout(() => {
-            $('.alert').alert('close');
-        }, 3000);
-    }
-
-    /**
      * 组件销毁
      */
     destroy() {
-        // 清理定时器
-        if (this.timeInterval) {
-            clearInterval(this.timeInterval);
-        }
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
         }
 
         // 销毁图表实例
-        Object.values(this.charts).forEach(chart => {
-            chart.destroy();
-        });
+        if (this.charts.trend) {
+            this.charts.trend.destroy();
+        }
+        if (this.charts.type) {
+            this.charts.type.destroy();
+        }
 
         // 解绑事件
         $('#refreshBtn').off('click');
         $('#viewAllBtn').off('click');
         this.$ticketList.off('click');
+
+        // 清理DOM引用
+        this.$statsCards = null;
+        this.$charts = null;
+        this.$ticketList = null;
 
         // 清理状态
         this.state = null;

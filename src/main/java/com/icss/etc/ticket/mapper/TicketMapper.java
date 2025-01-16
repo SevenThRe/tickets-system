@@ -2,6 +2,7 @@ package com.icss.etc.ticket.mapper;
 
 import com.icss.etc.ticket.entity.Ticket;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,8 @@ public interface TicketMapper {
      */
     Map<TicketStatus, Integer> countByStatus(@Param("userId") Long userId);
 
+
+    Long countBySS(TicketStatus status);
     /**
      * 统计用户相关工单数量
      */
@@ -208,4 +211,10 @@ public interface TicketMapper {
      * @return 待分配工单列表
      */
     List<Ticket> selectPendingTickets();
+
+    BigDecimal calAvgSatisfaction();
+
+    List<RecentTicketDTO> selectRecentTickets(@Param("days") int days);
+
+    List<TicketTypeStatsDTO> getTicketTypeDistribution();
 }

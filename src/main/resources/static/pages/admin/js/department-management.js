@@ -16,6 +16,8 @@ class DepartmentManagement {
         this.$searchResults = $('#memberSearchResults')
         this.$memberBody = $('#memberBody');
         this.debounceTimer = null;
+        this.$parentDepartment = $('#parentDepartment');
+
 
         this.validationRules = {
             departmentName: {
@@ -60,6 +62,7 @@ class DepartmentManagement {
             searchResults: [],        // 成员搜索结果
             selectedMembers: new Set(), // 选中待添加的成员
             isEdit: false            // 是否处理编辑状态
+
         };
         this._bindFormValidation();
         this.$departmentTree.on('click', '.department-node', (e) => {
@@ -102,7 +105,7 @@ class DepartmentManagement {
 
     async init() {
         try {
-            // await this._loadDepartments(); 废弃
+            await this._loadDepartments();
             await this._loadDepartmentTrees();
             // 在这里缓存 DOM 元素，确保它们已经加载
             this.$departmentTree = $('#departmentTree');
@@ -176,9 +179,9 @@ class DepartmentManagement {
         const department = da.department;
         $('#departmentId').val(department.departmentId);  // 隐藏字段，仅用于回显
         $('#departmentName').val(department.departmentName);
-        $('#managerId').val(da.charge ? charge.userId : '请选择部门负责人');
+        $('#managerId').val(da.charge ? da.charge.userId : '请选择部门负责人');
 
-        department.parentId ? $('#parentDepartment').val(department.parentId) :$('#parentDepartment').val('无上级部门');
+        department.parentId ? this.$parentDepartment.val(department.parentId) :this.$parentDepartment.val('无上级部门');
 
         $('#deptLevel').val(department.deptLevel);
         $('#description').val(department.description);
@@ -195,7 +198,7 @@ class DepartmentManagement {
             departmentId: this.state.currentDepartment?.departmentId, // 编辑时使用
             departmentName: $('#departmentName').val().trim(),
             managerId: $('#managerId').val() || null,
-            parentId: $('#parentDepartment').val() || null,
+            parentId: this.$parentDepartment.val() || null,
             deptLevel: Number($('#deptLevel').val()),
             description: $('#description').val()?.trim() || null,
             status: $('#status').prop('checked') ? 1 : 0,
@@ -349,6 +352,8 @@ class DepartmentManagement {
         });
 
 
+
+
     }
 
 
@@ -362,7 +367,7 @@ class DepartmentManagement {
             this._showLoading();
 
             const response = await $.ajax({
-                url: '/api/departments',
+                url: '/api/departments/list',
                 method: 'GET'
             });
 
@@ -524,12 +529,12 @@ class DepartmentManagement {
         };
 
         const options = ['<option value="">无上级部门</option>'];
-        options.push(buildOptions(this.state.departmentsTrees));
-        $('#parentDepartment').html(options.join(''));
+        options.push(buildOptions(this.state.departments));
+        this.$parentDepartment.html(options.join(''));
 
         // 选择正确的上级部门
         const selectedParentId = currentDepartment ? currentDepartment.parentId || '' : '';
-        $('#parentDepartment').val(selectedParentId);
+        this.$parentDepartment.val(selectedParentId);
     }
 
     async _getAvatarUrl(member) {
@@ -817,10 +822,10 @@ class DepartmentManagement {
      * @returns {Promise<void>}
      * @private
      */
-    async _refreshDepartments() {
-        await this._loadDepartments();
-        this._renderDepartmentTree(this.state.departments);
-    }
+    // async _refreshDepartments() {
+    //     await this._loadDepartments();
+    //     this._renderDepartmentTree(this.state.departments);
+    // }
 
     /**
      * 禁用/启用表单
@@ -959,6 +964,7 @@ class DepartmentManagement {
 
         } catch(error) {
             NotifyUtil.error('加载部门信息失败:' + error.message);
+            throw error;
         } finally {
             this._hideLoading();
         }
