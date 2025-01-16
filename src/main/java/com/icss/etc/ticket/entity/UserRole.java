@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,6 +20,7 @@ import lombok.NoArgsConstructor;
  * 用户角色关联表
  */
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserRole implements Serializable {

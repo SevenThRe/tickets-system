@@ -3,6 +3,7 @@ package com.icss.etc.ticket.service;
 import com.github.pagehelper.PageInfo;
 import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.entity.TicketType;
+import com.icss.etc.ticket.entity.UserPermission;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
 import com.icss.etc.ticket.entity.vo.TodoStatsVO;
@@ -125,4 +126,12 @@ public interface TicketService {
      * 自动分配待处理工单
      */
     void autoAssignPendingTickets();
+
+    /**
+     * 检查操作权限
+     *
+     * @param checkOperationDTO 检查DTO
+     * @return true：有权限，false：无权限
+     */
+    UserPermission checkOperationPermission(CheckOperationDTO checkOperationDTO);
 }

@@ -40,7 +40,7 @@ public enum OperationType {
     /**
      * 备注
      */
-    Note(6);
+    COMMENT(6);
 
     private final int value;
 

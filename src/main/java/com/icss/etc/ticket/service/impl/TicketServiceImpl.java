@@ -614,6 +614,12 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
+    @Override
+    public UserPermission checkOperationPermission(CheckOperationDTO checkOperationDTO) {
+
+        return userRoleMapper.checkOperationPermission(checkOperationDTO);
+    }
+
     /**
      * 分配单个工单
      */

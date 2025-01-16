@@ -607,6 +607,8 @@ MyTickets.prototype._bindCreateTicketEvents = function() {
 };
 
 MyTickets.prototype._initFileUpload = function() {
+    const self = this;
+
     // 创建拖拽上传区域
     const $dropZone = $(`
         <div class="upload-dropzone">
@@ -614,41 +616,44 @@ MyTickets.prototype._initFileUpload = function() {
             拖拽文件到此处或点击上传
             <input type="file" id="attachments" name="attachments" multiple style="display: none;">
         </div>
-    `).insertAfter('#content');
+    `).insertAfter('#expectFinishTime');
 
     const $fileList = $('<div class="file-list mt-2"></div>').insertAfter($dropZone);
-    const $fileInput = $('#attachments');
+    const $fileInput = $dropZone.find('input[type="file"]'); // 直接找子元素而不是用ID选择器
 
-    // 点击上传区域触发文件选择
-    $dropZone.on('click', () => {
-        $fileInput.click();
+    // 修改点击事件处理
+    $dropZone.on('click', function(e) {
+        // 阻止事件冒泡导致的递归触发
+        if(e.target === this || $(e.target).hasClass('bi-cloud-upload')) {
+            $fileInput.trigger('click');
+        }
     });
 
     // 拖拽相关事件
     $dropZone.on({
-        dragover: (e) => {
+        dragover: function(e) {
             e.preventDefault();
             e.stopPropagation();
-            $dropZone.addClass('dragover');
+            $(this).addClass('dragover');
         },
-        dragleave: (e) => {
+        dragleave: function(e) {
             e.preventDefault();
             e.stopPropagation();
-            $dropZone.removeClass('dragover');
+            $(this).removeClass('dragover');
         },
-        drop: (e) => {
+        drop: function(e) {
             e.preventDefault();
             e.stopPropagation();
-            $dropZone.removeClass('dragover');
+            $(this).removeClass('dragover');
 
             const files = e.originalEvent.dataTransfer.files;
-            this._handleFiles(files, $fileList);
+            self._handleFiles(files, $fileList);
         }
     });
 
     // 文件选择变更事件
-    $fileInput.on('change', (e) => {
-        this._handleFiles(e.target.files, $fileList);
+    $fileInput.on('change', function(e) {
+        self._handleFiles(e.target.files, $fileList);
     });
 };
 
@@ -1336,18 +1341,7 @@ MyTickets.prototype._uploadAttachments = function(ticketId, files) {
         }
     });
 };
-/**
- * 获取优先级样式类
- * @param {number} priority - 优先级值(0:低, 1:中, 2:高)
- * @returns {string} 对应的CSS类名
- */
-MyTickets.prototype._getPriorityClass = function(priority) {
-    return (this.PRIORITY_MAP[priority] || this.PRIORITY_MAP['NORMAL']).class;
-};
 
-MyTickets.prototype._getPriorityText = function(priority) {
-    return (this.PRIORITY_MAP[priority] || this.PRIORITY_MAP['NORMAL']).text;
-};
 
 /**
  * 获取操作类型文本
@@ -1361,7 +1355,8 @@ MyTickets.prototype._getOperationText = function(operationType) {
         2: '处理工单',
         3: '完成工单',
         4: '关闭工单',
-        5: '转交工单'
+        5: '转交工单',
+        6: '备注工单'
     };
     return operationMap[operationType] || '未知操作';
 };

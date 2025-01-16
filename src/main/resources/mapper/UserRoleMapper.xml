@@ -125,4 +125,62 @@
     LEFT JOIN t_role on t_user_role.role_id = t_role.role_id
     where t_user_role.user_id = #{userId} and t_role.base_role_code != #{baseRoleCode}
   </select>
+
+  <select id="checkOperationPermission" resultType="com.icss.etc.ticket.entity.UserPermission">
+    SELECT
+      t.ticket_id AS ticketId,
+      CASE
+        WHEN (t.create_by = u.user_id
+          OR t.processor_id = u.user_id
+          OR r.base_role_code = 'ADMIN')
+          AND t.status != 3 THEN 1
+        ELSE 0
+        END AS canClose,
+      CASE
+        WHEN (t.create_by = u.user_id
+          OR r.base_role_code = 'ADMIN')
+          AND t.status = 2 THEN 1
+        ELSE 0
+        END AS canEvaluate,
+      CASE
+        WHEN (t.create_by = u.user_id
+          OR t.processor_id = u.user_id
+          OR r.base_role_code = 'ADMIN')
+          AND t.status NOT IN (2,
+                               3) THEN 1
+        ELSE 0
+        END AS canComment,
+      CASE
+        WHEN t.status = 0
+          AND t.processor_id IS NOT NULL
+          AND (d.manager_id = u.user_id
+            OR t.processor_id = u.user_id
+            OR r.base_role_code = 'ADMIN') THEN 1
+        ELSE 0
+        END AS canTransfer,
+      CASE
+      WHEN t.status = 1
+      AND t.processor_id IS NOT NULL
+      AND (
+      t.processor_id = u.user_id
+      OR r.base_role_code = 'ADMIN') THEN 1
+      ELSE 0
+      END AS canProcess
+    FROM
+      t_ticket t
+        JOIN
+      t_user u
+      ON u.user_id = #{userId}
+        LEFT JOIN
+      t_department d
+      ON t.department_id = d.department_id
+        LEFT JOIN
+      t_user_role ur
+      ON u.user_id = ur.user_id
+        LEFT JOIN
+      t_role r
+      ON ur.role_id = r.role_id
+    WHERE
+      t.ticket_id = #{ticketId}
+  </select>
 </mapper>
