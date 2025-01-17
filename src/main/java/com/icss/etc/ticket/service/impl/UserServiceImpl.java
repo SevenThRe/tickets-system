@@ -357,6 +357,11 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    public List<User> selectDepartmentProcessors(Long departmentId) {
+        return userMapper.selectDepartmentProcessors(departmentId);
+    }
+
+    @Override
     public List<UserVO> getDeptMembersInDept(Long departmentId) {
         return userMapper.getDeptMembersInDept(departmentId);
     }

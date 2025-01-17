@@ -48,27 +48,27 @@ public class DeptMemberVO {
     /**
      * 当前工作量
      */
-    private Integer currentWorkload;
+    private Integer currentWorkload = 0;
 
     /**
      * 处理效率
      */
-    private String processingEfficiency;
+    private String processingEfficiency ="0";
 
     /**
      * 平均用时（以小时为单位）
      */
-    private Double averageProcessingTime;
+    private Double averageProcessingTime=0.0;
 
     /**
      * 满意度
      */
-    private Double satisfaction;
+    private Double satisfaction=0.0;
 
     /**
      * 本月绩效
      */
-    private Integer monthlyPerformance;
+    private Integer monthlyPerformance=0;
 
 
     /**

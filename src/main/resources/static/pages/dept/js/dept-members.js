@@ -1,5 +1,4 @@
 // 初始化页面
-var deptId = 0;
 let userId = JSON.parse(localStorage.getItem('userInfo')).userId;
 let pageNum =1;
 let pageSize = 10;
@@ -57,6 +56,69 @@ $(document).ready(function() {
 });
 
 
+function _renderDeptDetails(response) {
+    let totalCount = response.data.length;
+    $('#totalCount').text(totalCount);
+    $('#totalMembers').text(totalCount)
+    $('#memberTableBody').empty();
+    $.each(response.data, function(index, member) {
+        const row = `<tr>
+                        <td>${member.userId || 'N/A'}</td>
+                        <td>${member.realName || 'N/A'}</td>
+                        <td>${member.currentWorkload || '0'}</td>
+                        <td>${member.processingEfficiency|| 'N/A'}</td>
+                        <td>${member.averageProcessingTime || 'N/A'}小时</td>
+                        <td>${member.satisfaction || 'N/A'}</td>
+                        <td>${member.monthlyPerformance || 'N/A'}</td>
+                        <td><button type="button" class="btn btn-sm btn-primary view-member-btn" data-member-id="${member.userId}">查看</button></td></tr>`;
+        $('#memberTableBody').append(row);
+    });
+    if (response.pagination) {
+        renderPagination(response.pagination);
+    }
+
+    // 计算平均工作量
+    let totalWorkload = 0;
+    $.each(response.data, function(index, member) {
+        totalWorkload += member.currentWorkload;
+    });
+    let averageWorkload = totalWorkload / response.data.length;
+    $('#avgWorkload').text(averageWorkload.toFixed(2));
+
+    // 计算平均处理效率
+    let totalEfficiency = 0;
+    $.each(response.data, function(index, member) {
+        if (member.processingEfficiency!== null) {
+            // 替换大写字母
+            member.processingEfficiency = member.processingEfficiency.replace(/[A-Z]/g, function(match) {
+                return String.fromCharCode(match.charCodeAt(0) - 65);
+            });
+            // 将字符串转换为整数
+            member.processingEfficiency = parseInt(member.processingEfficiency);
+            // 处理 NaN 情况
+            if (isNaN(member.processingEfficiency)) {
+                member.processingEfficiency = 0;
+            }
+            // 累加处理效率
+            totalEfficiency += member.processingEfficiency;
+        } else {
+            // 如果 member.processingEfficiency 为 null，将其视为 0
+            member.processingEfficiency = 0;
+            totalEfficiency += 0;
+        }
+    });
+    const averageEfficiency = totalEfficiency / response.data.length;
+    $('#avgEfficiency').text(averageEfficiency.toFixed(2));
+
+    // 计算平均满意度
+    var totalSatisfaction = 0;
+    $.each(response.data, function(index, member) {
+        // 过滤所有的null
+        totalSatisfaction += member.satisfaction;
+    });
+    var averageSatisfaction = totalSatisfaction / response.data.length;
+    $('#avgSatisfaction').text(averageSatisfaction.toFixed(2));
+}
 
 // 加载成员列表
 function loadMemberList(page) {
@@ -64,7 +126,6 @@ function loadMemberList(page) {
     var keyword = $('#searchKeyword').val();
     var workloadFilter = $('#workloadFilter').val();
     var performanceFilter = $('#performanceFilter').val();
-
     $.ajax({
         url: '/api/departments/meblist',
         type: 'GET',
@@ -77,34 +138,8 @@ function loadMemberList(page) {
             performanceFilter: performanceFilter
         },
         success: function(response) {
-            if (response && response.data && response.data.length > 0) {
-                // 尝试从 data 数组的长度中获取总计数
-                var totalCount = response.data.length;
-                $('#totalCount').text(totalCount);
-                $('#memberTableBody').empty();
-                $.each(response.data, function(index, member) {
-                    const row = `<tr>
-                        <td>${member.userId || 'N/A'}</td>
-                        <td>${member.realName || 'N/A'}</td>
-                        <td>${member.currentWorkload || '0'}</td>
-                        <td>${member.processingEfficiency|| 'N/A'}</td>
-                        <td>${member.averageProcessingTime || 'N/A'}小时</td>
-                        <td>${member.satisfaction || 'N/A'}</td>
-                        <td>${member.monthlyPerformance || 'N/A'}</td>
-                        <td><button type="button" class="btn btn-sm btn-primary view-member-btn" data-member-id="${member.userId}">查看</button></td></tr>`;
-                    $('#memberTableBody').append(row);
-                });
-                $('#memberTableBody').on('click', '.view-member-btn', function() {
-                    // var memberId = $(this).data('member-id');
-                    var memberId = $(this).data('member-id');
-                    var member = response.data.find(m => m.userId === memberId); // 查找对应的成员信息
-
-                    // memberId
-                    seleselectModal(member);
-                });
-                if (response.pagination) {
-                    renderPagination(response.pagination);
-                }
+            if (response.code===200) {
+               _renderDeptDetails(response);
             } else {
                NotifyUtil.error('返回的数据格式有误');
             }
@@ -118,13 +153,13 @@ function loadMemberList(page) {
 function seleselectModal(member){
     $("#Modal").modal('show');
     console.log(member);
-    $("#userId1").val(member.userId|| '无');
-    $("#realName1").val(member.realName || '无');
-    $("#currentWorkload1").val(member.currentWorkload|| '0');
-    $("#processingEfficiency1").val(member.processingEfficiency|| 'D');
-    $("#averageProcessingTime1").val(member.averageProcessingTime|| '0小时');
-    $("#satisfaction1").val(member.satisfaction|| 'N/A');
-    $("#monthlyPerformance1").val(member.monthlyPerformance|| 'N/A');
+    $("#userId1").val(member.userId).prop({disabled:true});
+    $("#username1").val(member.username).prop({disabled:true});
+    $("#realName1").val(member.realName).prop({disabled:true});
+    $("#departmentName1").val(member.departmentName).prop({disabled:true});
+    $("#email1").val(member.email).prop({disabled:true});
+    $("#phone1").val(member.phone).prop({disabled:true});
+    $("#roleName1").val(member.roleName).prop({disabled:true});
 }
 
 // 渲染分页控件
@@ -147,7 +182,6 @@ function exportMemberList() {
     var keyword = $('#searchKeyword').val();
     var workloadFilter = $('#workloadFilter').val();
     var performanceFilter = $('#performanceFilter').val();
-
     $.ajax({
         url: '/api/members/export?keyword=' + keyword + '&workloadFilter=' + workloadFilter + '&performanceFilter=' + performanceFilter,
         type: 'GET',
@@ -165,28 +199,18 @@ function exportMemberList() {
     });
 }
 
+$(document).ready(function() {
 
+});
 // 查看成员详情
 $(document).on('click', '.view-member-btn', function() {
     var memberId = $(this).data('member-id');
     $.ajax({
-        url: '/api/departments/members/' + memberId,
+        url: '/api/departments/member/' + memberId,
         type: 'GET',
         success: function (response) {
             // 更新成员 ID 信息
-            $('#memberID1').text(response.userId || '无');
-            // 更新成员名称信息
-            $('#memberName1').text(response.name || '无');
-            // 更新成员职位信息
-            $('#memberPosition1').text(response.position || '无');
-            // 更新总票数信息，并将其转换为数字，如果无法转换则显示 0
-            $('#totalTickets1').text(parseInt(response.totalTickets) || 0);
-            // 更新当前工作量信息，并将其转换为数字，如果无法转换则显示 0
-            $('#currentWorkload1').text(parseFloat(response.currentWorkload) || 0);
-            // 更新平均处理时间信息，并添加小时后缀
-            $('#avgProcessTime1').text((response.avgProcessTime || 0) + '小时');
-            // 更新完成率信息
-            $('#completionRate1').text(response.completionRate || 0);
+           seleselectModal(response.data)
         },
         error: function (jqXHR, textStatus, errorThrown) {
             if (typeof NotifyUtil === 'object' && typeof NotifyUtil.error === 'function') {
@@ -204,7 +228,10 @@ $(document).on('click', '.view-member-btn', function() {
     });
 })
 
-
+//刷新
+function shuaXin(){
+    window.location.reload();
+}
 
 // 关闭成员详情抽屉
 $('#closeDrawerBtn').on('click', function() {

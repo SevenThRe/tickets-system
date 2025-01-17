@@ -125,4 +125,7 @@ public interface UserService {
     List<UserVO> searchUser(String keyword);
 
     DeptMembersDetailVO getDeptMemberDetial(Long userId);
+
+    List<User> selectDepartmentProcessors(@Param("departmentId") Long departmentId);
+
 }

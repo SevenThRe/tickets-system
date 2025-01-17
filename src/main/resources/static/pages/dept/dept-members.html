@@ -24,7 +24,7 @@
         <div class="d-flex justify-content-between align-items-center">
             <h4>部门成员管理</h4>
             <div class="header-actions">
-                <button type="button" class="btn btn-outline-secondary me-2" id="refreshBtn">
+                <button type="button" class="btn btn-outline-secondary me-2" id="refreshBtn" onclick="shuaXin()">
                     <i class="bi bi-arrow-clockwise"></i> 刷新
                 </button>
                 <button type="button" class="btn btn-primary" id="exportBtn">
@@ -64,7 +64,7 @@
                     <i class="bi bi-stopwatch"></i>
                 </div>
                 <div class="stat-content">
-                    <h3 class="stat-value" id="avgEfficiency">0%</h3>
+                    <h3 class="stat-value" id="avgEfficiency">0</h3>
                     <p class="stat-label">处理效率</p>
                 </div>
             </div>
@@ -222,48 +222,35 @@
             </div>
             <div class="modal-body">
                 <form id="userForm" class="needs-validation" novalidate>
-
                     <div class="mb-3">
                         <label class="form-label required">工号</label>
                         <input type="text" class="form-control" id="userId1" name="userId1"
-                               required maxlength="50">
+                               required maxlength="50" disabled>
                         <div class="invalid-feedback">工号</div>
                     </div>
+                        <div class="mb-3">
+                            <label class="form-label required">姓名</label>
+                            <input type="text" class="form-control" id="realName1" name="realName1"
+                                   required maxlength="50" disabled>
+                            <div class="invalid-feedback">姓名</div>
+                        </div>
                     <div class="mb-3">
-                        <label class="form-label required">姓名</label>
-                        <input type="text" class="form-control" id="realName1" name="realName1"
-                               required maxlength="50">
-                        <div class="invalid-feedback">姓名</div>
+                        <label class="form-label required">邮箱</label>
+                        <input type="text" class="form-control" id="email1" name="email1"
+                               required maxlength="50" disabled>
+                        <div class="invalid-feedback">邮箱</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label required">当前工作量</label>
-                        <input type="text" class="form-control" id="currentWorkload1" name="currentWorkload1"
-                               required maxlength="50">
-                        <div class="invalid-feedback">当前工作量</div>
+                        <label class="form-label required">电话</label>
+                        <input type="text" class="form-control" id="phone1" name="phone1"
+                               required maxlength="50" disabled>
+                        <div class="invalid-feedback">电话</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label required">处理效率</label>
-                        <input type="text" class="form-control" id="processingEfficiency1" name="processingEfficiency1"
-                               required maxlength="50">
-                        <div class="invalid-feedback">处理效率</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label required">平均用时</label>
-                        <input type="text" class="form-control" id="averageProcessingTime1" name="averageProcessingTime1"
-                               required maxlength="50">
-                        <div class="invalid-feedback">平均用时</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label required">满意度</label>
-                        <input type="text" class="form-control" id="satisfaction1" name="satisfaction1"
-                               required maxlength="50">
-                        <div class="invalid-feedback">满意度</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label required">本月绩效</label>
-                        <input type="text" class="form-control" id="monthlyPerformance1" name="monthlyPerformance1"
-                               required maxlength="50">
-                        <div class="invalid-feedback">本月绩效</div>
+                        <label class="form-label required">职位</label>
+                        <input type="text" class="form-control" id="roleName1" name="roleName1"
+                               required maxlength="50" disabled>
+                        <div class="invalid-feedback">职位</div>
                     </div>
                 </form>
             </div>

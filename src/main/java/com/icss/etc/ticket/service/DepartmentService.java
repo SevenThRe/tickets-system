@@ -5,6 +5,7 @@ import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
 import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -98,4 +99,5 @@ public interface DepartmentService {
     List<Map<String, Object>> getDepartmentTree();
 
 
+    int selectDepartmentProcessors(Long userId);
 }

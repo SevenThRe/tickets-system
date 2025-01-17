@@ -170,6 +170,11 @@ public class DepartmentController {
         return R.OK(userService.getDeptMemberDetial(userId));
     }
 
+    @GetMapping("/member/all")
+    public int getAllMembersInCurrDept(Long userId){
+        return departmentService.selectDepartmentProcessors(userId);
+    }
+
 
 
 

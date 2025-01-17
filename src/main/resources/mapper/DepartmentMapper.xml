@@ -310,5 +310,12 @@
   </select>
 
 
-
+<!--查询部门员工个数-->
+  <select id="selectDeptMoreUser" resultType="int">
+    SELECT COUNT(*)
+    FROM t_user u
+           left JOIN t_department d ON u.department_id = d.department_id
+    WHERE u.department_id = #{departmentId}
+    AND u.status = 1 AND u.is_deleted =0
+  </select>
 </mapper>

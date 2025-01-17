@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 public class DepartmentServiceImpl implements DepartmentService {
     @Autowired
     private DepartmentMapper departmentMapper;
+    @Autowired
+    private UserMapper userMapper;
 
 
     @Override
@@ -117,6 +119,11 @@ public class DepartmentServiceImpl implements DepartmentService {
         return tree;
     }
 
+    @Override
+    public int selectDepartmentProcessors(Long userId) {
+        Long deptId = userMapper.selectByPrimaryKey(userId).getDepartmentId();
+        return departmentMapper.selectDeptMoreUser(deptId);
+    }
 
 
     @Override

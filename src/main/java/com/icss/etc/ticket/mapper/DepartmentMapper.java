@@ -101,4 +101,5 @@ public interface DepartmentMapper {
     List<DepartmentChargeVO> selectManagerByDepartmentId(Long department_id);
 
 
+    int selectDeptMoreUser(Long deptId);
 }
