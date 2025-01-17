@@ -112,7 +112,7 @@ class LoginPage {
         // 根据baseRoleCode进行重定向
         const roleRedirects = {
             'ADMIN': '/pages/admin/dashboard.html',
-            'DEPT': '/pages/dept/dept-workspace.html',
+            'DEPT': '/pages/dept/dept-members.html',
             'USER': '/pages/user/dashboard.html'
         };
 

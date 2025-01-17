@@ -3,6 +3,7 @@ package com.icss.etc.ticket.service.impl;
 import com.icss.etc.ticket.entity.Department;
 import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
 import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
+import com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.mapper.DepartmentMapper;
 import com.icss.etc.ticket.mapper.UserMapper;
@@ -123,6 +124,11 @@ public class DepartmentServiceImpl implements DepartmentService {
     public int selectDepartmentProcessors(Long userId) {
         Long deptId = userMapper.selectByPrimaryKey(userId).getDepartmentId();
         return departmentMapper.selectDeptMoreUser(deptId);
+    }
+    @Override
+    public List<DepartmentWorkloadVO> getWorkloadStats() {
+
+        return departmentMapper.getWorkloadStats();
     }
 
 

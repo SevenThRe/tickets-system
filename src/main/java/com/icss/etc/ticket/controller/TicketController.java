@@ -274,9 +274,6 @@ public class TicketController {
     @GetMapping("/my")
     public R<PageInfo<Ticket>> getMyTickets(TicketQueryDTO queryDTO) {
         try {
-            // 确保只查询当前用户的工单
-            Long userId = SecurityUtils.getCurrentUserId();
-
             PageInfo<Ticket> pageInfo = ticketService.getTicketList(queryDTO);
             return R.OK(pageInfo);
         } catch (Exception e) {

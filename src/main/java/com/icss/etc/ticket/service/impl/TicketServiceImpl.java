@@ -24,6 +24,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -218,10 +219,10 @@ public class TicketServiceImpl implements TicketService {
         Long userId = SecurityUtils.getCurrentUserId();
         // 校验工单是否可以被备注
         if(!Objects.equals(ticket.getCreateBy(), userId)
-                && ticket.getStatus() != TicketStatus.CLOSED
+                && ticket.getStatus() == TicketStatus.CLOSED
                 && !Objects.equals(ticket.getProcessorId(), userId)
-                && !userRoleMapper.selectByUserId(userId, "ADMIN"))
-        {log.error("非创建人或处理人不能备注工单");
+                && !userRoleMapper.selectByUserId(userId, "ADMIN")){
+            log.error("非创建人或处理人不能备注工单");
             throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED, "校验不通过,不能进行备注");
         }
         // 添加处理记录
@@ -229,7 +230,9 @@ public class TicketServiceImpl implements TicketService {
         BeanUtils.copyProperties(recordDTO, record);
         record.setCreateTime(LocalDateTime.now());
         record.setIsDeleted(0);
-
+        if (record.getOperationContent().startsWith("\"") && record.getOperationContent().endsWith("\"")) {
+            record.setOperationContent(record.getOperationContent().substring(1, record.getOperationContent().length() - 1));
+        }
         // 禁止使用此接口评分
         recordDTO.setEvaluationScore(null);
         if (ticketRecordMapper.insertRecord(record) <= 0) {
@@ -459,6 +462,31 @@ public class TicketServiceImpl implements TicketService {
         result.put("COMPLETED", ticketMapper.countTicketsByStatus(userId, TicketStatus.COMPLETED));
         result.put("CLOSED", ticketMapper.countTicketsByStatus(userId, TicketStatus.CLOSED));
         return result;
+    }
+
+    @Override
+    public Long countByStatus(TicketStatus status) {
+        return ticketMapper.countBySS(status);
+    }
+
+    @Override
+    public List<RecentTicketDTO> getTicketTrends(int days) {
+        return ticketMapper.selectRecentTickets(days);
+    }
+
+    @Override
+    public List<TicketTypeStatsDTO> getTicketTypeDistribution() {
+        return ticketMapper.getTicketTypeDistribution();
+    }
+
+    @Override
+    public List<RecentTicketDTO> getRecentTickets(int limit) {
+        return ticketMapper.selectRecentTickets(limit);
+    }
+
+    @Override
+    public BigDecimal calculateAvgSatisfaction() {
+        return ticketMapper.calAvgSatisfaction();
     }
 
     @Override

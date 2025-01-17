@@ -4,8 +4,7 @@ import com.icss.etc.ticket.entity.Department;
 import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
 import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
 import org.apache.ibatis.annotations.Param;
-
-import java.util.Collection;
+import com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO;
 import java.util.List;
 import java.util.Map;
 
@@ -100,4 +99,6 @@ public interface DepartmentService {
 
 
     int selectDepartmentProcessors(Long userId);
+    List<DepartmentWorkloadVO> getWorkloadStats();
+
 }

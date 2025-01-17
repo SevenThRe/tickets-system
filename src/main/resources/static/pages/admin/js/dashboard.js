@@ -5,7 +5,7 @@
 class Dashboard {
     constructor() {
         // 缓存DOM元素
-        this.$container = $('#main');
+
         this.$statsCards = {
             pending: $('#pendingTickets'),
             processing: $('#processingTickets'),
@@ -24,6 +24,38 @@ class Dashboard {
             stats: null,
             recentTickets: []
         };
+
+        this.$userInfoCard = $(`
+        <div class="user-info-card">
+            <div class="user-info-header">
+                <div class="user-info-avatar">
+                    <img src="/images/default-avatar.png" alt="avatar">
+                </div>
+                <div class="user-info-name">
+                    <h6></h6>
+                    <small></small>
+                </div>
+            </div>
+            <div class="user-info-content">
+                <div class="user-info-item">
+                    <div class="user-info-label">用户名</div>
+                    <div class="user-info-value username"></div>
+                </div>
+                <div class="user-info-item">
+                    <div class="user-info-label">部门</div>
+                    <div class="user-info-value department"></div>
+                </div>
+                <div class="user-info-item">
+                    <div class="user-info-label">角色</div>
+                    <div class="user-info-value role"></div>
+                </div>
+                <div class="user-info-item">
+                    <div class="user-info-label">状态</div>
+                    <div class="user-info-value status"></div>
+                </div>
+            </div>
+        </div>
+    `).appendTo('body');
 
         // 图表实例
         this.charts = {};
@@ -57,9 +89,109 @@ class Dashboard {
             this.setupCharts();
             this.startAutoRefresh();
             this.updateCurrentTime();
+            this._bindHoverEvents();
         } catch (error) {
             console.error('仪表板初始化失败:', error);
-            this._showError('加载数据失败，请刷新页面重试');
+            NotifyUtil.error('加载数据失败，请刷新页面重试');
+        }finally {
+            this.state.loading = false;
+            this._debugData();
+        }
+    }
+
+    _bindHoverEvents() {
+        const showDelay = 300;
+        let hoverTimer;
+        let hideTimer;
+
+        // 移入用户链接时显示卡片
+        this.$ticketList.on('mouseenter', '.user-link', (e) => {
+            const userId = $(e.currentTarget).data('userid');
+            const $target = $(e.currentTarget);
+
+            clearTimeout(hideTimer);
+            clearTimeout(hoverTimer);
+
+            hoverTimer = setTimeout(async () => {
+                if(userId) {  // 确保有userId
+                    const userInfo = await this._loadUserInfo(userId);
+                    if(userInfo) {
+                        this._showUserInfoCard(userInfo, $target);
+                    }
+                }
+            }, showDelay);
+        });
+
+        // 移出用户链接时延迟隐藏卡片
+        this.$ticketList.on('mouseleave', '.user-link', () => {
+            clearTimeout(hoverTimer);
+            hideTimer = setTimeout(() => {
+                this._hideUserInfoCard();
+            }, showDelay);
+        });
+
+        // 移入卡片时取消隐藏
+        this.$userInfoCard.on('mouseenter', () => {
+            clearTimeout(hideTimer);
+        });
+
+        // 移出卡片时隐藏
+        this.$userInfoCard.on('mouseleave', () => {
+            this._hideUserInfoCard();
+        });
+    }
+
+    _showUserInfoCard(userInfo, $target) {
+        if(!userInfo || !userInfo.userId || userInfo.userId == -1) {
+            return;
+        }
+
+
+        const offset = $target.offset();
+        const windowWidth = $(window).width();
+        const cardWidth = this.$userInfoCard.outerWidth();
+
+        // 计算最佳显示位置
+        let left = offset.left;
+        if (left + cardWidth > windowWidth) {
+            left = windowWidth - cardWidth - 20; // 20px的安全边距
+        }
+
+        this.$userInfoCard.find('.user-info-name h6').text(userInfo.realName);
+        this.$userInfoCard.find('.user-info-name small').text(userInfo.roleName);
+        this.$userInfoCard.find('.username').text(userInfo.username);
+        this.$userInfoCard.find('.department').text(userInfo.departmentName || '-');
+        this.$userInfoCard.find('.role').text(userInfo.roleName);
+        this.$userInfoCard.find('.status').html(`
+        <span class="badge ${userInfo.status === 1 ? 'bg-success' : 'bg-danger'}">
+            ${userInfo.status === 1 ? '正常' : '禁用'}
+        </span>
+    `);
+
+        // 设置位置并显示
+        this.$userInfoCard.css({
+            top: offset.top + $target.outerHeight() + 5,
+            left: left
+        }).addClass('show');
+    }
+    _hideUserInfoCard() {
+        this.$userInfoCard.removeClass('show');
+    }
+
+    async _loadUserInfo(userId) {
+        try {
+            const response = await $.ajax({
+                url: `/api/users/${userId}/info`,
+                method: 'GET'
+            });
+
+            if(response.code === 200) {
+                return response.data;
+            }
+            return null;
+        } catch(error) {
+            console.error('加载用户信息失败:', error);
+            return null;
         }
     }
 
@@ -86,6 +218,9 @@ class Dashboard {
 
             this.state.stats = stats;
             this.state.recentTickets = tickets;
+
+            this.updateStats();
+            this.renderTicketList();
         } finally {
             this.state.loading = false;
         }
@@ -157,24 +292,43 @@ class Dashboard {
      * 获取趋势图数据
      */
     getTrendChartData() {
-        const trends = this.state.stats.trends;
+        const trends = this.state.stats?.trends || [];
+        const days = 7;
+        const dates = [];
+        const newCount = [];  // 改为newCount
+        const completedCount = []; // 改为completedCount
+
+        // 生成日期和数据
+        for(let i = days - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            dates.push(date.toLocaleDateString());
+
+            const trend = trends.find(t =>
+                new Date(t.date).toLocaleDateString() === date.toLocaleDateString()
+            );
+            newCount.push(trend?.newCount || 0);
+            completedCount.push(trend?.completedCount || 0);
+        }
 
         return {
-            labels: trends.map(item => item.date),
+            labels: dates,
             datasets: [
                 {
                     label: '新建工单',
-                    data: trends.map(item => item.created),
+                    data: newCount,
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4
+                    tension: 0.4,
+                    fill: true
                 },
                 {
                     label: '完成工单',
-                    data: trends.map(item => item.completed),
+                    data: completedCount,
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.4
+                    tension: 0.4,
+                    fill: true
                 }
             ]
         };
@@ -213,10 +367,10 @@ class Dashboard {
      * 获取类型图数据
      */
     getTypeChartData() {
-        const types = this.state.stats.types;
+        const types = this.state.stats?.types || [];
 
         return {
-            labels: types.map(item => item.name),
+            labels: types.map(item => item.typeName),
             datasets: [{
                 data: types.map(item => item.count),
                 backgroundColor: [
@@ -247,24 +401,58 @@ class Dashboard {
     }
 
     /**
+     * 渲染满意度星星
+     * @param {number} score 评分(0-5)
+     * @returns {string} 星星HTML
+     */
+    _renderStars(score) {
+        const fullStar = '<i class="bi bi-star-fill star"></i>';
+        const halfStar = '<i class="bi bi-star-half star"></i>';
+        const emptyStar = '<i class="bi bi-star star star-empty"></i>';
+
+        let stars = '';
+        const totalStars = 5;
+
+        for(let i = 1; i <= totalStars; i++) {
+            if(i <= Math.floor(score)) {
+                stars += fullStar;
+            } else if(i - 0.5 <= score) {
+                stars += halfStar;
+            } else {
+                stars += emptyStar;
+            }
+        }
+
+        return stars;
+    }
+
+    /**
      * 更新统计卡片
      */
     updateStats() {
         const { stats } = this.state;
+        if (!stats) return;
 
-        // 更新数值
-        Object.entries(this.$statsCards).forEach(([key, element]) => {
-            const value = stats[key];
-            element.text(typeof value === 'number' ?
-                value.toLocaleString() : value);
-        });
+        // 更新统计卡片
+        this.$statsCards.pending.text(stats.pendingCount || 0);
+        this.$statsCards.processing.text(stats.processingCount || 0);
+        this.$statsCards.completed.text(stats.completedCount || 0);
 
-        // 更新图表
-        this.charts.trend.data = this.getTrendChartData();
-        this.charts.trend.update();
+        // 更新满意度星星显示
+        const satisfaction = stats.avgSatisfaction || 0;
+        $('#avgSatisfactionStars').html(this._renderStars(satisfaction));
 
-        this.charts.type.data = this.getTypeChartData();
-        this.charts.type.update();
+        // 更新工单列表中的优先级显示
+        if(this.state.recentTickets) {
+            this.renderTicketList();
+        }
+    }
+
+    _escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 
     /**
@@ -272,32 +460,89 @@ class Dashboard {
      */
     renderTicketList() {
         const html = this.state.recentTickets.map(ticket => `
-            <tr>
-                <td>${ticket.code}</td>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <span class="priority-indicator priority-${ticket.priority.toLowerCase()}"></span>
-                        ${ticket.title}
-                    </div>
-                </td>
-                <td>${ticket.creator}</td>
-                <td>
-                    <span class="status-badge status-${ticket.status.toLowerCase()}">
-                        ${this.getStatusText(ticket.status)}
-                    </span>
-                </td>
-                <td>${this.getPriorityText(ticket.priority)}</td>
-                <td>${this._formatDate(ticket.createTime)}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary view-ticket" 
-                            data-id="${ticket.id}">
-                        查看
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        <tr>
+            <td>${ticket.ticketId}</td>
+            <td>${this._escapeHtml(ticket.title)}</td>
+            <td>
+                <span class="badge bg-secondary">${ticket.typeName || '-'}</span>
+            </td>
+            <td>
+                <a href="javascript:void(0)" 
+                   class="user-link" 
+                   data-userid="${ticket.creatorId}"
+                   onclick="window.location.href='/pages/admin/user-management.html?id=${ticket.creatorId}'">
+                    ${this._escapeHtml(ticket.creatorName)}
+                </a>
+            </td>
+            <td>
+                <span class="status-badge status-${this.getStatusClass(ticket.status)}">
+                    ${this.getStatusText(ticket.status)}
+                </span>
+            </td>
+            <td>${ticket.departmentName || '-'}</td>
+             <td>
+              ${ticket.processorId ?
+                    `<a href="javascript:void(0)" 
+                    class="user-link" 
+                    data-userid="${ticket.processorId}">
+                    ${this._escapeHtml(ticket.processorName)}
+                 </a>` :
+                    '未分配'
+                }
+            </td>
+            <td>
+                <span class="priority-badge priority-${this.getPriorityClass(ticket.priority)}">
+                    ${this.getPriorityText(ticket.priority)}
+                </span>
+            </td>
+            <td>${this._formatDate(ticket.createTime)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary view-ticket" 
+                        data-id="${ticket.ticketId}">
+                    查看
+                </button>
+            </td>
+        </tr>
+    `).join('');
 
-        this.$ticketList.html(html || '<tr><td colspan="7" class="text-center">暂无数据</td></tr>');
+        this.$ticketList.html(html || '<tr><td colspan="9" class="text-center">暂无数据</td></tr>');
+    }
+
+    getPriorityClass(priority) {
+        const map = {
+            '0': 'normal',
+            '1': 'urgent',
+            '2': 'extremely-urgent',
+            'NORMAL': 'normal',
+            'URGENT': 'urgent',
+            'EXTREMELY_URGENT': 'extremely-urgent'
+        };
+        return map[priority] || 'normal';
+    }
+
+    getStatusClass(status) {
+        const map = {
+            '0': 'pending',
+            '1': 'processing',
+            '2': 'completed',
+            '3': 'closed',
+            'PENDING': 'pending',
+            'PROCESSING': 'processing',
+            'COMPLETED': 'completed',
+            'CLOSED': 'closed'
+        };
+        return map[status] || 'pending';
+    }
+
+    /**
+     * 调试工具，输出数据到控制台
+     */
+    _debugData() {
+        console.group('Dashboard State');
+        console.log('Stats:', this.state.stats);
+        console.log('Recent Tickets:', this.state.recentTickets);
+        console.log('Loading:', this.state.loading);
+        console.groupEnd();
     }
 
     /**
@@ -307,50 +552,66 @@ class Dashboard {
         if (this.state.loading) return;
 
         try {
-            await this.loadInitialData();
+            this.state.loading = true;
+            NotifyUtil.loading('正在刷新数据...');
+
+            const [stats, tickets] = await Promise.all([
+                this.loadStats(),
+                this.loadRecentTickets()
+            ]);
+
+            this.state.stats = stats;
+            this.state.recentTickets = tickets;
+
+            // 更新UI
             this.updateStats();
             this.renderTicketList();
+            this._updateLastUpdateTime();
+
         } catch (error) {
             console.error('刷新数据失败:', error);
-            this._showError('刷新数据失败，请重试');
+            NotifyUtil.error('刷新数据失败，请重试');
+        } finally {
+            this.state.loading = false;
+            NotifyUtil.closeLoading();
         }
+    }
+
+    _updateLastUpdateTime() {
+        const now = new Date();
+        $('#lastUpdateTime').text(
+            `最后更新: ${now.toLocaleTimeString()}`
+        );
     }
 
     /**
      * 跳转到工单列表
      */
     navigateToTickets() {
-        window.location.href = '/admin/ticket-management.html';
+        window.location.href = '/pages/admin/ticket-management.html';
     }
 
     /**
      * 处理工单查看
      */
     handleViewTicket(ticketId) {
-        window.location.href = `/admin/ticket-management.html?id=${ticketId}`;
+        window.location.href = `/pages/admin/ticket-management.html?ticketId=${ticketId}`;
     }
+
 
     /**
      * 获取状态文本
      */
     getStatusText(status) {
-        return {
-            'PENDING': '待处理',
-            'PROCESSING': '处理中',
-            'COMPLETED': '已完成',
-            'CLOSED': '已关闭'
-        }[status] || status;
+        return TicketUtil.getStatusText(status);
     }
 
     /**
      * 获取优先级文本
      */
     getPriorityText(priority) {
-        return {
-            'HIGH': '高',
-            'MEDIUM': '中',
-            'LOW': '低'
-        }[priority] || priority;
+        return TicketUtil.getPriorityText(priority);
+
     }
 
     /**
@@ -359,6 +620,11 @@ class Dashboard {
      */
     _formatDate(date) {
         return new Date(date).toLocaleString();
+    }
+
+    _handleError(error, message) {
+        console.error(message, error);
+        NotifyUtil.error(message);
     }
 
     /**
@@ -378,45 +644,33 @@ class Dashboard {
     }
 
     /**
-     * 显示错误消息
-     * @private
-     */
-    _showError(message) {
-        const alertHtml = `
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        this.$container.prepend(alertHtml);
-
-        // 3秒后自动关闭
-        setTimeout(() => {
-            $('.alert').alert('close');
-        }, 3000);
-    }
-
-    /**
      * 组件销毁
      */
     destroy() {
-        // 清理定时器
-        if (this.timeInterval) {
-            clearInterval(this.timeInterval);
-        }
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
         }
 
         // 销毁图表实例
-        Object.values(this.charts).forEach(chart => {
-            chart.destroy();
-        });
-
+        if (this.charts.trend) {
+            this.charts.trend.destroy();
+        }
+        if (this.charts.type) {
+            this.charts.type.destroy();
+        }
+        if(this.$userInfoCard) {
+            this.$userInfoCard.remove();
+            this.$userInfoCard = null;
+        }
         // 解绑事件
         $('#refreshBtn').off('click');
         $('#viewAllBtn').off('click');
         this.$ticketList.off('click');
+
+        // 清理DOM引用
+        this.$statsCards = null;
+        this.$charts = null;
+        this.$ticketList = null;
 
         // 清理状态
         this.state = null;

@@ -121,7 +121,7 @@
     </update>
 
   <select id="selectByUserId" resultType="boolean">
-    select * from t_user_role
+    select count(1) > 0 from t_user_role
     LEFT JOIN t_role on t_user_role.role_id = t_role.role_id
     where t_user_role.user_id = #{userId} and t_role.base_role_code != #{baseRoleCode}
   </select>

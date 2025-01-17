@@ -9,6 +9,7 @@ import java.util.Map;
 import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
 import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
 import com.icss.etc.ticket.entity.vo.DeptMembersDetailVO;
+import com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -101,5 +102,10 @@ public interface DepartmentMapper {
     List<DepartmentChargeVO> selectManagerByDepartmentId(Long department_id);
 
 
+    /**
+     * 查询部门 workload 详情
+     * @return 部门 workload 详情
+     */
+    List<DepartmentWorkloadVO> getWorkloadStats();
     int selectDeptMoreUser(Long deptId);
 }

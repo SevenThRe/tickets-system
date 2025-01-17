@@ -32,12 +32,12 @@ class TicketUtil {
 
     static getPriorityText(priority) {
         const map = {
-            'HIGH': '高优先级',
-            'MEDIUM': '中等优先级',
-            'LOW': '低优先级',
-            '2': '高优先级',
-            '1': '中等优先级',
-            '0': '低优先级'
+            'HIGH': '高',
+            'MEDIUM': '中',
+            'LOW': '低',
+            '2': '高',
+            '1': '中',
+            '0': '低'
         };
         return map[priority] || '普通';
     }

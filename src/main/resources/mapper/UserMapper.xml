@@ -581,4 +581,13 @@
     ORDER BY u.create_time DESC
   </select>
 
+  <update id="addMembers">
+    update t_user
+    set department_id = #{departmentId,jdbcType=BIGINT}
+    where user_id in
+    <foreach collection="userIds" item="userId" separator=",">
+      #{userId,jdbcType=BIGINT}
+    </foreach>
+  </update>
+
 </mapper>

@@ -15,7 +15,15 @@ class DepartmentManagement {
         this.$departmentForm = $('#departmentForm');
         this.$searchResults = $('#memberSearchResults')
         this.$memberBody = $('#memberBody');
-        this.debounceTimer = null;
+        this.iconModal = new bootstrap.Modal('#iconModal');
+        this.departmentModal = new bootstrap.Modal('#departmentModal');
+        this.$parentDepartment = $('#parentDepartment');
+        this.formMode = 'view'; // 'view', 'add', 'edit'
+        this.availableIcons = [
+            'fa-folder', 'fa-building', 'fa-users', 'fa-cog', 'fa-briefcase',
+            'fa-chart-bar', 'fa-sitemap', 'fa-archive', 'fa-layer-group',
+            'fa-shield-alt', 'fa-cube', 'fa-cubes'
+        ];
 
         this.validationRules = {
             departmentName: {
@@ -60,6 +68,7 @@ class DepartmentManagement {
             searchResults: [],        // 成员搜索结果
             selectedMembers: new Set(), // 选中待添加的成员
             isEdit: false            // 是否处理编辑状态
+
         };
         this._bindFormValidation();
         this.$departmentTree.on('click', '.department-node', (e) => {
@@ -69,22 +78,22 @@ class DepartmentManagement {
         // 定义表单验证规则
         this.validationRules = {
             name: [
-                { type: 'required' },
-                { type: 'departmentName' }
+                {type: 'required'},
+                {type: 'departmentName'}
             ],
             code: [
-                { type: 'required' },
-                { type: 'departmentCode' }
+                {type: 'required'},
+                {type: 'departmentCode'}
             ],
             orderNum: [
-                { type: 'departmentOrder' }
+                {type: 'departmentOrder'}
             ],
             deptLevel: [
-                { type: 'min', param: 1 },
-                { type: 'max', param: 5 }
+                {type: 'min', param: 1},
+                {type: 'max', param: 5}
             ],
             managerId: [
-                { type: 'required' }
+                {type: 'required'}
             ]
         };
 
@@ -92,7 +101,7 @@ class DepartmentManagement {
         this.validator = new ValidatorUtil(this.validationRules);
         this.departmentModal = new bootstrap.Modal('#departmentModal');
         this.addMemberModal = new bootstrap.Modal('#addMemberModal');
-
+        this._initIconSelector();
         // 绑定事件
         this._bindEvents();
 
@@ -102,14 +111,14 @@ class DepartmentManagement {
 
     async init() {
         try {
-            // await this._loadDepartments(); 废弃
+            await this._loadDepartments();
             await this._loadDepartmentTrees();
             // 在这里缓存 DOM 元素，确保它们已经加载
             this.$departmentTree = $('#departmentTree');
             this._renderDepartmentTree(this.state.departmentsTrees);
             this._updateParentOptions(this.state.currentDepartment);
         } catch (error) {
-            NotifyUtil.error('页面初始化失败，请刷新重试',error);
+            NotifyUtil.error('页面初始化失败，请刷新重试', error);
         }
     }
 
@@ -166,44 +175,6 @@ class DepartmentManagement {
         return true;
     }
 
-
-
-    /**
-     * 填充部门表单
-     * @param {Object} da - 部门信息
-     */
-    _fillDepartmentForm(da) {
-        const department = da.department;
-        $('#departmentId').val(department.departmentId);  // 隐藏字段，仅用于回显
-        $('#departmentName').val(department.departmentName);
-        $('#managerId').val(da.charge ? charge.userId : '请选择部门负责人');
-
-        department.parentId ? $('#parentDepartment').val(department.parentId) :$('#parentDepartment').val('无上级部门');
-
-        $('#deptLevel').val(department.deptLevel);
-        $('#description').val(department.description);
-        $('#status').prop('checked', department.status === 1);
-        $('#orderNum').val(department.orderNum);
-    }
-
-    /**
-     * 获取表单数据
-     * @returns {Object} 表单数据
-     */
-    _getDepartmentFormData() {
-        return {
-            departmentId: this.state.currentDepartment?.departmentId, // 编辑时使用
-            departmentName: $('#departmentName').val().trim(),
-            managerId: $('#managerId').val() || null,
-            parentId: $('#parentDepartment').val() || null,
-            deptLevel: Number($('#deptLevel').val()),
-            description: $('#description').val()?.trim() || null,
-            status: $('#status').prop('checked') ? 1 : 0,
-            orderNum: Number($('#orderNum').val()),
-            iconClass: 'fa fa-folder' // 默认图标
-        };
-    }
-
     /**
      * 处理保存部门
      */
@@ -244,11 +215,6 @@ class DepartmentManagement {
             this._disableForm(false);
         }
     }
-
-
-
-
-
 
 
     /**
@@ -299,9 +265,35 @@ class DepartmentManagement {
      * @private
      */
     _bindEvents() {
+
+        // 添加成员相关事件
+        $('#addMemberBtn').on('click', () => this._handleAddMember());
+        $('#confirmAddMemberBtn').on('click', () => this._handleConfirmAddMember());
+        $('#memberSearch').on('input', (e) => this._handleMemberSearch(e));
+
+        // 模态框底部的保存按钮(新增时用)
+        $('#saveDepartmentModalBtn').on('click', () => {
+            if(this.formMode === 'add') {
+                this._handleFormSubmit();
+            }
+        });
+
+        // 表单内的保存按钮(修改时用)
+        $('#saveDepartmentBtn').on('click', (e) => {
+            if(this.formMode === 'edit' || this.formMode === 'view') {
+                this._handleSaveDepartment(e);
+            }
+        });
+
+        $('[data-bs-dismiss="modal"]').on('click', () => {
+            // 关闭时将表单移回原处
+            const $form = this.$departmentForm.detach();
+            // 还原表单
+
+            $('.department-detail-card .card-body').append($form);
+            this.formMode = 'view';
+        });
         // 部门相关事件
-        $('#addDepartmentBtn').on('click', () => this._handleAddDepartment());
-        $('#saveDepartmentBtn').on('click', (e) => this._handleSaveDepartment(e));
         $('#deleteDepartmentBtn').on('click', () => this._handleDeleteDepartment());
         // 部门树事件
         this.$departmentTree.on('click', '.department-node-header i', (e) => {
@@ -310,6 +302,22 @@ class DepartmentManagement {
             const $node = $icon.closest('.department-node');
             $icon.toggleClass('bi-chevron-right bi-chevron-down');
             $node.find('> .department-children').slideToggle();
+        })
+
+        // 添加部门按钮
+        $('#addDepartmentBtn').on('click', () => this._handleAddDepartment());
+
+        // 保存按钮
+        $('#saveModalBtn').on('click', (e) => this._handleFormSubmit(e));
+
+        // 模态框关闭事件
+        $('#departmentModal').on('hidden.bs.modal', () => {
+            // 如果是添加模式，将表单移回原位置
+            if (this.formMode === 'add') {
+                const $form = this.$departmentForm.detach();
+                $('.department-detail-card .card-body').append($form);
+            }
+            this.formMode = 'view';
         });
 
         this.$departmentTree.on('click', '.department-node-header', async (e) => {
@@ -318,15 +326,6 @@ class DepartmentManagement {
             await this._selectDepartment(deptId);
         });
 
-        // 成员相关事件
-        $('#addMemberBtn').on('click', () => this._handleAddMember());
-        $('#confirmAddMemberBtn').on('click', () => this._handleConfirmAddMember());
-        $('#memberSearch').on('input', (e) => {
-            clearTimeout(debounceTimer); // 清除之前的计时器
-            this.debounceTimer = setTimeout(() => {
-                this._handleMemberSearch(e);
-            }, 300); // 延迟300毫秒执行
-        });
         // 表单提交事件
         this.$departmentForm.on('submit', (e) => this._handleSubmitDepartment(e));
         this.$departmentForm.find('input, select').on('blur', (e) => {
@@ -362,11 +361,11 @@ class DepartmentManagement {
             this._showLoading();
 
             const response = await $.ajax({
-                url: '/api/departments',
+                url: '/api/departments/list',
                 method: 'GET'
             });
 
-            if(response.code === 200) {
+            if (response.code === 200) {
                 this.state.departments = response.data;
             } else {
                 throw new Error(response.message || '加载部门数据失败');
@@ -380,6 +379,7 @@ class DepartmentManagement {
             this._hideLoading();
         }
     }
+
     /**
      * 获取部门树
      * @private
@@ -394,7 +394,7 @@ class DepartmentManagement {
                 method: 'GET'
             });
 
-            if(response.code === 200) {
+            if (response.code === 200) {
                 this.state.departmentsTrees = response.data;
             } else {
                 throw new Error(response.message || '加载部门数据失败');
@@ -427,7 +427,7 @@ class DepartmentManagement {
                 }
             }
         });
-         // 绑定选择事件
+        // 绑定选择事件
         this.$departmentTree.on('select_node.jstree', (e, data) => {
             const departmentId = data.node.id;
             this._selectDepartment(departmentId);
@@ -449,8 +449,8 @@ class DepartmentManagement {
                 'id': node.id.toString(),
                 'icon': 'fas ' + node.icon,
                 'children': node.children ? node.children.map(child => prepareNode(child)) : null,
-                'state': { 'opened': true },
-                'li_attr': { 'data-id': node.id.toString() }
+                'state': {'opened': true},
+                'li_attr': {'data-id': node.id.toString()}
             };
         };
         return data.map(dept => prepareNode(dept, null));
@@ -482,7 +482,7 @@ class DepartmentManagement {
                 method: 'GET'
             });
 
-            if(response.code === 200) {
+            if (response.code === 200) {
                 this.state.members = response.data;
                 this._renderMembersList();
             } else {
@@ -494,48 +494,11 @@ class DepartmentManagement {
         }
     }
 
-    /**
-     * 更新上级部门选项
-     * @param {Object} currentDepartment - 当前部门信息
-     * @private
-     */
-    async _updateParentOptions(currentDepartment) {
-        const buildOptions = (departments, level = 0) => {
-            return departments.reduce((options, dept) => {
-                // 排除当前部门及其子部门
-                if (currentDepartment &&
-                    (dept.departmentId === currentDepartment.departmentId ||
-                        this._isChildDepartment(dept, currentDepartment.departmentId))) {
-                    return options;
-                }
-
-                options.push(`
-                <option value="${dept.departmentId}">
-                    ${'　'.repeat(level)}${dept.departmentName}
-                </option>
-            `);
-
-                if (dept.children?.length) {
-                    options.push(buildOptions(dept.children, level + 1));
-                }
-
-                return options;
-            }, []).join('');
-        };
-
-        const options = ['<option value="">无上级部门</option>'];
-        options.push(buildOptions(this.state.departmentsTrees));
-        $('#parentDepartment').html(options.join(''));
-
-        // 选择正确的上级部门
-        const selectedParentId = currentDepartment ? currentDepartment.parentId || '' : '';
-        $('#parentDepartment').val(selectedParentId);
-    }
 
     async _getAvatarUrl(member) {
         const avatarUrl = `/images/${member.username}_${member.userId}_avatar.png`;
         try {
-            const response = await fetch(avatarUrl, { method: 'HEAD' });
+            const response = await fetch(avatarUrl, {method: 'HEAD'});
             if (response.ok) {
                 return avatarUrl; // 文件存在，返回该 URL
             } else {
@@ -543,6 +506,192 @@ class DepartmentManagement {
             }
         } catch (error) {
             return '/images/default-avatar.png'; // 请求出错，返回默认 URL
+        }
+    }
+
+
+    /**
+     * 处理添加成员按钮点击
+     * @private
+     */
+    _handleAddMember() {
+        if (!this.state.currentDepartment) {
+            NotifyUtil.error('请先选择部门');
+            return;
+        }
+
+        // 重置搜索和选择状态
+        $('#memberSearch').val('');
+        this.state.searchResults = [];
+        this.state.selectedMembers = new Set();
+
+        // 加载无部门用户
+        this._loadAvailableUsers();
+
+        // 显示模态框
+        this.addMemberModal.show();
+    }
+
+
+    async _loadAvailableUsers() {
+        try {
+            const response = await $.ajax({
+                url: '/api/users/search',
+                method: 'GET',
+                data: {
+                    keyword: '',
+                }
+            });
+
+            if (response.code === 200) {
+                // 填充部门负责人下拉框
+                const html = response.data.map(user => `
+                <option value="${user.userId}">${user.realName}</option>
+            `).join('');
+                $('#managerId').html('<option value="">请选择部门负责人</option>' + html);
+            }
+        } catch (e) {
+            NotifyUtil.error('加载可用用户失败', e);
+        }
+    }
+
+
+
+    /**
+     * 处理成员搜索
+     * @param {Event} e - 输入事件
+     * @private
+     */
+    _handleMemberSearch(e) {
+        clearTimeout(this.searchTimer);
+
+        const keyword = e.target.value.trim();
+
+        this.searchTimer = setTimeout(async () => {
+            try {
+                const response = await $.ajax({
+                    url: '/api/users/search',
+                    method: 'GET',
+                    data: {
+                        keyword: keyword,
+                        
+                    }
+                });
+
+                if (response.code === 200) {
+                    this.state.searchResults = response.data;
+                    this._renderSearchResults();
+                }
+            } catch (error) {
+                NotifyUtil.error('搜索用户失败');
+            }
+        }, 300); // 300ms防抖
+    }
+
+    /**
+     * 渲染搜索结果
+     * @private
+     */
+    _renderSearchResults() {
+        const html = `
+        <div class="search-results-header">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="selectAll"
+                    ${this._isAllSelected() ? 'checked' : ''}>
+                <label class="form-check-label" for="selectAll">全选</label>
+            </div>
+        </div>
+        <div class="search-results-list">
+            ${this.state.searchResults.map(user => `
+                <div class="search-result-item">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input user-checkbox" 
+                            id="user_${user.userId}"
+                            value="${user.userId}"
+                            ${this.state.selectedMembers.has(user.userId) ? 'checked' : ''}>
+                        <label class="form-check-label" for="user_${user.userId}">
+                            <div class="user-info">
+                                <span class="user-name">${user.realName}</span>
+                                <span class="user-role">${user.roleName || ''}</span>
+                                <span class="user-email">${user.email || ''}</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+        this.$searchResults.html(html || '<div class="text-center py-3">无可添加的用户</div>');
+
+        // 绑定全选事件
+        $('#selectAll').on('change', (e) => {
+            const checked = e.target.checked;
+            $('.user-checkbox').prop('checked', checked);
+            if (checked) {
+                this.state.selectedMembers = new Set(
+                    this.state.searchResults.map(user => user.userId)
+                );
+            } else {
+                this.state.selectedMembers.clear();
+            }
+        });
+
+        // 绑定单个选择事件
+        $('.user-checkbox').on('change', (e) => {
+            const userId = $(e.target).val();
+            if (e.target.checked) {
+                this.state.selectedMembers.add(userId);
+            } else {
+                this.state.selectedMembers.delete(userId);
+            }
+            // 更新全选状态
+            $('#selectAll').prop('checked', this._isAllSelected());
+        });
+    }
+
+    /**
+     * 检查是否全部选中
+     * @returns {boolean}
+     * @private
+     */
+    _isAllSelected() {
+        return this.state.searchResults.length > 0 &&
+            this.state.searchResults.every(user =>
+                this.state.selectedMembers.has(user.userId)
+            );
+    }
+
+    /**
+     * 处理确认添加成员
+     * @private
+     */
+    async _handleConfirmAddMember() {
+        if (!this.state.selectedMembers.size) {
+            NotifyUtil.warning('请选择要添加的成员');
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: '/api/departments/addMembers',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    departmentId: this.state.currentDepartment.departmentId,
+                    userIds: Array.from(this.state.selectedMembers)
+                })
+            });
+
+            if (response.code === 200) {
+                NotifyUtil.success('添加成员成功');
+                this.addMemberModal.hide();
+                await this._loadDepartmentMembers(); // 重新加载成员列表
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (error) {
+            NotifyUtil.error(error.message || '添加成员失败');
         }
     }
 
@@ -613,139 +762,30 @@ class DepartmentManagement {
 
     }
 
+
+
+
+
     /**
-     * 处理部门表单提交
+     * 更新表单按钮状态
      * @private
      */
-    async _handleSubmitDepartment(e) {
-        e.preventDefault();
+    _updateFormButtons() {
+        const $deleteBtn = $('#deleteDepartmentBtn');
+        const $saveBtn = $('#saveDepartmentBtn');
 
-        if (!this._validateDepartmentForm()) {
-            return;
-        }
-
-        const formData = this._getDepartmentFormData();
-
-        try {
-            this._disableForm(true);
-
-            const isEdit = !!formData.departmentId;
-            const url = isEdit ?
-                `/api/departments/${formData.departmentId}` :
-                '/api/departments';
-
-            const response = await $.ajax({
-                url: url,
-                method: isEdit ? 'PUT' : 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(formData)
-            });
-
-            if(response.code === 200) {
-                this._showSuccess(`${isEdit ? '更新' : '创建'}部门成功`);
-                await this._refreshDepartments();
-
-                if (isEdit && this.state.currentDepartment?.departmentId === formData.departmentId) {
-                    await this._selectDepartment(formData.departmentId);
-                }
-
-                this.departmentModal.hide();
-            } else {
-                throw new Error(response.message || `${isEdit ? '更新' : '创建'}部门失败`);
-            }
-
-        } catch (error) {
-            NotifyUtil.error(`${isEdit ? '更新' : '创建'}部门失败:`, error);
-            NotifyUtil.error(error.message);
-        } finally {
-            this._disableForm(false);
+        if (this.formMode === 'add') {
+            $deleteBtn.hide(); // 新增模式下隐藏删除按钮
+            $saveBtn.text('创建');
+        } else if (this.formMode === 'edit') {
+            $deleteBtn.show(); // 编辑模式下显示删除按钮
+            $saveBtn.text('保存');
         }
     }
 
-    /**
-     * 处理添加成员
-     * @private
-     */
-    _handleAddMember() {
-        if (!this.state.currentDepartment) {
-            NotifyUtil.error('请先选择部门');
-            return;
-        }
 
-        // 重置搜索和选择状态
-        $('#memberSearch').val('');
-        this.state.searchResults = [];
-        this.state.selectedMembers.clear();
-        this._renderSearchResults();
-        this.addMemberModal.show();
-    }
 
-    /**
-     * 渲染搜索结果
-     * @private
-     */
-    _renderSearchResults() {
-        const html = this.state.searchResults.map(user => `
-            <div class="search-result-item">
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" 
-                           id="user_${user.userId}"
-                           value="${user.userId}"
-                           ${this.state.selectedMembers.has(user.userId) ? 'checked' : ''}>
-                    <label class="form-check-label" for="user_${user.userId}">
-                        ${user.realName} (${user.username})
-                        <small class="text-muted">${user.email || ''}</small>
-                    </label>
-                </div>
-            </div>
-        `).join('');
 
-        this.$searchResults.html(html || '<div class="text-center">无搜索结果</div>');
-
-        // 绑定选择事件
-        this.$searchResults.find('input[type="checkbox"]').on('change', (e) => {
-            const userId = $(e.target).val();
-            if (e.target.checked) {
-                this.state.selectedMembers.add(userId);
-            } else {
-                this.state.selectedMembers.delete(userId);
-            }
-        });
-    }
-
-    /**
-     * 处理确认添加成员
-     * @private
-     */
-    async _handleConfirmAddMember() {
-        if (!this.state.selectedMembers.size) {
-            NotifyUtil.error('请选择要添加的成员');
-            return;
-        }
-
-        try {
-            const response = await $.ajax({
-                url: `/api/departments/${this.state.currentDepartment.departmentId}/members`,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    userIds: Array.from(this.state.selectedMembers)
-                })
-            });
-
-            if(response.code === 200) {
-                this._showSuccess('添加成员成功');
-                await this._loadDepartmentMembers();
-                this.addMemberModal.hide();
-            } else {
-                throw new Error(response.message || '添加成员失败');
-            }
-
-        } catch (error) {
-            NotifyUtil.error('添加成员失败:', error);
-            NotifyUtil.error(error.message || '添加成员失败');
-        }
-    }
 
     /**
      * 处理移除成员
@@ -795,12 +835,6 @@ class DepartmentManagement {
             return false;
         }
 
-        // 部门编码验证
-        if (!/^[A-Z0-9]{2,10}$/.test(formData.departmentCode)) {
-            NotifyUtil.error('部门编码必须为2-10位大写字母或数字');
-            return false;
-        }
-
         // 排序号验证
         if (!Number.isInteger(Number(formData.orderNum)) || Number(formData.orderNum) < 0) {
             NotifyUtil.error('排序号必须是非负整数');
@@ -810,17 +844,6 @@ class DepartmentManagement {
         return true;
     }
 
-
-
-    /**
-     * 刷新部门树
-     * @returns {Promise<void>}
-     * @private
-     */
-    async _refreshDepartments() {
-        await this._loadDepartments();
-        this._renderDepartmentTree(this.state.departments);
-    }
 
     /**
      * 禁用/启用表单
@@ -940,18 +963,23 @@ class DepartmentManagement {
     async _selectDepartment(departmentId) {
         try {
             this._showLoading();
-
+            this.$departmentForm.find('.form-actions').show();
+            $('.modal-footer').hide();
             const response = await $.ajax({
                 url: `/api/departments/detail/${departmentId}`,
                 method: 'GET'
             });
-
             if(response.code === 200) {
-                this.state.currentDepartment = response.data;
-                // 回填表单数据
+                this.state.currentDepartment = response.data.department;
+
+                // 更新上级部门选择器
+                await this._loadDepartments(); // 确保部门列表已加载
+                this._updateParentOptions(this.state.currentDepartment);
+
+                // 填充表单数据
                 this._fillDepartmentForm(response.data);
+
                 // 加载部门成员
-                this.state.currentDepartment.departmentId = departmentId;
                 await this._loadDepartmentMembers();
             } else {
                 throw new Error(response.message);
@@ -959,9 +987,53 @@ class DepartmentManagement {
 
         } catch(error) {
             NotifyUtil.error('加载部门信息失败:' + error.message);
+            throw error;
         } finally {
             this._hideLoading();
         }
+    }
+
+
+
+    /**
+     * 更新上级部门选项
+     * @param {Object} currentDepartment - 当前部门信息
+     * @private
+     */
+    _updateParentOptions(currentDepartment) {
+        if (!this.state.departments || !Array.isArray(this.state.departments)) {
+            return;
+        }
+
+        const buildOptions = (departments, level = 0) => {
+            return departments.reduce((options, dept) => {
+                // 排除当前部门及其子部门作为父部门选项
+                if (currentDepartment &&
+                    (dept.departmentId === currentDepartment.departmentId ||
+                        this._isChildDepartment(dept, currentDepartment.departmentId))) {
+                    return options;
+                }
+
+                options.push(`
+                <option value="${dept.departmentId}" 
+                    ${currentDepartment && currentDepartment.parentId === dept.departmentId ? 'selected' : ''}>
+                    ${'　'.repeat(level)}${dept.departmentName}
+                </option>
+            `);
+
+                if (dept.children?.length) {
+                    options.push(buildOptions(dept.children, level + 1));
+                }
+
+                return options;
+            }, []).join('');
+        };
+
+        const options = ['<option value="">无上级部门</option>'];
+        options.push(buildOptions(this.state.departments));
+
+        const $parentDepartment = $('#parentDepartment');
+        $parentDepartment.html(options.join(''));
     }
 
 
@@ -1004,75 +1076,72 @@ class DepartmentManagement {
         }
     }
 
+
     /**
-     * 处理添加部门
+     * 处理模态框表单提交(新增/修改)
      * @private
      */
-    _handleAddDepartment() {
-        // 重置表单和状态
-        this.$departmentForm[0].reset();
-        this.state.currentDepartment = null;
-        // 移除验证状态
-        this.$departmentForm.find('.is-invalid, .is-valid').removeClass('is-invalid is-valid');
-        this.$departmentForm.find('.invalid-feedback').remove();
+    async _handleFormSubmit(e) {
+        e.preventDefault();
 
-        // 设置默认值
-        $('#departmentLevel').val(1);
-        $('#departmentOrder').val(0);
+        // 获取表单数据
+        const formData = {
+            departmentName: $('#departmentName').val().trim(),
+            departmentId: $('#departmentId').val().trim(),
+            parentId: $('#parentDepartment').val() || null,
+            managerId: $('#managerId').val() || null,
+            deptLevel: Number($('#deptLevel').val()),
+            description: $('#description').val()?.trim(),
+            status: $('#status').prop('checked') ? 1 : 0,
+            orderNum: Number($('#orderNum').val())
+        };
 
-        // 显示弹窗
-        this.departmentModal.show();
-    }
-    //
-    // /**
-    //  * 处理编辑部门
-    //  * @private
-    //  */
-    // _handleEditDepartment() {
-    //     if(!this.state.currentDepartment) {
-    //         NotifyUtil.error('请先选择部门');
-    //         return;
-    //     }
-    //
-    //     // 回填当前部门数据
-    //     this._fillDepartmentForm(this.state.currentDepartment);
-    //     this._updateParentOptions(this.state.currentDepartment);
-    //     // 显示弹窗
-    //     this.departmentModal.show();
-    // }
+        // 如果是编辑模式,添加部门ID
+        if (this.formMode === 'edit') {
+            formData.departmentId = this.state.currentDepartment.departmentId;
+        }
 
+        // 表单验证
+        if (!formData.departmentName) {
+            NotifyUtil.warning('部门名称不能为空');
+            return;
+        }
 
-
-    async _handleMemberSearch(e) {
-        const keyword = e.target.value.trim();
-        if (!keyword) {
-            this.state.searchResults = [];
-            this._renderSearchResults();
+        if (formData.deptLevel < 1 || formData.deptLevel > 5) {
+            NotifyUtil.warning('部门层级必须在1-5之间');
             return;
         }
 
         try {
             const response = await $.ajax({
-                url: '/api/users/search',
-                method: 'GET',
-                data: {
-                    keyword: keyword,
-                    excludeDepartmentId: this.state.currentDepartment?.departmentId || ''
-                }
+                url: this.formMode === 'edit'
+                    ? `/api/departments/update`
+                    : '/api/departments/add',
+                method: this.formMode === 'edit' ? 'PUT' : 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData)
             });
 
-            if(response.code === 200) {
-                this.state.searchResults = response.data;
-                this._renderSearchResults();
+            if (response.code === 200) {
+                NotifyUtil.success(`${this.formMode === 'edit' ? '修改' : '新增'}部门成功`);
+
+                // 关闭模态框
+                this.departmentModal.hide();
+
+                // 重新加载部门树
+                await this._loadDepartmentTrees();
+
+                // 如果是编辑模式,重新加载当前部门信息
+                if (this.formMode === 'edit' && this.state.currentDepartment) {
+                    await this._selectDepartment(this.state.currentDepartment.departmentId);
+                }
             } else {
-                throw new Error(response.message || '搜索用户失败');
+                throw new Error(response.message);
             }
         } catch (error) {
-            NotifyUtil.error('搜索用户失败:', error);
-            NotifyUtil.error('搜索用户失败');
+            NotifyUtil.error(error.message || `${this.formMode === 'edit' ? '修改' : '新增'}部门失败`);
         }
     }
-
 
     /**
      * 设置字段有效状态
@@ -1103,18 +1172,191 @@ class DepartmentManagement {
         return isValid;
     }
 
-    // /**
-    //  * 重置表单验证状态
-    //  * @private
-    //  */
-    // _resetFormValidation() {
-    //     this.$departmentForm
-    //         .find('.is-valid, .is-invalid')
-    //         .removeClass('is-valid is-invalid');
-    //     this.$departmentForm
-    //         .find('.invalid-feedback')
-    //         .remove();
-    // }
+
+    /**
+     * 初始化图标选择器
+     * @private
+     */
+    _initIconSelector() {
+        const iconGrid = $('.icon-grid');
+        this.availableIcons.forEach(icon => {
+            iconGrid.append(`
+                <div class="icon-item" data-icon="${icon}">
+                    <i class="fas ${icon}"></i>
+                </div>
+            `);
+        });
+
+        // 绑定图标选择事件
+        $('.icon-item').on('click', (e) => {
+            const selectedIcon = $(e.currentTarget).data('icon');
+            $('#selectedIcon').attr('class', `fas ${selectedIcon}`);
+            this.iconModal.hide();
+        });
+
+        // 绑定图标选择按钮事件
+        $('#iconSelectBtn').on('click', () => {
+            this.iconModal.show();
+        });
+    }
+
+    /**
+     * 重置表单
+     * @private
+     */
+    _resetForm() {
+        this.$departmentForm[0].reset();
+
+        // 重置所有字段
+        $('#departmentName').val('');
+        $('#departmentId').val('').closest('.row').toggle(this.formMode !== 'add'); // 控制部门ID的显示
+        $('#deptLevel').val(1);
+        $('#description').val('');
+        $('#orderNum').val(0);
+        $('#status').prop('checked', true);
+        $('#selectedIcon').attr('class', 'fas fa-folder'); // 重置图标
+
+        // 重置上级部门选择器
+        this._updateParentOptions(null);
+
+        // 重置部门负责人选择器
+        $('#managerId').html('<option value="">请选择部门负责人</option>');
+
+        // 移除验证状态
+        this.$departmentForm.find('.is-invalid, .is-valid')
+            .removeClass('is-invalid is-valid');
+        this.$departmentForm.find('.invalid-feedback').remove();
+
+        // 控制按钮显示
+        this._updateFormButtons();
+    }
+
+    /**
+     * 获取表单数据
+     * @returns {Object} 表单数据
+     * @private
+     */
+    _getDepartmentFormData() {
+        const selectedIcon = $('#selectedIcon').attr('class').split(' ')[1];
+
+        return {
+            departmentId: this.formMode === 'edit' ? $('#departmentId').val() : undefined,
+            departmentName: $('#departmentName').val().trim(),
+            managerId: $('#managerId').val() || null,
+            parentId: $('#parentDepartment').val() || null,
+            deptLevel: Number($('#deptLevel').val()),
+            description: $('#description').val()?.trim() || null,
+            status: $('#status').prop('checked') ? 1 : 0,
+            orderNum: Number($('#orderNum').val()),
+            iconClass: selectedIcon || 'fa-folder'
+        };
+    }
+
+    /**
+     * 处理表单提交
+     * @private
+     */
+    async _handleSubmitDepartment(e) {
+        e.preventDefault();
+
+        // 防止重复提交
+        if (this.isSubmitting) return;
+        this.isSubmitting = true;
+
+        try {
+            if (!this._validateForm()) {
+                return;
+            }
+
+            const formData = this._getDepartmentFormData();
+            const isEdit = this.formMode === 'edit';
+
+            const response = await $.ajax({
+                url: isEdit ? '/api/departments/update' : '/api/departments/add',
+                method: isEdit ? 'PUT' : 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData)
+            });
+
+            if (response.code === 200) {
+                NotifyUtil.success(`${isEdit ? '更新' : '创建'}部门成功`);
+                await this._loadDepartmentTrees();
+
+                if (isEdit && this.state.currentDepartment?.departmentId === formData.departmentId) {
+                    await this._selectDepartment(formData.departmentId);
+                }
+
+                this.departmentModal.hide();
+            } else {
+                throw new Error(response.message || `${isEdit ? '更新' : '创建'}部门失败`);
+            }
+        } catch (error) {
+            NotifyUtil.error(error.message || '操作失败');
+        } finally {
+            this.isSubmitting = false;
+            this._disableForm(false);
+        }
+    }
+
+    /**
+     * 处理添加部门按钮点击
+     * @private
+     */
+    _handleAddDepartment() {
+        this.formMode = 'add';
+
+        // 重置表单
+        this._resetForm();
+
+        // 移动表单到模态框
+        const $form = this.$departmentForm.detach();
+        $('#modalFormContainer').append($form);
+
+        // 更新模态框标题和按钮状态
+        $('#departmentModal .modal-title').text('新增部门');
+        this._updateFormButtons();
+
+        // 隐藏部门ID字段
+        $('#departmentId').closest('.row').hide();
+
+        // 显示模态框
+        this.departmentModal.show();
+    }
+
+    /**
+     * 填充部门表单
+     * @param {Object} data - 部门信息和负责人信息
+     * @private
+     */
+    _fillDepartmentForm(data) {
+        const department = data.department;
+        const charge = data.charge && data.charge.length > 0 ? data.charge[0] : null;
+
+        // 显示部门ID字段
+        $('#departmentId').closest('.row').show();
+
+        // 填充表单字段
+        $('#departmentId').val(department.departmentId);
+        $('#departmentName').val(department.departmentName);
+        $('#deptLevel').val(department.deptLevel);
+        $('#description').val(department.description);
+        $('#status').prop('checked', department.status === 1);
+        $('#orderNum').val(department.orderNum);
+        $('#selectedIcon').attr('class', `fas ${department.iconClass || 'fa-folder'}`);
+
+        // 处理部门负责人
+        const $managerId = $('#managerId');
+        $managerId.empty();
+        $managerId.append('<option value="">请选择部门负责人</option>');
+
+        if (charge) {
+            $managerId.append(`<option value="${charge.userId}" selected>${charge.realName}</option>`);
+        }
+
+        // 处理上级部门
+        $('#parentDepartment').val(department.parentId || '');
+    }
+
 
 
 

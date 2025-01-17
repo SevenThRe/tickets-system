@@ -848,7 +848,7 @@ MyTickets.prototype._handleCloseTicket = function() {
     const closeRequest = {
         content: content,
         operatorId: this.state.filters.userId,
-        tickedId: this.state.currentTicket.ticketId
+        ticketId: this.state.currentTicket.ticketId
     };
 
     // 关闭工单请求
@@ -946,16 +946,10 @@ MyTickets.prototype._handleAddNote = function() {
     }
 
     $.ajax({
-        url: '/api/tickets/records',
+        url: `/api/tickets/${this.state.currentTicket.ticketId}/note`,
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({
-            ticketId: this.state.currentTicket.ticketId,
-            operatorId: this.state.filters.userId,
-            operationContent: content,
-            evaluationScore: null,
-            evaluationContent: null
-        }),
+        data: JSON.stringify(content),
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

@@ -1430,38 +1430,6 @@ class TicketManagement {
         }
     }
 
-    /**
-     * 处理文件上传
-     *
-     */
-    // async _handleFileUpload(files) {
-    //     if(!files || !files.length) return;
-    //     修改了 合并到上传工单中
-    //     try {
-    //         const formData = new FormData();
-    //         Array.from(files).forEach(file => {
-    //             formData.append('files', file);
-    //         });
-    //
-    //         formData.append('ticketId', this.state.currentTicket.ticketId);
-    //
-    //         const response = await $.ajax({
-    //             url: `/api/tickets/${this.state.currentTicket.ticketId}/attachments`,
-    //             method: 'POST',
-    //             data: formData,
-    //             processData: false,
-    //             contentType: false
-    //         });
-    //
-    //         if(response.code === 200) {
-    //             NotifyUtil.success('文件上传成功');
-    //             await this._loadTicketAttachments(this.state.currentTicket.ticketId);
-    //         }
-    //     } catch(error) {
-    //         console.error('文件上传失败:', error);
-    //         NotifyUtil.error('上传失败，请重试');
-    //     }
-    // }
 
     /**
      * 文件下载处理
