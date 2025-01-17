@@ -116,8 +116,8 @@ function _renderDeptDetails(response) {
         // 过滤所有的null
         totalSatisfaction += member.satisfaction;
     });
-    var averageSatisfaction = totalSatisfaction / response.data.length;
-    $('#avgSatisfaction').text(averageSatisfaction.toFixed(2));
+    $('#avgSatisfaction').html(this._renderStars(totalSatisfaction / response.data.length));
+
 }
 
 // 加载成员列表
@@ -237,3 +237,25 @@ function shuaXin(){
 $('#closeDrawerBtn').on('click', function() {
     $('#memberDrawer').removeClass('open');
 });
+
+
+function _renderStars(score) {
+    const fullStar = '<i class="bi bi-star-fill star"></i>';
+    const halfStar = '<i class="bi bi-star-half star"></i>';
+    const emptyStar = '<i class="bi bi-star star star-empty"></i>';
+
+    let stars = '';
+    const totalStars = 5;
+
+    for(let i = 1; i <= totalStars; i++) {
+        if(i <= Math.floor(score)) {
+            stars += fullStar;
+        } else if(i - 0.5 <= score) {
+            stars += halfStar;
+        } else {
+            stars += emptyStar;
+        }
+    }
+
+    return stars;
+}

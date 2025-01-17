@@ -38,6 +38,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -146,27 +148,30 @@ public class TicketController {
             CreateTicketDTO createDTO) {
         try {
             Long ticketId = ticketService.createTicket(createDTO);
-            String filePath =
-                    fileService.uploadFile(file,ticketId).substring("/api/files/".length());
+
 
             // 创建工单
             if (ticketId == null) throw new BusinessException(CodeEnum.INTERNAL_ERROR, "未知异常，工单创建失败");
 
             // 文件上传完毕，尝试传递文件路径到t_attachment表
-            attachmentMapper.insertSelective(
-                    Attachment.builder().ticketId(ticketId)
-                            .createBy(createDTO.getCurrentUserId())
-                            .fileName(file.getOriginalFilename())
-                            .fileSize(file.getSize())
-                            .filePath(filePath).build()
-            );
+            if(file != null){
+                String filePath =
+                        fileService.uploadFile(Objects.requireNonNull(file),ticketId).substring("/api/files/".length());
+                attachmentMapper.insertSelective(
+                        Attachment.builder().ticketId(ticketId)
+                                .createBy(createDTO.getCurrentUserId())
+                                .fileName(file.getOriginalFilename())
+                                .fileSize(file.getSize())
+                                .filePath(filePath).build()
+                );
+            }
             return R.OK(ticketId);
         } catch (BusinessException e) {
             log.error("创建工单失败: {}", e.getMessage());
-            return R.FAIL(TicketEnum.TICKET_OPERATION_FAILED);
+            throw new BusinessException(CodeEnum.INTERNAL_ERROR,e.getMessage());
         } catch (Exception e) {
             log.error("创建工单失败:", e);
-            return R.FAIL();
+            throw new BusinessException(CodeEnum.INTERNAL_ERROR, "未知异常，工单创建失败");
         }
     }
 

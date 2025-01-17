@@ -647,7 +647,17 @@ MyTickets.prototype._initFileUpload = function() {
             $(this).removeClass('dragover');
 
             const files = e.originalEvent.dataTransfer.files;
-            self._handleFiles(files, $fileList);
+
+            // 校验文件后缀
+                const validFiles = Array.from(files).filter(file => {
+                    const fileExt = file.name.split('.').pop().toLowerCase();
+                    return ['pdf', 'doc', 'docx', 'xls', 'xlsx'].includes(fileExt);
+                });
+                $(files).each((i,e) => {
+                    if(validFiles.includes(e)) {
+                        self._handleFiles(files, $fileList);
+                    }else {NotifyUtil.warning(`文件${e.name}格式不支持`);}
+                })
         }
     });
 
