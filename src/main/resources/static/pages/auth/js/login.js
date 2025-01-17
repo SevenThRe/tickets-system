@@ -116,7 +116,7 @@ class LoginPage {
             'USER': '/pages/user/dashboard.html'
         };
 
-        const defaultPath = '/common/profile.html';
+        const defaultPath = '/pages/common/profile.html';
         const redirectPath = roleRedirects[userInfo.baseRoleCode] || defaultPath;
         window.location.href = redirectPath;
     }
@@ -195,7 +195,7 @@ class LoginPage {
             }
 
         } catch (error) {
-            this.handleLoginError(error);
+            this.handleLoginError(error.message);
         } finally {
             this.state.isSubmitting = false;
             this.setLoadingState(false);

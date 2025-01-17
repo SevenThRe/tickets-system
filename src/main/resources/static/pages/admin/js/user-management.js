@@ -592,13 +592,11 @@ class UserManagement {
                     `<option value="${role.roleId}">${role.roleName}</option>`
                 ).join('');
 
-                // 不设置默认值,只提供选择项
                 const defaultOption = '<option value="">请选择角色</option>';
                 $('#roleFilter, #role').html(defaultOption + options);
             }
         } catch (error) {
-            console.error('加载角色列表失败:', error);
-            NotifyUtil.error('加载角色列表失败');
+            NotifyUtil.error('加载角色列表失败', error.message);
         }
     }
 

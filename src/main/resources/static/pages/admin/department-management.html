@@ -50,36 +50,36 @@
                         <form id="departmentForm" class="mb-4">
                             <!-- 隐藏的ID字段，仅用于回显 -->
 <!--                            <input type="hidden" id="departmentId" name="departmentId">-->
-
                             <div class="row mb-3">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
+                                    <label class="form-label">部门ID</label>
+                                    <input class="form-control" disabled
+                                           id="departmentId" name="departmentId" readonly type="text">
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-12">
                                     <label class="form-label">部门名称</label>
                                     <input type="text" class="form-control"
                                            id="departmentName" name="departmentName" required>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">部门ID</label>
-                                    <input type="text" class="form-control"
-                                           disabled id="departmentId" name="departmentId" readonly>
-                                </div>
                             </div>
                             <div class="mb-3" id="iconSelectGroup">
                                 <label class="form-label">部门图标</label>
-                                <div class="icon-selector">
+                                <div class="icon-selector col-md-6">
                                     <button class="btn btn-outline-secondary" id="iconSelectBtn" type="button">
                                         <i class="fas fa-folder" id="selectedIcon"></i>
                                         <span class="ms-2">选择图标</span>
                                     </button>
                                 </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">部门层级</label>
+                                    <input class="form-control" id="deptLevel"
+                                           max="5" min="1"
+                                           name="deptLevel" required type="number" value="1">
+                                    <div class="form-text">最大支持5级部门</div>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">部门层级</label>
-                                <input type="number" class="form-control"
-                                       id="deptLevel" name="deptLevel"
-                                       min="1" max="5" value="1" required>
-                                <div class="form-text">最大支持5级部门</div>
-                            </div>
-
                             <div class="mb-3">
                                 <label class="form-label">上级部门</label>
                                 <select class="form-select" id="parentDepartment" name="parentId">

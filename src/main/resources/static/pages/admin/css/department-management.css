@@ -50,6 +50,12 @@
     border-bottom: 1px solid #dee2e6;
 }
 
+.card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
 .search-results-list {
     max-height: 400px;
     overflow-y: auto;
@@ -298,11 +304,7 @@
 }
 
 .department-tree-card,
-.department-detail-card {
-    height: calc(100vh - 120px);
-    display: flex;
-    flex-direction: column;
-}
+
 
 /* 表单验证样式 */
 .form-group {
@@ -390,6 +392,44 @@
         background-color: var(--card-background);
         border-color: var(--primary-color);
     }
+}
+/* 修改department-management.css */
+
+/* 调整card-body的最小高度和滚动条 */
+.department-detail-card .card-body {
+    min-height: calc(100vh - 200px);
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+/* 确保表单操作按钮始终可见 */
+.form-actions {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 1rem 0;
+    margin-top: 1rem;
+    border-top: 1px solid #dee2e6;
+    z-index: 10;
+}
+
+/* 暗色主题适配 */
+@media (prefers-color-scheme: dark) {
+    .form-actions {
+        background: var(--card-background);
+        border-top: 1px solid var(--border-color);
+    }
+}
+
+/* 调整部门树卡片的高度 */
+.department-tree-card {
+    height: calc(100vh - 120px);
+}
+
+.department-tree {
+    height: calc(100% - 60px);
+    overflow-y: auto;
 }
 
 /* 响应式调整 */
