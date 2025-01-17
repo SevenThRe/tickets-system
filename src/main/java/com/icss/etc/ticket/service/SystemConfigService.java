@@ -1,6 +1,9 @@
 package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.sys.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Optional;
 
 /**
  * {@code SystemConfigService}
@@ -36,4 +39,12 @@ public interface SystemConfigService {
      * @param config {@link UploadConfig}
      */
     void updateUploadConfig(UploadConfig config);
+
+    /**
+     * 获取系统名称配置
+     * @return 系统名称
+     */
+    String getSystemName();
+
+    int updateSystemLogo(MultipartFile systemLogo);
 }

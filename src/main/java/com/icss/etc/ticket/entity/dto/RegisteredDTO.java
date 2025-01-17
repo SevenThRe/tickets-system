@@ -13,6 +13,6 @@ public class RegisteredDTO {
     private String realName;
     private String email;
     private String phone;
-    private Long roleId;
+    private Long roleId = 3L;
 
 }

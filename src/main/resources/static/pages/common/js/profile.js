@@ -375,6 +375,10 @@ class Profile {
             if (response.code === 200) {
                 this.showSuccess('密码修改成功');
                 this.$passwordForm[0].reset();
+
+                localStorage.removeItem('token');
+                localStorage.removeItem('userInfo');
+                window.location.href = '/pages/auth/login.html';
             } else {
                 throw new Error(response.msg || '修改失败');
             }

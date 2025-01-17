@@ -3,7 +3,8 @@
     padding: 20px;
     position: relative;
     min-height: calc(100vh - 56px);
-    margin-left: 5em; /* 添加这行，与导航栏宽度对应 */
+    margin-left: 4rem;
+
 }
 
 /* 当导航栏展开时的适配 */

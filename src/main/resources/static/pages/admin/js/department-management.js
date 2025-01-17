@@ -192,22 +192,24 @@ class DepartmentManagement {
             this._disableForm(true);
             const response = await $.ajax({
                 url: isEdit ?
-                    `/api/departments/${this.state.currentDepartment.departmentId}` :
-                    '/api/departments',
-                method: isEdit ? 'PUT' : 'POST',
+                    '/api/departments/update' :
+                    '/api/departments/add',
+                method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(formData)
             });
 
             if (response.code === 200) {
                 this._showSuccess(isEdit ? '更新部门成功' : '创建部门成功');
+                // 重新加载树结构
                 await this._loadDepartmentTrees();
+                // 重新渲染树
+                this._renderDepartmentTree(this.state.departmentsTrees);
+
                 if (isEdit) {
                     await this._selectDepartment(this.state.currentDepartment.departmentId);
                 }
                 this.departmentModal.hide();
-            } else {
-                throw new Error(response.message);
             }
         } catch (error) {
             NotifyUtil.error(error.message || '保存失败');
@@ -316,6 +318,12 @@ class DepartmentManagement {
             if (this.formMode === 'add') {
                 const $form = this.$departmentForm.detach();
                 $('.department-detail-card .card-body').append($form);
+
+                // 移除表单事件绑定
+                this.$departmentForm.off('submit');
+
+                // 重新绑定原有表单事件
+                this.$departmentForm.on('submit', (e) => this._handleSaveDepartment(e));
             }
             this.formMode = 'view';
         });
@@ -708,7 +716,7 @@ class DepartmentManagement {
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-2">
                             <div class="member-avatar me-2" style="background-image: url(${avatarUrl});">
-                                <i class="bi bi-person-circle fs-4"></i>
+                               
                             </div>
                             <div>
                                 <h6 class="card-title mb-0">${member.realName}</h6>
@@ -1065,8 +1073,9 @@ class DepartmentManagement {
                 this.state.currentDepartment = null;
                 // 清空表单
                 this.$departmentForm[0].reset();
-                // 重新加载部门树
+                // 重新加载并渲染树
                 await this._loadDepartmentTrees();
+                this._renderDepartmentTree(this.state.departmentsTrees);
             } else {
                 throw new Error(response.message);
             }
@@ -1083,7 +1092,7 @@ class DepartmentManagement {
      */
     async _handleFormSubmit(e) {
         e.preventDefault();
-
+        e.stopPropagation();
         // 获取表单数据
         const formData = {
             departmentName: $('#departmentName').val().trim(),
@@ -1097,49 +1106,56 @@ class DepartmentManagement {
         };
 
         // 如果是编辑模式,添加部门ID
-        if (this.formMode === 'edit') {
-            formData.departmentId = this.state.currentDepartment.departmentId;
-        }
-
-        // 表单验证
-        if (!formData.departmentName) {
-            NotifyUtil.warning('部门名称不能为空');
-            return;
-        }
-
-        if (formData.deptLevel < 1 || formData.deptLevel > 5) {
-            NotifyUtil.warning('部门层级必须在1-5之间');
-            return;
-        }
+        if(this.isSubmitting) return;
+        this.isSubmitting = true;
 
         try {
+            // 获取表单数据
+            const formData = this._getDepartmentFormData();
+
+            // 验证表单
+            if (!this._validateForm()) {
+                this.isSubmitting = false;
+                return;
+            }
+            // 表单验证
+            if (!formData.departmentName) {
+                NotifyUtil.warning('部门名称不能为空');
+                return;
+            }
+
+            if (formData.deptLevel < 1 || formData.deptLevel > 5) {
+                NotifyUtil.warning('部门层级必须在1-5之间');
+                return;
+            }
+
             const response = await $.ajax({
-                url: this.formMode === 'edit'
-                    ? `/api/departments/update`
-                    : '/api/departments/add',
-                method: this.formMode === 'edit' ? 'PUT' : 'POST',
+                url: '/api/departments/add',
+                method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(formData)
             });
 
             if (response.code === 200) {
-                NotifyUtil.success(`${this.formMode === 'edit' ? '修改' : '新增'}部门成功`);
+                NotifyUtil.success('添加部门成功');
 
                 // 关闭模态框
                 this.departmentModal.hide();
 
-                // 重新加载部门树
+                // 重新加载部门树并刷新
                 await this._loadDepartmentTrees();
+                this._renderDepartmentTree(this.state.departmentsTrees);
 
-                // 如果是编辑模式,重新加载当前部门信息
-                if (this.formMode === 'edit' && this.state.currentDepartment) {
-                    await this._selectDepartment(this.state.currentDepartment.departmentId);
-                }
+                // 还原表单到原位置
+                const $form = this.$departmentForm.detach();
+                $('.department-detail-card .card-body').append($form);
             } else {
-                throw new Error(response.message);
+                throw new Error(response.msg || '添加部门失败');
             }
         } catch (error) {
-            NotifyUtil.error(error.message || `${this.formMode === 'edit' ? '修改' : '新增'}部门失败`);
+            NotifyUtil.error(error.message || '添加部门失败');
+        } finally {
+            this.isSubmitting = false;
         }
     }
 
@@ -1268,7 +1284,7 @@ class DepartmentManagement {
                 return;
             }
 
-            const formData = this._getDepartmentFormData();
+            let formData = this._getDepartmentFormData();
             const isEdit = this.formMode === 'edit';
 
             const response = await $.ajax({
@@ -1281,11 +1297,11 @@ class DepartmentManagement {
             if (response.code === 200) {
                 NotifyUtil.success(`${isEdit ? '更新' : '创建'}部门成功`);
                 await this._loadDepartmentTrees();
+                await this._renderDepartmentTree(this.state.departmentsTrees);
 
                 if (isEdit && this.state.currentDepartment?.departmentId === formData.departmentId) {
                     await this._selectDepartment(formData.departmentId);
                 }
-
                 this.departmentModal.hide();
             } else {
                 throw new Error(response.message || `${isEdit ? '更新' : '创建'}部门失败`);
@@ -1304,6 +1320,13 @@ class DepartmentManagement {
      */
     _handleAddDepartment() {
         this.formMode = 'add';
+
+
+        // 移除已有的submit事件监听
+        this.$departmentForm.off('submit');
+
+        // 重新绑定submit事件
+        this.$departmentForm.on('submit', (e) => this._handleFormSubmit(e));
 
         // 重置表单
         this._resetForm();

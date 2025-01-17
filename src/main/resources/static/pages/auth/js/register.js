@@ -13,7 +13,6 @@ class Register {
         this.$email = $('#email');
         this.$phone = $('#phone');
         this.$submitBtn = $('#submitBtn');
-        this.$roleSelect = $('#roleId');
         this.$togglePassword = $('#togglePassword');
         this.$toggleConfirmPassword = $('#toggleConfirmPassword');
 
@@ -50,9 +49,6 @@ class Register {
                 required: true,
                 pattern: /^1[3-9]\d{9}$/
             },
-            roleId: {
-                required: true
-            }
         };
 
         // 状态标志
@@ -72,8 +68,7 @@ class Register {
     async init() {
         // 绑定事件
         this._bindEvents();
-        // 加载角色列表
-        await this._loadRoles();
+
         // 加载用户名列表(用于唯一性校验)
         await this._loadUsernames();
     }
@@ -100,30 +95,10 @@ class Register {
         this.$realName.on('input', () => this.debounceValidate('realName'));
         this.$email.on('input', () => this.debounceValidate('email'));
         this.$phone.on('input', () => this.debounceValidate('phone'));
-        this.$roleSelect.on('change', () => this.debounceValidate('roleId'));
 
         // 密码显示切换
         this.$togglePassword.on('click', () => this._togglePasswordVisibility(this.$password));
         this.$toggleConfirmPassword.on('click', () => this._togglePasswordVisibility(this.$confirmPassword));
-    }
-
-    // 加载角色列表
-    async _loadRoles() {
-        try {
-            const response = await $.ajax({
-                url: '/api/roles/list',
-                method: 'GET'
-            });
-
-            if(response.code === 200) {
-                this._renderRoleOptions(response.data);
-            } else {
-                throw new Error(response.message || '加载角色列表失败');
-            }
-        } catch(error) {
-            console.error('加载角色列表失败:', error);
-            this._showError('加载角色列表失败');
-        }
     }
 
     // 加载用户名列表
@@ -142,28 +117,12 @@ class Register {
         }
     }
 
-    // 渲染角色选项
-    _renderRoleOptions(roles) {
-        let options = roles.map((role) => {
-            if (role.roleName === "普通用户") {
-                return `<option value="${role.roleId}" selected>${role.roleName}</option>`;
-            } else {
-                return `<option value="${role.roleId}">${role.roleName}</option>`;
-            }
-        }).join('');
-        this.$roleSelect.append(options);
-    }
-
 
     // 字段验证
     validateField(field) {
         let $field;
-        // 特殊处理roleId字段
-        if (field === 'roleId') {
-            $field = this.$roleSelect;
-        } else {
-            $field = this[`$${field}`];
-        }
+
+        $field = this[`$${field}`];
 
         if (!$field || $field.length === 0) {
             console.error(`Field ${field} not found`);
@@ -253,7 +212,7 @@ class Register {
                     window.location.href = '/pages/auth/login.html';
                 }, 1500);
             } else {
-                throw new Error(response.message);
+                throw new Error(response.msg);
             }
 
         } catch(error) {
@@ -272,7 +231,6 @@ class Register {
             realName: this.$realName.val().trim(),
             email: this.$email.val().trim(),
             phone: this.$phone.val().trim(),
-            roleId: this.$roleSelect.val()
         };
     }
 

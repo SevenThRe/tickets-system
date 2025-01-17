@@ -22,7 +22,7 @@
 
 .main-content {
     flex: 1;
-    margin-left: 250px;
+    margin-left: 4rem;
     padding: 2rem;
     background-color: var(--background-color);
 }
@@ -96,12 +96,18 @@
 
 /* Logo预览 */
 .logo-preview {
-    width: 120px;
-    height: 40px;
+    margin-left: 4rem;
+    width: 60px;
+    height: 60px;
     object-fit: contain;
     border: 1px solid var(--border-color);
     border-radius: 0.25rem;
     padding: 0.25rem;
+    display: inline-block;
+
+}
+.logo-select-label:hover {
+    cursor: pointer;
 }
 
 /* 表单检查框样式 */

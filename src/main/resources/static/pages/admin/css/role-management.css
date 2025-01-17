@@ -25,7 +25,7 @@
 
 .main-content {
     flex: 1;
-    margin-left: 250px;  /* 导航栏宽度 */
+    margin-left: 5rem;
     padding: 2rem;
     background-color: var(--background-color);
 }

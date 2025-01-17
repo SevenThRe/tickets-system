@@ -38,7 +38,9 @@ public enum CodeEnum {
     PASSWORD_WEAK(1325,"密码强度不足"),
     UNKNOW_USER(1411,"未知用户"),
     DELETE_MEMBER_FAILED(1412, "删除成员失败"),
-    SAVE_FAILED(1055, "保存失败");
+    SAVE_FAILED(1055, "保存失败"),
+    INVALID_FILE_SIZE(1551, "文件大小超出限制"),
+    INVALID_FILE_TYPE(1552, "文件类型不支持"), REGISTER_CLOSED(1553, "系统注册已关闭");
     @Getter
     @Setter
     private int code;

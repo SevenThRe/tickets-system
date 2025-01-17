@@ -37,16 +37,16 @@ public class DepartmentController {
      *  修改部门
      * @param department 部门对象
      */
-    @PutMapping("/update")
+    @PostMapping("/update")
     public R updateDepartment(@RequestBody Department department) {
-        return R.OK(departmentService.updateByPrimaryKey(department));
+        return departmentService.updateByPrimaryKey(department) > 0 ? R.OK() : R.FAIL();
     }
 
     /**
      * 删除部门
      * @param department_id 部门ID
      */
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/del/{id}")
     public R deleteDepartment(@PathVariable("id") Long department_id) {
         return R.OK(departmentService.deleteByPrimaryKey(department_id));
     }

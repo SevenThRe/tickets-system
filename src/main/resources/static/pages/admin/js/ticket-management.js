@@ -813,7 +813,8 @@ class TicketManagement {
         console.log('渲染工单详情:', ticket);
 
         // 渲染基本信息
-        $('#ticketType').text(ticket.typeName).addClass(`bg-secondary`);
+        $('#ticketType').text(ticket.typeName).addClass(`bg-secondary`)
+            .addClass(`ticket-type-${this.getTypeClass(ticket.typeName)}`);
         $('#ticketStatus').html(`
         <span class="badge bg-${this._getStatusClass(ticket.status)}">
             ${this._getStatusText(ticket.status)}
@@ -1573,6 +1574,17 @@ class TicketManagement {
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
+    }
+
+    getTypeClass(typeName) {
+        const map = {
+            '系统故障': 'error',
+            '功能建议': 'suggestion',
+            '账号问题': 'account',
+            '权限申请': 'permission',
+            '系统咨询': 'consultation'
+        };
+        return map[typeName] || 'other';
     }
 }
 

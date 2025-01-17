@@ -464,7 +464,7 @@ class Dashboard {
             <td>${ticket.ticketId}</td>
             <td>${this._escapeHtml(ticket.title)}</td>
             <td>
-                <span class="badge bg-secondary">${ticket.typeName || '-'}</span>
+                <span class="badge bg-secondary ticket-type-${this.getTypeClass(ticket.typeName)}">${ticket.typeName || '-'}</span>
             </td>
             <td>
                 <a href="javascript:void(0)" 
@@ -674,6 +674,17 @@ class Dashboard {
 
         // 清理状态
         this.state = null;
+    }
+
+    getTypeClass(typeName) {
+        const map = {
+            '系统故障': 'error',
+            '功能建议': 'suggestion',
+            '账号问题': 'account',
+            '权限申请': 'permission',
+            '系统咨询': 'consultation'
+        };
+        return map[typeName] || 'other';
     }
 }
 

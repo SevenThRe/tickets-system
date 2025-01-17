@@ -1,4 +1,5 @@
 /* navbar.css */
+
 /* 变量定义 */
 :root {
     --navbar-width: 5rem;
@@ -22,14 +23,14 @@
     overflow-x: hidden;
     z-index: 1000;
     padding: 0;
-    transform: translateX(0); /* 添加transform以启用GPU加速 */
+    transform: translateX(0);
 }
 
 /* 主内容区域调整 */
 .main-content {
     padding: 2rem;
     min-height: 100vh;
-    margin-left: var(--navbar-width); /* 仅在非折叠状态下保持边距 */
+    margin-left: var(--navbar-width);
     transition: margin-left var(--transition-speed) cubic-bezier(.175, .685, .32, 1);
 }
 
@@ -60,22 +61,43 @@ body {
 .navbar-logo {
     margin: 0;
     width: 100%;
-    height: 5rem;
+    height: 3.5rem;
     background: hsl(256, 10%, 10%);
     display: flex;
     align-items: center;
-    justify-content: center;
+    padding: 0 0.75rem;
 }
 
-.navbar-logo > .navbar-item-inner {
-    width: calc(5rem - 8px);
+.navbar-logo .navbar-item-inner {
+    width: 100%;
+    display: flex;
+    align-items: center;
     padding: 0;
 }
 
-.navbar-logo svg {
-    width: 2em;
-    height: 2em;
-    fill: white;
+.navbar-logo-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    min-width: 1.5rem;
+    margin-right: 0.5rem;
+}
+
+/* Logo文字样式 */
+.navbar-logo-text {
+    opacity: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 0;
+    transition: all var(--transition-speed);
+    color: var(--navbar-text);
+    font-size: 0.9rem;
+}
+
+#navbar:hover .navbar-logo-text {
+    opacity: 1;
+    max-width: calc(var(--navbar-expanded-width) - 3rem);
+    color: var(--navbar-hover-text);
 }
 
 /* 导航项基础样式 */
@@ -87,11 +109,12 @@ body {
 .navbar-item-inner {
     display: flex;
     align-items: center;
-    padding: 1rem 0;
+    padding: 0.5rem;
     color: var(--navbar-text);
     text-decoration: none;
     border-radius: 0.25rem;
     transition: all 0.2s ease;
+    width: 100%;
     position: relative;
 }
 
@@ -102,61 +125,36 @@ body {
 
 /* 图标容器 */
 .navbar-item-inner-icon-wrapper {
-    width: calc(5rem - 1rem - 8px);
+    width: 3rem;
+    height: 3rem;
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-shrink: 0;
 }
 
+/* 修改图标默认状态 */
+.navbar-item-inner-icon-wrapper i {
+    font-size: 1.25rem;
+    transition: font-size var(--transition-speed);
+}
 
+#navbar:hover .navbar-item-inner-icon-wrapper i {
+    font-size: 1rem;
+}
+
+/* 修改文字显示逻辑 */
 .link-text {
-    margin: 0;
+    opacity: 0;
+    margin-left: 0.5rem;
     white-space: nowrap;
-    opacity: 0; /* 默认隐藏文字 */
-    transition: opacity var(--transition-speed) cubic-bezier(.175, .685, .32, 1);
     overflow: hidden;
-    position: absolute; /* 使用绝对定位 */
-    left: 100%; /* 将文字放置在图标的右侧 */
-    top: 0;
-    bottom: 0;
-    width: calc(100% - 5rem); /* 计算文字的宽度 */
+    text-overflow: ellipsis;
+    transition: all var(--transition-speed);
+    flex: 1;
 }
-
-
-/* 导航项基础样式 */
-.navbar-item-inner {
-    display: flex;
-    align-items: center;
-    padding: 1rem 0;
-    color: var(--navbar-text);
-    text-decoration: none;
-    border-radius: 0.25rem;
-    transition: all 0.2s ease;
-}
-
-/* 导航栏展开时的样式 */
-.navbar-expanded .navbar-item-inner-icon-wrapper {
-    width: 5rem; /* 展开时图标的宽度 */
-}
-
-.navbar-expanded .link-text {
-    opacity: 1; /* 展开时显示文字 */
-}
-
-/* 展开效果 */
-#navbar:hover .navbar-item-inner-icon-wrapper {
-    width: 5rem; /* 展开时图标的宽度 */
-}
-
-/* 活动状态 */
-.navbar-item.active .navbar-item-inner {
-    color: var(--navbar-hover-text);
-    background: var(--navbar-hover-bg);
-}
-
 
 #navbar:hover .link-text {
-    width: calc(100% - calc(5rem - 8px));
     opacity: 1;
 }
 
@@ -173,26 +171,84 @@ body {
     background: var(--navbar-hover-bg);
 }
 
-/* 主内容区域调整 */
-.main-content {
-    margin-left: var(--navbar-width);
-    transition: margin-left var(--transition-speed) cubic-bezier(.175, .685, .32, 1);
-    min-height: 100vh;
-    padding: 2rem;
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
     #navbar {
-        transform: translateX(calc(-1 * var(--navbar-width))); /* 默认隐藏导航栏 */
+        transform: translateX(calc(-1 * var(--navbar-width)));
     }
 
     #navbar.show {
-        transform: translateX(0); /* 显示导航栏 */
+        transform: translateX(0);
     }
 
     .main-content {
-        margin-left: 0; /* 移除左边距 */
+        margin-left: 0;
         padding: 1rem;
     }
+}
+
+/* 移动端菜单按钮 */
+.navbar-toggle {
+    display: none;
+    position: fixed;
+    left: 1rem;
+    top: 1rem;
+    z-index: 1001;
+    background: var(--navbar-bg);
+    border: none;
+    color: var(--navbar-text);
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+/* 登出按钮样式 */
+.navbar-item.mt-auto {
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#logoutBtn {
+    color: var(--navbar-text);
+    width: 100%;
+}
+
+#logoutBtn:hover {
+    color: var(--navbar-hover-text);
+}
+
+#logoutBtn .navbar-item-inner-icon-wrapper i {
+    font-size: 1.25rem;
+    transition: font-size var(--transition-speed);
+}
+
+#navbar:hover #logoutBtn .navbar-item-inner-icon-wrapper i {
+    font-size: 1rem;
+}
+
+#logoutBtn .link-text {
+    opacity: 0;
+    margin-left: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all var(--transition-speed);
+    flex: 1;
+}
+
+#navbar:hover #logoutBtn .link-text {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .navbar-toggle {
+        display: block;
+    }
+}
+
+/* 激活状态样式 */
+.navbar-item.active .navbar-item-inner {
+    background: var(--navbar-hover-bg);
+    color: var(--navbar-hover-text);
 }

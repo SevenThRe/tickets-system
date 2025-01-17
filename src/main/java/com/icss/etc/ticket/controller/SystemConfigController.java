@@ -6,6 +6,7 @@ import com.icss.etc.ticket.service.SystemConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * {@code SystemConfigController}
@@ -73,6 +74,20 @@ public class SystemConfigController {
             return R.OK();
         } catch (Exception e) {
             log.error("更新文件上传配置失败:", e);
+            return R.FAIL();
+        }
+    }
+    @GetMapping("/get")
+    public R<String> get() {
+        return R.OK(configService.getSystemName());
+    }
+
+    @PostMapping("/upload-logo")
+    public R<Void> uploadLog(@RequestParam("systemLogo") MultipartFile systemLogo) {
+        try {
+            return configService.updateSystemLogo(systemLogo) > 0 ? R.OK() : R.FAIL();
+        } catch (Exception e) {
+            log.error("上传系统Logo失败:", e);
             return R.FAIL();
         }
     }

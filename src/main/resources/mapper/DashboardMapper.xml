@@ -18,6 +18,7 @@
         WHERE tr.evaluation_score IS NOT NULL
           AND tr.is_deleted = 0
           AND t.is_deleted = 0
+
     </select>
 
     <!-- 获取工单趋势统计 -->

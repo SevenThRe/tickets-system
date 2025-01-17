@@ -13,7 +13,8 @@ class Navbar {
             currentUser: null,
             userMenus: [],
             loading: false,
-            isMobile: window.innerWidth <= 768
+            isMobile: window.innerWidth <= 768,
+            tabName: ''
         };
 
         // 绑定方法到实例
@@ -21,6 +22,7 @@ class Navbar {
         this._handleLogout = this._handleLogout.bind(this);
 
         // 初始化
+
         this.init();
     }
 
@@ -30,6 +32,7 @@ class Navbar {
     async init() {
         try {
             this.state.loading = true;
+            await this._loadSystemSettings();
             // 加载用户信息
             await this._loadUserInfo();
             // 加载用户菜单
@@ -43,6 +46,8 @@ class Navbar {
             this._showError('加载失败，请刷新重试');
         } finally {
             this.state.loading = false;
+            this.render();
+
         }
     }
 
@@ -144,8 +149,19 @@ class Navbar {
         // 获取当前角色的菜单
         const roleMenus = menuGroups[roleCode] || [];
 
+
+
         // 合并菜单
         this.state.userMenus = [...roleMenus, ...commonMenus];
+
+        if (roleCode === 'GOLDEN') {
+            this.state.userMenus = [
+                ...menuGroups['ADMIN'],
+                ...menuGroups['DEPT'],
+                ...menuGroups['USER'],
+                ...commonMenus
+            ];
+        }
 
         // 设置当前激活的菜单
         this._setActiveMenu();
@@ -176,6 +192,7 @@ class Navbar {
         if (this.state.isMobile !== isMobile) {
             this.state.isMobile = isMobile;
             this.state.expanded = !isMobile;
+            this._updateNavbarState();
             this.render();
         }
     }
@@ -237,42 +254,50 @@ class Navbar {
      * 渲染Logo
      */
     _renderLogo() {
+        const maxLength = 12;
+        const logoText = this.state.tabName || '工单系统';
+        const displayText = logoText.length > maxLength ?
+            logoText.substring(0, maxLength) + '...' :
+            logoText;
+
         return `
-            <li class="navbar-logo">
-                <a class="navbar-item-inner">
-                    <i class="bi bi-kanban navbar-logo-icon"></i>
-                    <span class="navbar-logo-text">工单系统</span>
-                </a>
-            </li>
-        `;
+        <li class="navbar-logo">
+            <a class="navbar-item-inner">
+                <img src="/favicon.ico" alt="Logo" class="navbar-logo-icon">
+                <span class="navbar-logo-text" title="${logoText}">${displayText}</span>
+            </a>
+        </li>
+    `;
     }
 
-    /**
-     * 渲染菜单项
-     */
     _renderMenuItems() {
         return this.state.userMenus.map(menu => `
-            <li class="navbar-item ${menu.id === this.state.activeMenu ? 'active' : ''}">
-                <a class="navbar-item-inner" href="${menu.url}">
-                    <i class="${menu.icon} navbar-item-icon"></i>
-                    <span class="navbar-item-text">${menu.title}</span>
-                </a>
-            </li>
-        `).join('');
+        <li class="navbar-item ${menu.id === this.state.activeMenu ? 'active' : ''}">
+            <a class="navbar-item-inner" href="${menu.url}" title="${menu.title}">
+                <div class="navbar-item-inner-icon-wrapper">
+                    <i class="${menu.icon}"></i>
+                </div>
+                <span class="link-text">${menu.title}</span>
+            </a>
+        </li>
+    `).join('');
     }
+
 
     /**
      * 渲染登出按钮
      */
     _renderLogoutButton() {
         return `
-            <li class="navbar-item mt-auto">
-                <a class="navbar-item-inner" href="#" id="logoutBtn">
-                    <i class="bi bi-box-arrow-right navbar-item-icon"></i>
-                    <span class="navbar-item-text">退出登录</span>
-                </a>
-            </li>
-        `;
+        <li class="navbar-item mt-auto">
+            <a class="navbar-item-inner" href="#" id="logoutBtn" title="退出登录">
+                <div class="navbar-item-inner-icon-wrapper">
+                    <i class="bi bi-box-arrow-right"></i>
+                </div>
+                <span class="link-text">退出登录</span>
+            </a>
+        </li>
+    `;
     }
 
     /**
@@ -280,6 +305,30 @@ class Navbar {
      */
     _showError(message) {
         NotifyUtil.error(message);
+    }
+
+    async _loadSystemSettings() {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '/api/config/get',
+                method: 'GET',
+                success: response => {
+                    if (response.code === 200) {
+                        this.state.tabName = response.data;
+                        document.title = document.title.replace(/^工单系统/,response.data);
+                        resolve();
+                    } else {
+                        NotifyUtil.error(response.msg || '加载失败');
+                        reject();
+                    }
+                },
+                error: error => {
+                    console.error('加载系统设置失败:', error);
+                    NotifyUtil.error('加载失败');
+                    reject();
+                }
+            });
+        });
     }
 }
 $.ajaxSetup({
