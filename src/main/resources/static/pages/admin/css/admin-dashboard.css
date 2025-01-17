@@ -21,7 +21,7 @@
 /* 主内容区样式 */
 .main-content {
     flex: 1;
-    margin-left: 250px;  /* 与导航栏宽度对应 */
+    margin-left: 4rem;  /* 与导航栏宽度对应 */
     padding: 2rem;
     min-height: 100vh;
     background-color: var(--background-color);
@@ -397,6 +397,37 @@
     font-size: 0.875rem;
     font-weight: 500;
     border-radius: 9999px;
+}
+
+/* 定义不同ticket类型的背景色 */
+.ticket-type-error {
+    background: linear-gradient(to right, #f5365c, #f56036); /* 红色渐变 */
+    color: #fff; /* 白色文字 */
+}
+
+.ticket-type-suggestion {
+    background: linear-gradient(to right, #f7d794, #f37335); /* 黄色到橙色渐变 */
+    color: #838080; /* 黑色文字 */
+}
+
+.ticket-type-account {
+    background: linear-gradient(to right, #00b09b, #96c93d); /* 绿色渐变 */
+    color: #fff; /* 白色文字 */
+}
+
+.ticket-type-permission {
+    background: linear-gradient(to right, #4776e6, #8e54e9); /* 蓝色到紫色渐变 */
+    color: #fff; /* 白色文字 */
+}
+
+.ticket-type-consultation {
+    background: linear-gradient(to right, #556270, #f3904f); /* 深蓝色到橙色渐变 */
+    color: #fff; /* 白色文字 */
+}
+
+.ticket-type-other {
+    background: linear-gradient(to right, #7f7f7f, #8c8c8c); /* 灰色渐变 */
+    color: #fff; /* 白色文字 */
 }
 
 /* 优先级指示器 */

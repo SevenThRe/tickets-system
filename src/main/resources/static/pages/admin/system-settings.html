@@ -54,6 +54,28 @@
                             <label class="form-label">系统名称</label>
                             <input type="text" class="form-control" name="systemName" required>
                         </div>
+                        <div class="mb-4">
+                            <label class="form-label logo-select-label">系统Logo
+                            <input accept="image/*" class="form-control" hidden name="systemLogo" type="file">
+                            <img alt="当前系统Logo预览" class="logo-preview mt-2" id="logoPreview" src="/favicon.ico">
+                            </label>
+                            <p class="form-text">支持JPG、PNG格式，大小不超过1MB</p>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">系统备案号</label>
+                            <input class="form-control" name="systemICP" required type="text">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">系统版权信息</label>
+                            <input class="form-control" name="systemCopyright" required type="text">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">系统开放注册</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" id="openRegister" name="openRegister" type="checkbox">
+                                <label class="form-check-label">允许用户注册</label>
+                            </div>
+                        </div>
                         <button type="submit" class="btn btn-primary">保存设置</button>
                     </form>
                 </div>

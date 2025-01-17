@@ -23,6 +23,8 @@ class SystemSettings {
         this.loadCurrentConfig();
         // 绑定事件
         this.bindEvents();
+        // 绑定Logo文件预览
+        this.bindLogoPreview();
     }
 
     /**
@@ -47,11 +49,37 @@ class SystemSettings {
     }
 
     /**
+     * 上传系统Logo
+     */
+    async uploadSystemLogo(formData) {
+        try {
+            const response = await $.ajax({
+                url: '/api/config/upload-logo',
+                method: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false
+            });
+
+            if(response.code === 200) {
+                NotifyUtil.success('Logo上传成功');
+            } else {
+                NotifyUtil.error(response.msg || 'Logo上传失败');
+            }
+        } catch(error) {
+            console.error('Logo上传失败:', error);
+            NotifyUtil.error('Logo上传失败');
+        }
+    }
+    /**
      * 更新表单值
      */
     updateFormValues(config) {
         // 基本设置
         this.forms.general.find('[name="systemName"]').val(config.general.systemName);
+        this.forms.general.find('[name="openRegister"]').prop('checked', config.general.openRegister);
+        this.forms.general.find('[name="systemICP"]').val(config.general.systemICP);
+        this.forms.general.find('[name="systemCopyright"]').val(config.general.systemCopyright);
 
         // 缓存设置
         this.forms.cache.find('[name="enableCache"]').prop('checked', config.cache.enableCache);
@@ -91,9 +119,40 @@ class SystemSettings {
             $('#cacheSettings').toggle(e.target.checked);
         });
 
+        // 更改Logo文件时
+        this.forms.general.find('[name="systemLogo"]').on('change', (e) => this.handlerUploadLogo(e));
+
         this.forms.upload.on('submit', (e) => this.handleUploadSubmit(e));
     }
 
+    /**
+     * 绑定Logo文件预览
+     */
+    bindLogoPreview() {
+        this.forms.general.find('[name="systemLogo"]').on('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    $('#logoPreview').attr('src', event.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // 处理Logo文件上传
+    async handlerUploadLogo(e) {
+        const $logoInput = this.forms.general.find('[name="systemLogo"]');
+        const logoFile = $logoInput[0].files[0];
+        if (logoFile) {
+            // 处理文件上传逻辑（例如使用FormData上传）
+            const formData = new FormData();
+            formData.append('systemLogo', logoFile);
+            // 发送请求上传Logo
+            await this.uploadSystemLogo(formData);
+        }
+    }
     /**
      * 处理基本设置提交
      */
@@ -101,8 +160,14 @@ class SystemSettings {
         e.preventDefault();
         try {
             const formData = this.forms.general.serializeArray();
-            const data = this.convertFormDataToObject(formData);
-
+            formData.push({ name: 'openRegister', value: $('#openRegister').is(':checked') });
+            const formDataFixed = formData.map(item => {
+                if (item.value === 'on') {
+                    return { ...item, value: true };
+                }
+                return item;
+            });
+            const data = this.convertFormDataToObject(formDataFixed);
             const response = await $.ajax({
                 url: '/api/config/update-general',
                 method: 'POST',

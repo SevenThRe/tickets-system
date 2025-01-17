@@ -20,7 +20,7 @@
 /* 页面基础布局 */
 .main-content {
     flex: 1;
-    margin-left: 250px;
+    margin-left: 4rem;
     padding: 2rem;
     background-color: var(--background-color);
     min-height: 100vh;
@@ -70,18 +70,6 @@
 .todo-badge {
     width: 80px;
     text-align: center;
-}
-.priority-high {
-    background-color: #dc3545;
-    color: white;
-}
-.priority-medium {
-    background-color: #ffc107;
-    color: black;
-}
-.priority-low {
-    background-color: #28a745;
-    color: white;
 }
 .deadline-warning {
     color: #dc3545;
@@ -271,18 +259,6 @@
     background-color: #dc3545;
 }
 
-.priority-high {
-    background-color: #dc3545;
-}
-
-.priority-medium {
-    background-color: #ffc107;
-}
-
-.priority-low {
-    background-color: #28a745;
-}
-
 /* 状态徽章样式优化 */
 .badge {
     padding: 0.4em 0.6em;
@@ -326,9 +302,6 @@
     margin-right: 8px;
 }
 
-.priority-high { background-color: #dc3545; }
-.priority-medium { background-color: #ffc107; }
-.priority-low { background-color: #28a745; }
 
 .btn-sm {
     padding: 0.25rem 0.5rem;

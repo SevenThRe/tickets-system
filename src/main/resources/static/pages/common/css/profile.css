@@ -18,8 +18,8 @@
 }
 
 .main-content {
+    margin-left: 4rem;
     flex: 1;
-    margin-left: 250px;
     padding: 2rem;
 }
 
@@ -43,16 +43,17 @@
 
 /* 角色背景渐变 */
 .profile-cover.role-ADMIN {
-    background: linear-gradient(135deg, #f43f5e, #e11d48);
+    background: linear-gradient(135deg, #f43f5e, #f57c7c, #e11d48, #c4183c);
 }
 
 .profile-cover.role-DEPT {
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, #10b981, #4ade80, #059669, #056d59);
 }
 
 .profile-cover.role-USER {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #3b82f6, #6366f1, #2563eb, #1d4ed8);
 }
+
 
 /* 背景遮罩 */
 .profile-cover::before {
@@ -152,8 +153,10 @@
 /* 表单样式 */
 .profile-form {
     max-width: 800px;
-    margin: 0 auto;
+    margin: 0 0;
+
 }
+
 
 .form-label {
     color: var(--text-primary);
@@ -326,4 +329,48 @@
     .list-group-item {
         background-color: var(--card-background);
     }
+}
+
+.profile-cover.role-GOLDEN {
+    background: linear-gradient(135deg, #e5d217, #f0e68c, #e6b8af, #de8a1b);
+    color: #333;
+    text-align: center;
+    padding: 2em; /* 增加内边距 */
+    border-radius: 10px; /* 圆角边框 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 轻微的阴影效果 */
+    border: 2px solid #e6b8af;
+    position: relative;
+
+}
+
+.profile-cover.role-GOLDEN h1,
+.profile-cover.role-GOLDEN h2,
+.profile-cover.role-GOLDEN h3 {
+    color: #b22222; /* 标题颜色 */
+    font-weight: bold; /* 加粗字体 */
+    margin-bottom: 0.5em; /* 标题与内容之间的间距 */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* 文本阴影 */
+}
+
+/* 段落样式 */
+.profile-cover.role-GOLDEN p {
+    color: #555; /* 段落颜色 */
+    margin-bottom: 1em; /* 段落之间的间距 */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* 文本阴影 */
+}
+
+/* 按钮样式 */
+.profile-cover.role-GOLDEN button {
+    background-color: #f0e68c; /* 按钮背景为金色 */
+    color: #333; /* 按钮文本颜色 */
+    border: none; /* 无边框 */
+    padding: 0.5em 1em; /* 按钮内边距 */
+    border-radius: 5px; /* 圆角按钮 */
+    cursor: pointer; /* 鼠标悬停时显示指针 */
+    transition: background-color 0.3s; /* 背景颜色变化的过渡效果 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 按钮阴影 */
+}
+
+.profile-cover.role-GOLDEN button:hover {
+    background-color: #e6b8af; /* 鼠标悬停时背景颜色变浅 */
 }

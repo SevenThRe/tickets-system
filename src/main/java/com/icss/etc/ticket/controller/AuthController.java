@@ -6,6 +6,7 @@ import com.icss.etc.ticket.entity.User;
 import com.icss.etc.ticket.entity.dto.AuthDTO;
 import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.enums.CodeEnum;
+import com.icss.etc.ticket.service.SystemConfigService;
 import com.icss.etc.ticket.service.UserService;
 import com.icss.etc.ticket.service.impl.OnlineUserManager;
 import com.icss.etc.ticket.util.JWTUtils;
@@ -27,8 +28,14 @@ public class AuthController {
     @Autowired
     private OnlineUserManager onlineUserManager;
 
+    @Autowired
+    private SystemConfigService systemConfigService;
+
     @PostMapping("/register")
     public R register(@RequestBody RegisteredDTO user) {
+        if (!systemConfigService.getSystemConfig().getGeneral().getOpenRegister()){
+            return R.FAIL(CodeEnum.REGISTER_CLOSED);
+        }
         if(userService.selectByUsername(user.getUsername()) != null){
             return R.FAIL(CodeEnum.USERNAME_EXIST);
         }

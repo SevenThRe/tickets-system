@@ -139,14 +139,6 @@ class TodoList {
             this._handleQuickStart(ticketId);
         });
 
-        // // 查看详情按钮点击
-        // 我发现详情和处理功能重复了，冗余代码注释掉了
-        // this.elements.todoList.on('click', '.view-detail', (e) => {
-        //     const ticketId = $(e.currentTarget).data('id');
-        //     this._showTicketDetail(ticketId);
-        // });
-
-
         // 提交处理按钮点击
         $('#submitProcessBtn').on('click', () => this._handleProcessSubmit());
 

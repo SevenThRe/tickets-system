@@ -4,13 +4,16 @@ import com.icss.etc.ticket.config.SystemConfigLoader;
 import com.icss.etc.ticket.entity.sys.*;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.exceptions.BusinessException;
+import com.icss.etc.ticket.service.FileService;
 import com.icss.etc.ticket.service.SystemConfigService;
 import com.icss.etc.ticket.util.PropertiesUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Arrays;
+import java.io.File;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -20,14 +23,20 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     private PropertiesUtil propertiesUtil;
     @Autowired
     private SystemConfigLoader configLoader;
+    @Autowired
+    private FileService fileService;
 
 
     @Override
     public void updateGeneralConfig(GeneralConfig config) {
         try {
-            propertiesUtil.setProperty("system.name", config.getSystemName());
+            propertiesUtil.setProperty("system.name", Optional.ofNullable(config).map(GeneralConfig::getSystemName).orElse("工单系统"));
+            propertiesUtil.setProperty("system.icp", Optional.ofNullable(config).map(GeneralConfig::getSystemICP).orElse("备案号"));
+            propertiesUtil.setProperty("system.copyright", Optional.ofNullable(config).map(GeneralConfig::getSystemCopyright).orElse("版权信息"));
+//            propertiesUtil.setProperty("system.logo", Optional.ofNullable(config).map(GeneralConfig::getSystemLogo).orElse("static/favicon.ico"));
+            propertiesUtil.setProperty("system.openRegister",Optional.ofNullable(config).map(GeneralConfig::getOpenRegister).orElse(true).toString());
             propertiesUtil.saveProperties();
-            log.info("更新系统名称成功: {}", config.getSystemName());
+            log.info("更新系统名称成功: {}", Objects.requireNonNull(config).getSystemName());
         } catch (Exception e) {
             log.error("更新系统配置失败:", e);
             throw new BusinessException(CodeEnum.INTERNAL_ERROR, "更新配置失败");
@@ -83,12 +92,56 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     }
 
     @Override
+    public String getSystemName() {
+
+        return propertiesUtil.getProperty("system.name", "工单系统");
+    }
+
+    @Override
+    public int updateSystemLogo(MultipartFile systemLogo) {
+        try {
+            String logoPath  = propertiesUtil.getProperty("system.logo", "static/favicon.ico");
+            File destFile = new File(logoPath);
+            if (systemLogo.getSize() > 1024 * 1024) {
+                throw new BusinessException(CodeEnum.INVALID_FILE_SIZE, "文件大小不能超过1MB");
+            }
+            if (!isValidFileType(systemLogo.getOriginalFilename())) {
+                throw new BusinessException(CodeEnum.INVALID_FILE_TYPE, "不支持的文件类型");
+            }
+            systemLogo.transferTo(destFile);
+            log.info("上传系统logo成功: {}", systemLogo.getOriginalFilename());
+            return 1;
+        } catch (Exception e) {
+            log.error("上传系统logo失败:", e);
+            throw new BusinessException(CodeEnum.INTERNAL_ERROR, "上传系统logo失败");
+        }
+    }
+
+    private boolean isValidFileType(String fileName) {
+        Set<String> validTypes = new HashSet<>(Arrays.asList(".jpg", ".jpeg", ".png", ".gif",".ico"));
+        String extension = getFileExtension(fileName);
+        return validTypes.contains(extension);
+    }
+
+    private String getFileExtension(String fileName) {
+        if (fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0) {
+            return fileName.substring(fileName.lastIndexOf("."));
+        }
+        return ""; // Empty string if no extension
+    }
+
+
+    @Override
     public ConfigResponse getSystemConfig() {
         ConfigResponse response = new ConfigResponse();
 
         // 基本配置
         GeneralConfig generalConfig = new GeneralConfig();
         generalConfig.setSystemName(propertiesUtil.getProperty("system.name", "工单系统"));
+        generalConfig.setSystemICP(propertiesUtil.getProperty("system.icp", "备案号"));
+        generalConfig.setSystemCopyright(propertiesUtil.getProperty("system.copyright", "版权信息"));
+        generalConfig.setOpenRegister(propertiesUtil.getProperty("system.openRegister", "true").equals("true"));
+
         response.setGeneral(generalConfig);
 
         // 缓存配置
