@@ -67,10 +67,14 @@ class TicketUtil {
             'PROCESSING': '处理中',
             'COMPLETED': '已完成',
             'CLOSED': '已关闭',
-            '0': '待处理',
-            '1': '处理中',
-            '2': '已完成',
-            '3': '已关闭'
+            'TRANSFER_PENDING': '转交待审批',
+            'TRANSFER_REJECTED': '转交被驳回',
+            0: '待处理',
+            1: '处理中',
+            2: '已完成',
+            3: '已关闭',
+            4: '转交待审批',
+            5: '转交被驳回'
         };
         return statusMap[status] || '未知状态';
     }

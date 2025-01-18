@@ -17,7 +17,9 @@ public enum TicketStatus {
     PENDING(0),
     PROCESSING(1),
     COMPLETED(2),
-    CLOSED(3);
+    CLOSED(3),
+    TRANSFER_PENDING(4), // 转交待审批
+    TRANSFER_REJECTED(5); // 转交被驳回
 
     private final int value;
 

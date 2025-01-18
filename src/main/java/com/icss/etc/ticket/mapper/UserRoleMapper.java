@@ -85,4 +85,6 @@ public interface UserRoleMapper {
      * @return 是否有权限
      */
      UserPermission checkOperationPermission(CheckOperationDTO checkOperationDTO);
+
+    boolean hasManagePermission(@Param("userId") Long currentUserId, @Param("departmentId") Long departmentId);
 }

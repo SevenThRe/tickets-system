@@ -183,4 +183,27 @@
     WHERE
       t.ticket_id = #{ticketId}
   </select>
+
+  <select id="hasManagePermission" resultType="boolean">
+    SELECT
+      COUNT(1) > 0
+
+    FROM
+      t_user u
+        JOIN
+      t_user_role ur
+      ON u.user_id = ur.user_id
+        JOIN
+      t_role r
+      ON ur.role_id = r.role_id
+        JOIN
+      t_department d
+      ON u.department_id = d.department_id
+
+    WHERE
+      u.user_id = #{userId}
+      AND r.base_role_code = 'ADMIN'
+    OR (r.base_role_code = 'DEPT' AND d.department_id = #{departmentId})
+    or d.manager_id = #{userId}
+    </select>
 </mapper>
