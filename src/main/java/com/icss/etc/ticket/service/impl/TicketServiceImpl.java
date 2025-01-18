@@ -428,7 +428,7 @@ public class TicketServiceImpl implements TicketService {
 
         // 设置分页
         PageHelper.startPage(queryDTO.getPageNum(), queryDTO.getPageSize());
-        List<Ticket> tickets = ticketMapper.selectTicketList(queryDTO);
+        List<Ticket> tickets = ticketMapper.selectTodoList(queryDTO);
 
         return new PageInfo<>(tickets);
     }

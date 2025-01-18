@@ -89,15 +89,17 @@ public class Department implements Serializable {
     */
     private Integer orderNum;
 
+    /**
+     * 部门图标
+     */
+    private String iconClass;
+
+
 
     private List<Department> subDepartments;
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 部门图标
-     */
-    private String iconClass;
 
 }

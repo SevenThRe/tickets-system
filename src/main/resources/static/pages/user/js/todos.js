@@ -88,6 +88,7 @@ class TodoList {
         } catch (error) {
             console.error('更新状态失败:', error);
             this.showError('更新状态失败，请重试');
+            throw error;
         }
     }
 
@@ -106,6 +107,7 @@ class TodoList {
             const ticketId = urlParams.get('ticketId');
             if (ticketId) {
                 setTimeout(() => {
+                    //TODO: 判断工单状态，如果是处理中状态，直接打开处理模态框
                     this._showProcessModal(ticketId);
                 },30)
             }
@@ -318,23 +320,19 @@ class TodoList {
                 <td>${this._formatDate(ticket.createTime)}</td>
                 <td>
                     <div class="btn-group">
-                        ${ticket.status === 'PENDING' ? `
+                        ${ticket.status == '0' ? `
                             <button class="btn btn-sm btn-outline-success quick-start" data-id="${ticket.ticketId}">
                                 <i class="bi bi-play-fill"></i> 快速开始
                             </button>
                         ` : ''}
                         <button class="btn btn-sm btn-outline-primary process-btn" data-id="${ticket.ticketId}">
-                            <i class="bi bi-tools"></i> 处理
+                            <i class="bi bi-tools"></i> 完成或转交
                         </button>
                         
                     </div>
                 </td>
             </tr>
         `).join('');
-
-        // <button class="btn btn-sm btn-outline-secondary view-detail" data-id="${ticket.ticketId}">
-        //     <i class="bi bi-eye"></i> 详情
-        // </button>
 
         this.elements.todoList.html(html);
         this.elements.totalCount.text(this.state.pagination.total);
@@ -801,91 +799,6 @@ class TodoList {
         });
     }
 
-
-    // /**
-    //  * 显示工单详情
-    //  * @param {number} ticketId - 工单ID
-    //  * @private
-    //  */
-    // async _showTicketDetail(ticketId) {
-    //     try {
-    //         const response = await $.ajax({
-    //             url: `/api/tickets/${ticketId}`,
-    //             method: 'GET'
-    //         });
-    //
-    //         if (response.code === 200) {
-    //             const ticket = response.data;
-    //             // 使用Bootstrap Modal显示详情
-    //             await this._loadTicketAttachments(ticketId);
-    //             const modalHtml = `
-    //                 <div class="modal fade" id="detailModal" tabindex="-1">
-    //                     <div class="modal-dialog modal-lg">
-    //                         <div class="modal-content">
-    //                             <div class="modal-header">
-    //                                 <h5 class="modal-title">工单详情</h5>
-    //                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-    //                             </div>
-    //                             <div class="modal-body">
-    //                                 <div class="row mb-3">
-    //                                     <div class="col-6">
-    //                                         <label class="form-label">工单编号</label>
-    //                                         <div class="fw-bold">${ticket.ticketId}</div>
-    //                                     </div>
-    //                                     <div class="col-6">
-    //                                         <label class="form-label">当前状态</label>
-    //                                         <div>${this._getStatusText(ticket.status)}</div>
-    //                                     </div>
-    //                                 </div>
-    //                                 <div class="mb-3">
-    //                                     <label class="form-label">标题</label>
-    //                                     <div class="fw-bold">${ticket.title}</div>
-    //                                 </div>
-    //                                 <div class="mb-3">
-    //                                     <label class="form-label">内容</label>
-    //                                     <div>${ticket.content}</div>
-    //                                 </div>
-    //                                 <div class="row mb-3">
-    //                                     <div class="col-6">
-    //                                         <label class="form-label">创建时间</label>
-    //                                         <div>${this._formatDate(ticket.createTime)}</div>
-    //                                     </div>
-    //                                     <div class="col-6">
-    //                                         <label class="form-label">期望完成时间</label>
-    //                                         <div class="${this._isDeadlineNear(ticket.expectFinishTime) ? 'deadline-warning' : ''}">
-    //                                             ${this._formatDate(ticket.expectFinishTime)}
-    //                                         </div>
-    //                                     </div>
-    //                                 </div>
-    //                                 <!-- 添加处理记录显示等其他内容 -->
-    //                             </div>
-    //                             <div class="modal-footer">
-    //                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-    //                                 <button type="button" class="btn btn-primary process-btn" data-id="${ticket.ticketId}">
-    //                                     处理工单
-    //                                 </button>
-    //                             </div>
-    //                         </div>
-    //                     </div>
-    //                 </div>
-    //             `;
-    //
-    //             // 移除可能存在的旧模态框
-    //             $('#detailModal').remove();
-    //
-    //             $(document).on('click', '#detailModal .process-btn', (e) => {
-    //                 const ticketId = $(e.currentTarget).data('id');
-    //                 $('#detailModal').modal('hide');
-    //                 this._showProcessModal(ticketId);
-    //             });
-    //             // 添加新模态框并显示
-    //             $(modalHtml).appendTo('body').modal('show');
-    //         }
-    //     } catch (error) {
-    //         console.error('加载工单详情失败:', error);
-    //         this.showError('加载详情失败');
-    //     }
-    // }
 
 
 }

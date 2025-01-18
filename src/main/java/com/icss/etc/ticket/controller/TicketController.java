@@ -179,7 +179,7 @@ public class TicketController {
      * 更新工单状态
      */
     @PutMapping("/status")
-    public R<Void> updateTicketStatus(UpdateTicketStatusDTO updateDTO) {
+    public R<Void> updateTicketStatus(@RequestBody UpdateTicketStatusDTO updateDTO) {
         try {
             ticketService.updateTicketStatus(updateDTO);
             return R.OK();

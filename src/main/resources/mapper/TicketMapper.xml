@@ -339,18 +339,40 @@
 
     <select id="selectTodoList" resultMap="BaseResultMap">
         SELECT
-        <include refid="Base_Column_List" />
+        t_ticket.*,
+        t_department.department_name ,
+        t_ticket_type.type_name
         FROM t_ticket
-        WHERE processor_id = #{processorId}
-        AND status IN (0, 1)  <!-- 0=PENDING, 1=PROCESSING -->
-        AND is_deleted = 0
+        left join t_department on t_ticket.department_id = t_department.department_id
+        left join t_ticket_type on t_ticket.type_id = t_ticket_type.type_id
+        WHERE processor_id = #{queryDTO.processorId,jdbcType=BIGINT}
+        AND t_ticket.status IN (0, 1)  <!-- 0=PENDING, 1=PROCESSING -->
+        AND t_ticket.is_deleted = 0
+        <if test="queryDTO.keyword != null and queryDTO.keyword != ''">
+            AND (
+            t_ticket.title LIKE CONCAT('%', #{queryDTO.keyword}, '%')
+            OR t_ticket.content LIKE CONCAT('%', #{queryDTO.keyword}, '%')
+            )
+        </if>
+        <if test="queryDTO.priority != null">
+            AND t_ticket.priority = #{queryDTO.priority}
+        </if>
+        <if test="queryDTO.departmentId != null">
+            AND t_ticket.department_id = #{queryDTO.departmentId}
+        </if>
+        <if test="queryDTO.startTime != null">
+            AND t_ticket.create_time >= #{queryDTO.startTime}
+        </if>
+        <if test="queryDTO.endTime != null">
+            AND t_ticket.create_time &lt;= #{queryDTO.endTime}
+        </if>
         ORDER BY
-        CASE status
+        CASE t_ticket.status
         WHEN 0 THEN 0     <!-- PENDING -->
         WHEN 1 THEN 1     <!-- PROCESSING -->
         END,
-        priority DESC,
-        create_time ASC
+        t_ticket.create_time ASC,
+        t_ticket.priority DESC
     </select>
 
     <!-- 按条件统计工单数量 -->
@@ -534,7 +556,7 @@
         FROM t_ticket
         WHERE processor_id = #{userId}
         AND status = 2
-        AND create_time BETWEEN #{startTime} AND #{endTime}
+        AND update_time BETWEEN #{startTime} AND #{endTime}
         AND is_deleted = 0
     </select>
     <select id="countActiveTickets" resultType="java.lang.Integer">

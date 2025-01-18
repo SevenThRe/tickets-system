@@ -1,11 +1,9 @@
 package com.icss.etc.ticket.util;
 
-import com.icss.etc.ticket.entity.User;
+import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.exceptions.BusinessException;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
 
 /**
  * {@code SecurityUtils}
@@ -16,35 +14,65 @@ import java.time.LocalDateTime;
  */
 @Component
 public class SecurityUtils {
-    private static final ThreadLocal<Long> userIdHolder = new ThreadLocal<>();
-    private static final ThreadLocal<String> userNameHolder = new ThreadLocal<>();
-    private static final ThreadLocal<String> roleHolder = new ThreadLocal<>();
+    private static final ThreadLocal<UserViewBackDTO> userViewBackDTOHolder = new ThreadLocal<>();
 
-    public static void setCurrentUser(Long userId, String username, String role) {
-        userIdHolder.set(userId);
-        userNameHolder.set(username);
-        roleHolder.set(role);
+    public static void setCurrentUser(UserViewBackDTO userViewBackDTO) {
+        userViewBackDTOHolder.set(userViewBackDTO);
+
     }
 
     public static Long getCurrentUserId() {
-        Long userId = userIdHolder.get();
+        Long userId = userViewBackDTOHolder.get().getUserId();
         if (userId == null) {
             throw new BusinessException(CodeEnum.UNKNOW_USER);
         }
         return userId;
     }
-
     public static String getCurrentUsername() {
-        return userNameHolder.get();
+        return userViewBackDTOHolder.get().getUsername();
     }
 
-    public static String getCurrentRole() {
-        return roleHolder.get();
+    public static String getCurrentRealName() {
+        return userViewBackDTOHolder.get().getRealName();
+    }
+
+    public static String getCurrentPhone() {
+        return userViewBackDTOHolder.get().getPhone();
+    }
+
+    public static String getCurrentEmail() {
+        return userViewBackDTOHolder.get().getEmail();
+    }
+
+    public static String getCurrentPassword() {
+        return userViewBackDTOHolder.get().getPassword();
+    }
+
+    public static String getCurrentDepartmentName() {
+        return userViewBackDTOHolder.get().getDepartmentName();
+    }
+
+    public static String getCurrentRoleName() {
+        return userViewBackDTOHolder.get().getRoleName();
+    }
+
+    public static String getCurrentBaseRoleCode() {
+        return userViewBackDTOHolder.get().getBaseRoleCode();
+    }
+
+    public static Integer getCurrentStatus() {
+        return userViewBackDTOHolder.get().getStatus();
+    }
+
+    public static UserViewBackDTO getCurrentUserInfo() {
+        return userViewBackDTOHolder.get();
+    }
+
+    public static Long getCurrentDepartmentId() {
+        return userViewBackDTOHolder.get().getDepartmentId();
     }
 
     public static void clear() {
-        userIdHolder.remove();
-        userNameHolder.remove();
-        roleHolder.remove();
+        userViewBackDTOHolder.remove();
     }
 }

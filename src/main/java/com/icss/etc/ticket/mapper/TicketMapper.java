@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.icss.etc.ticket.entity.TicketRecord;
-import com.icss.etc.ticket.entity.dto.*;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
 import com.icss.etc.ticket.entity.vo.ticket.DepartmentStatisticsVO;
@@ -72,7 +71,7 @@ public interface TicketMapper {
     /**
      * 获取待处理工单列表
      */
-    List<Ticket> selectTodoList(@Param("processorId") Long processorId);
+    List<Ticket> selectTodoList(@Param("queryDTO") TicketQueryDTO queryDTO);
 
     /**
      * 按条件统计工单数量

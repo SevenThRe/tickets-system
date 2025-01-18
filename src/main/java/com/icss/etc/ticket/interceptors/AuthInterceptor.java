@@ -2,12 +2,12 @@ package com.icss.etc.ticket.interceptors;
 
 import com.icss.etc.ticket.annotation.RequirePermissions;
 import com.icss.etc.ticket.annotation.RequireRoles;
+import com.icss.etc.ticket.entity.vo.UserViewBackDTO;
 import com.icss.etc.ticket.enums.Logical;
 import com.icss.etc.ticket.exceptions.UnauthorizedException;
 import com.icss.etc.ticket.service.PermissionService;
 import com.icss.etc.ticket.util.JWTUtils;
 import com.icss.etc.ticket.util.SecurityUtils;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +18,7 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.lang.reflect.Method;
+
 
 @Slf4j
 @Component
@@ -44,14 +45,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         token = token.replace("Bearer ", "");
 
         try {
-            Claims claims = JWTUtils.verifyToken(token);
-            Long userId = Long.valueOf(claims.getSubject());
-            String username = claims.get("username", String.class);
-            String role = claims.get("role", String.class);
+            UserViewBackDTO userInfo = JWTUtils.getTokenInfo(token);
+            Long userId = userInfo.getUserId();
 
-            request.setAttribute("userId", userId);
-            request.setAttribute("username", username);
-            request.setAttribute("role", role);
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             Method method = handlerMethod.getMethod();
             Class<?> declaringClass = method.getDeclaringClass();
@@ -70,7 +66,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                 response.setHeader("Authorization", newToken);
             }
 
-            SecurityUtils.setCurrentUser(userId, username, role);
+            SecurityUtils.setCurrentUser(userInfo);
 
             return true;
         } catch (UnauthorizedException e) {
