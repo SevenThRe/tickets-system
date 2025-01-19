@@ -18,7 +18,8 @@ import org.apache.ibatis.annotations.Param;
 
 /**
  * {@code TicketMapper} 工单数据访问层
- *  处理工单相关的数据库操作
+ * 处理工单相关的数据库操作
+ *
  * @author SevenThRe
  * @version 1.0
  * @since 1.0
@@ -26,6 +27,7 @@ import org.apache.ibatis.annotations.Param;
 public interface TicketMapper {
     /**
      * 统计各状态工单数量
+     *
      * @param userId 用户ID
      * @return 状态-数量映射
      */
@@ -33,6 +35,7 @@ public interface TicketMapper {
 
 
     Long countBySS(TicketStatus status);
+
     /**
      * 统计用户相关工单数量
      */
@@ -126,11 +129,14 @@ public interface TicketMapper {
      * 基础CRUD操作
      */
     Ticket selectTicketById(@NotNull(message = "工单ID不能为空") Long ticketId);
+
     int insertTicket(Ticket ticket);
+
     int updateTicket(Ticket ticket);
 
     /**
      * 获取工单列表
+     *
      * @param queryDTO 查询条件
      * @return 工单详情
      */
@@ -138,6 +144,7 @@ public interface TicketMapper {
 
     /**
      * 获取工单详情
+     *
      * @param ticketId 工单ID
      * @return 工单详情
      */
@@ -146,7 +153,8 @@ public interface TicketMapper {
 
     /**
      * 获取用户今日已完成工单数量
-     * @param userId 用户ID
+     *
+     * @param userId     用户ID
      * @param todayStart 今日开始时间
      * @return 今日已完成工单数量
      */
@@ -155,7 +163,8 @@ public interface TicketMapper {
 
     /**
      * 获取用户今日待办工单数量
-     * @param userId 用户ID
+     *
+     * @param userId       用户ID
      * @param ticketStatus 工单状态
      * @return 今日待办工单数量
      */
@@ -163,22 +172,24 @@ public interface TicketMapper {
 
     /**
      * 获取用户今日已完成工单数量
+     *
      * @param userId     用户ID
-     * @param todayStart     今日开始时间
-     * @param todayEnd     今日结束时间
+     * @param todayStart 今日开始时间
+     * @param todayEnd   今日结束时间
      * @return 今日已完成工单数量
      */
     Integer countCompletedTickets(@Param("userId") Long userId, @Param("startTime") LocalDateTime todayStart, @Param("endTime") LocalDateTime todayEnd);
 
 
     Integer countActiveTickets(Long userId);
+
     /**
      * 根据工单ID查询完成的工单
+     *
      * @param ticketId 工单ID
      * @return 工单
      */
     Ticket getTicketById(Long ticketId);
-
 
 
     Boolean checkTicketEvaluable(@Param("ticketId") Long ticketId, @Param("userId") Long userId);
@@ -186,7 +197,8 @@ public interface TicketMapper {
 
     /**
      * 获取用户的已完成工单的平均满意度
-     * @param userId   用户ID
+     *
+     * @param userId 用户ID
      * @return 满意度
      */
     Double getSatisfaction(Long userId);
@@ -194,19 +206,21 @@ public interface TicketMapper {
 
     /**
      * 获取用户的已完成工单的平均处理时间
-     * @param userId   用户ID
-     * @param grade 效率等级
+     *
+     * @param userId 用户ID
+     * @param grade  效率等级
      * @return 平均处理时间
      */
     Double getAvgProcessTime(@Param("userId") Long userId, @Param("grade") String grade);
 
 
-    Integer countCrrentWorkload(@Param("userId") Long userId,@Param("workloadFilter") Integer workloadFilter);
+    Integer countCrrentWorkload(@Param("userId") Long userId, @Param("workloadFilter") Integer workloadFilter);
 
     Integer getMonthlyPerformance(@Param("userId") Long userId);
 
     /**
      * 获取所有待分配的工单
+     *
      * @return 待分配工单列表
      */
     List<Ticket> selectPendingTickets();
@@ -216,4 +230,20 @@ public interface TicketMapper {
     List<RecentTicketDTO> selectRecentTickets(@Param("days") int days);
 
     List<TicketTypeStatsDTO> getTicketTypeDistribution();
+
+    /**
+     * 按部门和状态统计工单数量
+     */
+    Integer countByDepartmentAndStatus(@Param("departmentId") Long departmentId,
+                                       @Param("status") Integer status);
+
+    /**
+     * 计算部门工单平均满意度
+     */
+    Double calculateDepartmentAvgSatisfaction(@Param("departmentId") Long departmentId);
+
+    /**
+     * 查询部门工单趋势统计
+     */
+    List<Map<String, Object>> selectDepartmentTicketTrends(@Param("departmentId") Long departmentId);
 }

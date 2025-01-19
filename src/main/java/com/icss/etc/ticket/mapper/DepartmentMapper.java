@@ -6,9 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
-import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
-import com.icss.etc.ticket.entity.vo.DeptMembersDetailVO;
+import com.icss.etc.ticket.entity.vo.*;
 import com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO;
 import org.apache.ibatis.annotations.Param;
 
@@ -99,7 +97,6 @@ public interface DepartmentMapper {
      * @param department_id 部门ID
      * @return 部门负责人列表
      */
-    List<DepartmentChargeVO> selectManagerByDepartmentId(Long department_id);
 
 
     /**
@@ -107,5 +104,22 @@ public interface DepartmentMapper {
      * @return 部门 workload 详情
      */
     List<DepartmentWorkloadVO> getWorkloadStats();
+
+    /**
+     * 查询部门成员列表
+     */
+    List<DepartmentMemberVO> selectDepartmentMembers(@Param("departmentId") Long departmentId);
+
+    /**
+     * 查询成员工作量统计
+     */
+    List<MemberWorkloadVO> selectMemberWorkload(@Param("departmentId") Long departmentId);
+
+
+    /**
+     * 查询部门的主管信息
+     */
+    List<DepartmentChargeVO> selectManagerByDepartmentId(@Param("departmentId") Long departmentId);
+
     int selectDeptMoreUser(Long deptId);
 }

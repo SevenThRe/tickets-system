@@ -318,4 +318,100 @@
     WHERE u.department_id = #{departmentId}
     AND u.status = 1 AND u.is_deleted =0
   </select>
+
+
+  <!-- 查询部门成员列表 -->
+  <select id="selectDepartmentMembers" resultType="com.icss.etc.ticket.entity.vo.DepartmentMemberVO">
+    SELECT
+      u.user_id,
+      u.real_name,
+      r.role_name,
+      CASE
+    <![CDATA[ WHEN efficiency_stats.avg_hours <= 24 THEN 'A'
+    WHEN efficiency_stats.avg_hours <= 48 THEN 'B'
+    WHEN efficiency_stats.avg_hours <= 72 THEN 'C']]>
+    ELSE 'D'
+    END as processing_efficiency,
+    COALESCE(satisfaction_stats.avg_score, 0) as satisfaction
+    FROM t_user u
+    LEFT JOIN t_user_role ur ON u.user_id = ur.user_id
+    LEFT JOIN t_role r ON ur.role_id = r.role_id
+    LEFT JOIN (
+    SELECT
+    t.processor_id,
+    AVG(TIMESTAMPDIFF(HOUR, t.create_time, t.actual_finish_time)) as avg_hours
+    FROM t_ticket t
+    WHERE t.status = 2 -- 已完成状态
+    GROUP BY t.processor_id
+    ) efficiency_stats ON u.user_id = efficiency_stats.processor_id
+    LEFT JOIN (
+    SELECT
+    t.processor_id,
+    AVG(tr.evaluation_score) as avg_score
+    FROM t_ticket t
+    INNER JOIN t_ticket_record tr ON t.ticket_id = tr.ticket_id
+    WHERE tr.operation_type = 3 -- 完成操作
+    AND tr.evaluation_score IS NOT NULL
+    GROUP BY t.processor_id
+    ) satisfaction_stats ON u.user_id = satisfaction_stats.processor_id
+    WHERE u.department_id = #{departmentId}
+    AND u.status = 1 -- 启用状态
+    AND u.is_deleted = 0
+  </select>
+
+  <!-- 查询成员工作量统计 -->
+  <select id="selectMemberWorkload" resultType="com.icss.etc.ticket.entity.vo.MemberWorkloadVO">
+    SELECT
+      u.user_id,
+      COALESCE(current_workload.count, 0) as current_count,
+      COALESCE(completed_workload.count, 0) as completed_count,
+      CASE
+    <![CDATA[   WHEN efficiency_stats.avg_hours <= 24 THEN 'A'
+    WHEN efficiency_stats.avg_hours <= 48 THEN 'B'
+    WHEN efficiency_stats.avg_hours <= 72 THEN 'C']]>
+    ELSE 'D'
+    END as efficiency_grade,
+    COALESCE(satisfaction_stats.avg_score, 0) as avg_satisfaction
+    FROM t_user u
+    LEFT JOIN (
+    SELECT processor_id, COUNT(*) as count
+    FROM t_ticket
+    WHERE status IN (0,1) -- 待处理和处理中
+    AND is_deleted = 0
+    GROUP BY processor_id
+    ) current_workload ON u.user_id = current_workload.processor_id
+    LEFT JOIN (
+    SELECT processor_id, COUNT(*) as count
+    FROM t_ticket
+    WHERE status = 2 -- 已完成
+    AND is_deleted = 0
+    GROUP BY processor_id
+    ) completed_workload ON u.user_id = completed_workload.processor_id
+    LEFT JOIN (
+    SELECT
+    processor_id,
+    AVG(TIMESTAMPDIFF(HOUR, create_time, actual_finish_time)) as avg_hours
+    FROM t_ticket
+    WHERE status = 2
+    GROUP BY processor_id
+    ) efficiency_stats ON u.user_id = efficiency_stats.processor_id
+    LEFT JOIN (
+    SELECT
+    t.processor_id,
+    AVG(tr.evaluation_score) as avg_score
+    FROM t_ticket t
+    INNER JOIN t_ticket_record tr ON t.ticket_id = tr.ticket_id
+    WHERE tr.operation_type = 3
+    AND tr.evaluation_score IS NOT NULL
+    GROUP BY t.processor_id
+    ) satisfaction_stats ON u.user_id = satisfaction_stats.processor_id
+    WHERE u.department_id = #{departmentId}
+    AND u.status = 1
+    AND u.is_deleted = 0
+  </select>
+
+<!--  -->
+  <select id="getWorkloadStats" resultType="com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO">
+
+  </select>
 </mapper>

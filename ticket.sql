@@ -1,35 +1,8 @@
-create table ticket_system.sys_theme
-(
-    theme_id    varchar(32)                        not null comment '主题ID'
-        primary key,
-    theme_name  varchar(50)                        not null comment '主题名称',
-    theme_type  varchar(20)                        not null comment '主题类型',
-    is_system   tinyint  default 0                 not null comment '是否系统主题',
-    is_default  tinyint  default 0                 not null comment '是否默认主题',
-    config_json text                               not null comment '主题配置JSON',
-    create_by   bigint                             null comment '创建人',
-    create_time datetime default CURRENT_TIMESTAMP null,
-    update_time datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
-    constraint uk_theme_name
-        unique (theme_name)
-);
+create database if not exists ticket_system;
 
-create table ticket_system.sys_user_theme
-(
-    user_id     bigint                             not null comment '用户ID',
-    theme_id    varchar(32)                        not null comment '主题ID',
-    is_current  tinyint  default 0                 not null comment '是否当前使用的主题',
-    create_time datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    update_time datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    primary key (user_id, theme_id)
-)
-    comment '用户主题配置表' charset = utf8mb4;
+use ticket_system;
 
-create index idx_current
-    on ticket_system.sys_user_theme (user_id, is_current)
-    comment '当前主题索引';
-
-create table ticket_system.t_attachment
+create table if not exists ticket_system.t_attachment
 (
     attachment_id bigint auto_increment comment '附件ID'
         primary key,
@@ -48,7 +21,7 @@ create index idx_ticket
     on ticket_system.t_attachment (ticket_id)
     comment '工单索引';
 
-create table ticket_system.t_department
+create table if not exists ticket_system.t_department
 (
     department_id   bigint auto_increment comment '部门ID'
         primary key,
@@ -80,7 +53,7 @@ create index idx_parent
     on ticket_system.t_department (parent_id)
     comment '父部门索引';
 
-create table ticket_system.t_notification
+create table if not exists ticket_system.t_notification
 (
     notification_id bigint auto_increment comment '通知ID'
         primary key,
@@ -102,7 +75,7 @@ create index idx_user
     on ticket_system.t_notification (user_id)
     comment '用户索引';
 
-create table ticket_system.t_permission
+create table if not exists ticket_system.t_permission
 (
     permission_id   bigint auto_increment comment '权限ID'
         primary key,
@@ -120,7 +93,7 @@ create table ticket_system.t_permission
 )
     comment '权限表' charset = utf8mb4;
 
-create table ticket_system.t_role
+create table if not exists ticket_system.t_role
 (
     role_id        bigint auto_increment comment '角色ID'
         primary key,
@@ -138,7 +111,7 @@ create table ticket_system.t_role
 )
     comment '角色表' charset = utf8mb4;
 
-create table ticket_system.t_role_permission
+create table if not exists ticket_system.t_role_permission
 (
     role_id       bigint                             not null comment '角色ID',
     permission_id bigint                             not null comment '权限ID',
@@ -147,7 +120,7 @@ create table ticket_system.t_role_permission
 )
     comment '角色权限关联表' charset = utf8mb4;
 
-create table ticket_system.t_ticket
+create table if not exists ticket_system.t_ticket
 (
     ticket_id          bigint auto_increment comment '工单ID'
         primary key,
@@ -180,7 +153,7 @@ create index idx_type
     on ticket_system.t_ticket (type_id)
     comment '类型索引';
 
-create table ticket_system.t_ticket_record
+create table if not exists ticket_system.t_ticket_record
 (
     record_id          bigint auto_increment comment '记录ID'
         primary key,
@@ -203,7 +176,7 @@ create index idx_ticket
     on ticket_system.t_ticket_record (ticket_id)
     comment '工单索引';
 
-create table ticket_system.t_ticket_type
+create table if not exists ticket_system.t_ticket_type
 (
     type_id     bigint auto_increment comment '类型ID'
         primary key,
@@ -215,7 +188,7 @@ create table ticket_system.t_ticket_type
 )
     comment '工单类型表' charset = utf8mb4;
 
-create table ticket_system.t_user
+create table if not exists ticket_system.t_user
 (
     user_id       bigint auto_increment comment '用户ID'
         primary key,
@@ -240,7 +213,7 @@ create index idx_department
     on ticket_system.t_user (department_id)
     comment '部门索引';
 
-create table ticket_system.t_user_role
+create table if not exists ticket_system.t_user_role
 (
     user_id     bigint                             not null comment '用户ID',
     role_id     bigint                             not null comment '角色ID',
@@ -249,7 +222,7 @@ create table ticket_system.t_user_role
 )
     comment '用户角色关联表' charset = utf8mb4;
 
-create table ticket_system.t_user_settings
+create table if not exists ticket_system.t_user_settings
 (
     id                   bigint auto_increment
         primary key,

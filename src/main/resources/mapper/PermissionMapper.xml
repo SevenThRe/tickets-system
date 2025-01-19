@@ -290,7 +290,7 @@
     </select>
 
     <select id="selectUserRoles" resultType="string">
-        SELECT r.role_code
+        SELECT r.base_role_code
         FROM t_role r
         INNER JOIN t_user_role ur ON r.role_id = ur.role_id
         WHERE ur.user_id = #{userId}

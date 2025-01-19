@@ -146,11 +146,25 @@ class SystemSettings {
         const $logoInput = this.forms.general.find('[name="systemLogo"]');
         const logoFile = $logoInput[0].files[0];
         if (logoFile) {
-            // 处理文件上传逻辑（例如使用FormData上传）
             const formData = new FormData();
             formData.append('systemLogo', logoFile);
-            // 发送请求上传Logo
-            await this.uploadSystemLogo(formData);
+
+            try {
+                await this.uploadSystemLogo(formData);
+                // 更新预览
+                $('#logoPreview').attr('src', URL.createObjectURL(logoFile));
+
+                // 强制刷新favicon
+                const favicon = document.querySelector("link[rel~='icon']");
+                if (favicon) {
+                    favicon.href = favicon.href.split('?')[0] + '?v=' + new Date().getTime();
+                }
+
+                // 通知用户可能需要刷新页面
+                NotifyUtil.success('Logo更新成功，您可能需要清除浏览器缓存或刷新页面才能看到新图标');
+            } catch (error) {
+                NotifyUtil.error('Logo上传失败');
+            }
         }
     }
     /**

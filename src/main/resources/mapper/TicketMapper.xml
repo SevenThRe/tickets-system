@@ -209,12 +209,13 @@
         AND is_deleted = 0
     </update>
 
-    <!-- 统计用户相关工单数量 -->
+    <!-- 统计我的工单数量 -->
     <select id="countUserTickets" resultType="integer">
         SELECT COUNT(1)
         FROM t_ticket
         WHERE is_deleted = 0
-        AND (create_by = #{userId} OR processor_id = #{userId})
+        AND status IN (0, 1)  <!-- PENDING, PROCESSING -->
+        AND (create_by = #{userId})
     </select>
 
     <!-- 统计各状态工单数量 -->
@@ -636,10 +637,10 @@
 
     <select id="selectPendingTickets" resultMap="BaseResultMap">
         select
-        <include refid="Base_Column_List">
-        </include>
-        from t_ticket
-        where is_deleted = 0 and status = 0
+        t.*,d.department_name
+        from t_ticket t
+        JOIN t_department d ON t.department_id = d.department_id
+        where t.is_deleted = 0 and t.status = 0
     </select>
 
     <delete id="countBySS">
@@ -671,19 +672,41 @@
         GROUP BY t.type_id, tt.type_name
     </select>
 
-    <!--    <select id="countCompletedTickets" resultType="java.lang.Integer">-->
-<!--        SELECT COUNT(1)-->
-<!--        FROM t_ticket-->
-<!--        WHERE processor_id = #{userId}-->
-<!--        AND status = 2-->
-<!--        AND create_time BETWEEN #{startTime} AND #{endTime}-->
-<!--        AND is_deleted = 0-->
-<!--    </select>-->
-<!--    <select id="countActiveTickets" resultType="java.lang.Integer">-->
-<!--        SELECT COUNT(1)-->
-<!--        FROM t_ticket-->
-<!--        WHERE processor_id = #{userId}-->
-<!--        AND status IN (0, 1)  &lt;!&ndash; PENDING, PROCESSING &ndash;&gt;-->
-<!--        AND is_deleted = 0-->
-<!--    </select>-->
+    <!-- 按部门和状态统计工单数量 -->
+    <select id="countByDepartmentAndStatus" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM t_ticket
+        WHERE department_id = #{departmentId}
+        AND status = #{status}
+        AND is_deleted = 0
+    </select>
+
+
+    <!-- 计算部门工单平均满意度 -->
+    <select id="calculateDepartmentAvgSatisfaction" resultType="java.lang.Double">
+        SELECT COALESCE(ROUND(AVG(tr.evaluation_score), 1), 0)
+        FROM t_ticket t
+        INNER JOIN t_ticket_record tr ON t.ticket_id = tr.ticket_id
+        WHERE t.department_id = #{departmentId}
+        AND t.status = 2
+        AND tr.operation_type = 3
+        AND tr.evaluation_score IS NOT NULL
+        AND t.is_deleted = 0
+        AND tr.is_deleted = 0
+    </select>
+
+
+    <!-- 查询部门工单趋势统计 -->
+    <select id="selectDepartmentTicketTrends" resultType="java.util.Map">
+        SELECT
+        DATE_FORMAT(t.create_time, '%Y-%m-%d') as date,
+        COUNT(CASE WHEN t.create_time >= DATE_SUB(NOW(), INTERVAL 1 DAY) THEN 1 END) as new_count,
+        COUNT(CASE WHEN t.status = 2 AND t.actual_finish_time >= DATE_SUB(NOW(), INTERVAL 1 DAY) THEN 1 END) as completed_count
+        FROM t_ticket t
+        WHERE t.department_id = #{departmentId}
+        AND t.is_deleted = 0
+        AND t.create_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY DATE_FORMAT(t.create_time, '%Y-%m-%d')
+        ORDER BY date DESC
+    </select>
 </mapper>

@@ -621,7 +621,7 @@ class TicketManagement {
                 contentType: 'application/json',
                 data: JSON.stringify({
                     ticketId: this.state.currentTicket.ticketId,
-                    status: 'PROCESSING',
+                    status: 'COMPLETED',
                     operatorId: this.userInfo.userId,
                     content: content
                 }),
@@ -631,7 +631,7 @@ class TicketManagement {
             });
 
             if (response.code === 200) {
-                NotifyUtil.success('已开始处理');
+                NotifyUtil.success('已完成处理');
                 $('#operationContent').val(''); // 清空输入框
                 await this._loadTicketDetail(this.state.currentTicket.ticketId);
                 await this._loadTickets();
@@ -810,7 +810,7 @@ class TicketManagement {
     _renderTicketDetail() {
         const ticket = this.state.currentTicket;
         if(!ticket) return;
-        console.log('渲染工单详情:', ticket);
+        // console.log('渲染工单详情:', ticket);
 
         // 渲染基本信息
         $('#ticketType').text(ticket.typeName).addClass(`bg-secondary`)

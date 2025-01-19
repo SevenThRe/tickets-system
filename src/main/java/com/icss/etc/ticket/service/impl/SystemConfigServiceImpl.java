@@ -7,9 +7,13 @@ import com.icss.etc.ticket.exceptions.BusinessException;
 import com.icss.etc.ticket.service.FileService;
 import com.icss.etc.ticket.service.SystemConfigService;
 import com.icss.etc.ticket.util.PropertiesUtil;
+import jakarta.servlet.ServletContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -23,6 +27,13 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     private PropertiesUtil propertiesUtil;
     @Autowired
     private SystemConfigLoader configLoader;
+
+    @Value("${system.favicon.path}")
+    private String faviconPath;
+
+    @Value("${system.static.path}")
+    private String staticPath;
+
     @Autowired
     private FileService fileService;
 
@@ -100,20 +111,41 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     @Override
     public int updateSystemLogo(MultipartFile systemLogo) {
         try {
-            String logoPath  = propertiesUtil.getProperty("system.logo", "static/favicon.ico");
-            File destFile = new File(logoPath);
+            // 获取项目根路径
+            String projectPath = System.getProperty("user.dir");
+            // 完整的favicon路径
+            String fullFaviconPath = projectPath + File.separator + faviconPath;
+
             if (systemLogo.getSize() > 1024 * 1024) {
                 throw new BusinessException(CodeEnum.INVALID_FILE_SIZE, "文件大小不能超过1MB");
             }
+
             if (!isValidFileType(systemLogo.getOriginalFilename())) {
                 throw new BusinessException(CodeEnum.INVALID_FILE_TYPE, "不支持的文件类型");
             }
-            systemLogo.transferTo(destFile);
-            log.info("上传系统logo成功: {}", systemLogo.getOriginalFilename());
+
+            // 确保目录存在
+            File targetDir = new File(projectPath + File.separator + staticPath);
+            if (!targetDir.exists()) {
+                targetDir.mkdirs();
+            }
+
+            // 保存文件
+            File faviconFile = new File(fullFaviconPath);
+            systemLogo.transferTo(faviconFile);
+
+            // 更新配置
+            propertiesUtil.setProperty("system.logo", "favicon.ico");
+            propertiesUtil.saveProperties();
+
+            // 重新加载资源
+            ResourceUtils.getFile("/static/favicon.ico");
+
+            log.info("上传系统logo成功,保存路径: {}", fullFaviconPath);
             return 1;
         } catch (Exception e) {
             log.error("上传系统logo失败:", e);
-            throw new BusinessException(CodeEnum.INTERNAL_ERROR, "上传系统logo失败");
+            throw new BusinessException(CodeEnum.INTERNAL_ERROR, "上传系统logo失败: " + e.getMessage());
         }
     }
 

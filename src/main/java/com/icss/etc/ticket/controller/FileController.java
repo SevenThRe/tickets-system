@@ -46,6 +46,10 @@ public class FileController {
     @GetMapping("/check/{ticketId}/{filePath}")
     public R<Boolean> checkFile(@PathVariable Long ticketId, @PathVariable String filePath) {
         try {
+
+            log.info("正在校验文件 - ticketId: {}, filePath: {}", ticketId, filePath);
+
+
             // 先从数据库验证附件记录
             Attachment attachment = attachmentMapper.selectByAll(
                     Attachment.builder()
@@ -60,6 +64,8 @@ public class FileController {
                 return R.FAIL(CodeEnum.NOT_FOUND);
             }
             String uploadPath = propertiesUtil.getProperty("upload.path");
+            log.info("当前配置的上传路径: {}", uploadPath);
+
             if (uploadPath == null) {
                 throw new BusinessException(CodeEnum.INTERNAL_ERROR,"上传路径未配置");
             }
@@ -69,6 +75,9 @@ public class FileController {
 
             // 验证物理文件
             File file = new File(uploadPath + filePath);
+
+            log.info("完整文件路径: {}", file.getAbsolutePath());
+
             if (!file.exists()) {
                 log.error("文件不存在: {}", file.getAbsoluteFile());
                 throw new BusinessException(CodeEnum.NOT_FOUND,"文件不存在");

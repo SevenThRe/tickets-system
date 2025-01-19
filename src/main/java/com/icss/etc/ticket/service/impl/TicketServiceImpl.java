@@ -657,8 +657,9 @@ public class TicketServiceImpl implements TicketService {
             // 1. 获取部门内所有可用处理人
             List<User> availableProcessors = selectAvailableProcessors(ticket.getDepartmentId());
             if (availableProcessors.isEmpty()) {
-                log.warn("部门编号{}-{}没有可用处理人",ticket.getDepartmentId(), ticket.getDepartmentName());
-                throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED, "部门没有可用处理人");
+                log.warn("部门{} - {} , 没有可用处理人",ticket.getDepartmentId(), ticket.getDepartmentName());
+//                throw new BusinessException(TicketEnum.TICKET_OPERATION_FAILED, "部门没有可用处理人");
+                return;
             }
 
             // 2. 获取处理人工作量

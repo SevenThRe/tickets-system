@@ -40,7 +40,8 @@ public enum CodeEnum {
     DELETE_MEMBER_FAILED(1412, "删除成员失败"),
     SAVE_FAILED(1055, "保存失败"),
     INVALID_FILE_SIZE(1551, "文件大小超出限制"),
-    INVALID_FILE_TYPE(1552, "文件类型不支持"), REGISTER_CLOSED(1553, "系统注册已关闭");
+    INVALID_FILE_TYPE(1552, "文件类型不支持"), REGISTER_CLOSED(1553, "系统注册已关闭"),
+    PARAM_ERROR(1555, "参数错误"), DATA_NOT_FOUND(1556, "数据未找到"), DATA_EXIST(1557, "数据已存在"),;
     @Getter
     @Setter
     private int code;

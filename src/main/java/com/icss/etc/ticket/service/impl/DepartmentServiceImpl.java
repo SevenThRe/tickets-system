@@ -1,15 +1,18 @@
 package com.icss.etc.ticket.service.impl;
 
 import com.icss.etc.ticket.entity.Department;
-import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
-import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
+import com.icss.etc.ticket.entity.vo.*;
 import com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO;
 import com.icss.etc.ticket.enums.CodeEnum;
+import com.icss.etc.ticket.enums.TicketStatus;
+import com.icss.etc.ticket.exceptions.BusinessException;
 import com.icss.etc.ticket.mapper.DepartmentMapper;
+import com.icss.etc.ticket.mapper.TicketMapper;
 import com.icss.etc.ticket.mapper.UserMapper;
 import com.icss.etc.ticket.mapper.UserRoleMapper;
 import com.icss.etc.ticket.service.DepartmentService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +37,8 @@ public class DepartmentServiceImpl implements DepartmentService {
     private DepartmentMapper departmentMapper;
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private TicketMapper ticketMapper;
 
 
     @Override
@@ -82,10 +87,10 @@ public class DepartmentServiceImpl implements DepartmentService {
      * 部门详情
      * @return DepartmentDetailVO
      */
-    public DepartmentDetailVO getDepartmentDetail(Long departmentId) {
-        Department department = departmentMapper.selectByPrimaryKey(departmentId);
-        return new DepartmentDetailVO(departmentMapper.selectManagerByDepartmentId(departmentId), department);
-    }
+//    public DepartmentDetailVO getDepartmentDetail(Long departmentId) {
+//        Department department = departmentMapper.selectByPrimaryKey(departmentId);
+//        return new DepartmentDetailVO(departmentMapper.selectManagerByDepartmentId(departmentId), department);
+//    }
 
     @Override
     public List<Department> selectAll() {
@@ -125,6 +130,97 @@ public class DepartmentServiceImpl implements DepartmentService {
         Long deptId = userMapper.selectByPrimaryKey(userId).getDepartmentId();
         return departmentMapper.selectDeptMoreUser(deptId);
     }
+
+    @Override
+    public DepartmentStatsVO getDepartmentStats(Long departmentId) {
+        if(departmentId == null) {
+            throw new BusinessException(CodeEnum.PARAM_ERROR, "部门ID不能为空");
+        }
+
+        // 获取各状态工单数量
+        Integer pendingCount = ticketMapper.countByDepartmentAndStatus(
+                departmentId, TicketStatus.PENDING.getValue());
+        Integer processingCount = ticketMapper.countByDepartmentAndStatus(
+                departmentId, TicketStatus.PROCESSING.getValue());
+        Integer completedCount = ticketMapper.countByDepartmentAndStatus(
+                departmentId, TicketStatus.COMPLETED.getValue());
+
+        // 计算平均满意度
+        Double avgSatisfaction = ticketMapper.calculateDepartmentAvgSatisfaction(departmentId);
+
+        // 获取趋势数据
+        List<Map<String, Object>> rawTrends = ticketMapper.selectDepartmentTicketTrends(departmentId);
+        Map<String, Double> trends = this.processTrends(rawTrends);
+
+        return DepartmentStatsVO.builder()
+                .pendingCount(pendingCount)
+                .processingCount(processingCount)
+                .completedCount(completedCount)
+                .avgSatisfaction(avgSatisfaction)
+                .trends(trends)
+                .build();
+    }
+
+    /**
+     * 处理趋势数据
+     */
+    private Map<String, Double> processTrends(List<Map<String, Object>> rawTrends) {
+        Map<String, Double> result = new HashMap<>();
+        if(CollectionUtils.isEmpty(rawTrends)) {
+            return result;
+        }
+
+        // 计算同比增长
+        Map<String, Object> latest = rawTrends.get(0);
+        Map<String, Object> yesterday = rawTrends.size() > 1 ? rawTrends.get(1) : null;
+
+        if(yesterday != null) {
+            int newCount = ((Number)latest.get("new_count")).intValue();
+            int yesterdayNewCount = ((Number)yesterday.get("new_count")).intValue();
+            double newCountTrend = yesterdayNewCount == 0 ? 0 :
+                    ((newCount - yesterdayNewCount) / (double)yesterdayNewCount) * 100;
+            result.put("newTicketsTrend", newCountTrend);
+
+            int completedCount = ((Number)latest.get("completed_count")).intValue();
+            int yesterdayCompletedCount = ((Number)yesterday.get("completed_count")).intValue();
+            double completedCountTrend = yesterdayCompletedCount == 0 ? 0 :
+                    ((completedCount - yesterdayCompletedCount) / (double)yesterdayCompletedCount) * 100;
+            result.put("completedTicketsTrend", completedCountTrend);
+        }
+
+        return result;
+    }
+
+    @Override
+    public List<DepartmentMemberVO> getDepartmentMembers(Long departmentId) {
+        if(departmentId == null) {
+            throw new BusinessException(CodeEnum.PARAM_ERROR, "部门ID不能为空");
+        }
+        return departmentMapper.selectDepartmentMembers(departmentId);
+    }
+
+    @Override
+    public List<MemberWorkloadVO> getMemberWorkload(Long departmentId) {
+        if(departmentId == null) {
+            throw new BusinessException(CodeEnum.PARAM_ERROR, "部门ID不能为空");
+        }
+        return departmentMapper.selectMemberWorkload(departmentId);
+    }
+
+
+    @Override
+    public DepartmentDetailVO getDepartmentDetail(Long departmentId) {
+        Department department = departmentMapper.selectByPrimaryKey(departmentId);
+        if(department == null) {
+            throw new BusinessException(CodeEnum.DATA_NOT_FOUND, "部门不存在");
+        }
+
+        List<DepartmentChargeVO> managers = departmentMapper.selectManagerByDepartmentId(departmentId);
+        return new DepartmentDetailVO(managers, department);
+    }
+
+
+
     @Override
     public List<DepartmentWorkloadVO> getWorkloadStats() {
 

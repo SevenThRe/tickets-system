@@ -383,7 +383,35 @@ MyTickets.prototype._getFileIconClass = function(fileExt) {
 /**
  * 文件预览处理
  */
+// 修改文件下载方法
+MyTickets.prototype._downloadAttachment = function(ticketId, filePath, fileName) {
+    // 先进行路径处理,去掉开头的斜杠
+    if(filePath.startsWith('/')) {
+        filePath = filePath.substring(1);
+    }
+
+    $.ajax({
+        url: `/api/files/check/${ticketId}/${filePath}`,
+        method: 'GET'
+    }).done(function(response) {
+        if (response.code === 200 && response.data) {
+            // 使用window.open直接下载
+            window.open(`/api/files/download/${ticketId}/${filePath}`);
+        } else {
+            NotifyUtil.error("文件已失效");
+        }
+    }).fail(function() {
+        NotifyUtil.error("校验文件失败");
+    });
+};
+
+// 修改文件预览方法
 MyTickets.prototype._previewFile = function(ticketId, filePath, fileName) {
+    // 先进行路径处理,去掉开头的斜杠
+    if(filePath.startsWith('/')) {
+        filePath = filePath.substring(1);
+    }
+
     const fileExt = fileName.split('.').pop().toLowerCase();
 
     // 清除之前的预览
@@ -394,31 +422,31 @@ MyTickets.prototype._previewFile = function(ticketId, filePath, fileName) {
 
     if (['jpg', 'jpeg', 'png', 'gif', 'pdf'].includes(fileExt)) {
         $.ajax({
-            url: `/api/files/preview${filePath}`,
-            type: 'GET',
-            xhrFields: {
-                responseType: 'blob'
-            }
-        }).done(function(blob) {
-            const url = window.URL.createObjectURL(blob);
-            if (fileExt === 'pdf') {
-                $previewContainer.html(`
-                    <div class="preview-header">
-                        <h5>${fileName}</h5>
-                        <button class="btn-close" onclick="$(this).closest('.preview-container').remove()"></button>
-                    </div>
-                    <iframe src="${url}" width="100%" height="90%"></iframe>
-                `);
+            url: `/api/files/check/${ticketId}/${filePath}`,
+            method: 'GET'
+        }).done(function(response) {
+            if (response.code === 200 && response.data) {
+                if (fileExt === 'pdf') {
+                    $previewContainer.html(`
+                        <div class="preview-header">
+                            <h5>${fileName}</h5>
+                            <button class="btn-close" onclick="$(this).closest('.preview-container').remove()"></button>
+                        </div>
+                        <iframe src="/api/files/download/${ticketId}/${filePath}" width="100%" height="90%"></iframe>
+                    `);
+                } else {
+                    $previewContainer.html(`
+                        <div class="preview-header">
+                            <h5>${fileName}</h5>
+                            <button class="btn-close" onclick="$(this).closest('.preview-container').remove()"></button>
+                        </div>
+                        <img src="/api/files/download/${ticketId}/${filePath}" alt="${fileName}" style="max-width: 100%; height: auto;">
+                    `);
+                }
+                $previewContainer.addClass('show');
             } else {
-                $previewContainer.html(`
-                    <div class="preview-header">
-                        <h5>${fileName}</h5>
-                        <button class="btn-close" onclick="$(this).closest('.preview-container').remove()"></button>
-                    </div>
-                    <img src="${url}" alt="${fileName}" style="max-width: 100%; height: auto;">
-                `);
+                NotifyUtil.error("文件已失效");
             }
-            $previewContainer.addClass('show');
         }).fail(function() {
             NotifyUtil.error("预览失败");
         });

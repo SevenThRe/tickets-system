@@ -154,7 +154,7 @@ public class TicketController {
             if (ticketId == null) throw new BusinessException(CodeEnum.INTERNAL_ERROR, "未知异常，工单创建失败");
 
             // 文件上传完毕，尝试传递文件路径到t_attachment表
-            if(file != null){
+            if(file.getSize() > 0 || !file.isEmpty()) {
                 String filePath =
                         fileService.uploadFile(Objects.requireNonNull(file),ticketId).substring("/api/files/".length());
                 attachmentMapper.insertSelective(

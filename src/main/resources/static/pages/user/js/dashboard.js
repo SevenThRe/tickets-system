@@ -211,7 +211,7 @@ class Dashboard {
         const { statistics } = this.state;
 
         // 更新数量显示
-        this.elements.todoCount.text(statistics.pendingCount || 0);
+        this.elements.todoCount.text((statistics.statusCount.PENDING + statistics.statusCount.PROCESSING) || 0);
         this.elements.totalTickets.text(statistics.totalCount || 0);
         this.elements.processingCount.text(statistics.processingCount || 0);
         this.elements.todayCompleted.text(statistics.todayCompleted || 0);

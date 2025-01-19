@@ -111,6 +111,12 @@ class Navbar {
             ],
             'DEPT': [
                 {
+                    id: 'dept-dashboard',
+                    title: '部门工作台',
+                    icon: 'bi bi-building',
+                    url: '/pages/dept/department-dashboard.html'
+                },
+                {
                     id: 'dept-members',
                     title: '部门成员',
                     icon: 'bi bi-people',

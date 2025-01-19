@@ -1,8 +1,7 @@
 package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.Department;
-import com.icss.etc.ticket.entity.vo.DepartmentChargeVO;
-import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
+import com.icss.etc.ticket.entity.vo.*;
 import org.apache.ibatis.annotations.Param;
 import com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO;
 import java.util.List;
@@ -93,12 +92,37 @@ public interface DepartmentService {
 
 
 
-    DepartmentDetailVO getDepartmentDetail(Long departmentId);
+
 
     List<Map<String, Object>> getDepartmentTree();
 
 
     int selectDepartmentProcessors(Long userId);
+
+
+    /**
+     * 获取部门统计数据
+     */
+    DepartmentStatsVO getDepartmentStats(Long departmentId);
+
+    /**
+     * 获取部门成员列表
+     */
+    List<DepartmentMemberVO> getDepartmentMembers(Long departmentId);
+
+    /**
+     * 获取成员工作量统计
+     */
+    List<MemberWorkloadVO> getMemberWorkload(Long departmentId);
+
+    /**
+     * 获取部门工作量统计
+     */
     List<DepartmentWorkloadVO> getWorkloadStats();
+
+    /**
+     * 获取部门详情
+     */
+    DepartmentDetailVO getDepartmentDetail(Long departmentId);
 
 }

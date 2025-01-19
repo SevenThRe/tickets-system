@@ -5,6 +5,13 @@ import com.icss.etc.ticket.entity.Department;
 import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.dto.DepartmentsQueryDTO;
 import com.icss.etc.ticket.entity.dto.DeptMemberDTO;
+import com.icss.etc.ticket.entity.vo.DepartmentDetailVO;
+import com.icss.etc.ticket.entity.vo.DepartmentMemberVO;
+import com.icss.etc.ticket.entity.vo.DepartmentStatsVO;
+import com.icss.etc.ticket.entity.vo.MemberWorkloadVO;
+import com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO;
+import com.icss.etc.ticket.enums.CodeEnum;
+import com.icss.etc.ticket.exceptions.BusinessException;
 import com.icss.etc.ticket.service.DepartmentService;
 import com.icss.etc.ticket.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -72,25 +79,6 @@ public class DepartmentController {
     public R selectByAll(Department department) {
         return R.OK(departmentService.selectByAll(department));
     }
-
-    //批量更新部门
-    //int updateBatchSelective(@Param("list") List<Department> list);
-
-
-
-    //批量插入部门
-    //int batchInsert(@Param("list") List<Department> list);
-
-
-
-    //部门表根节点集合   */
-    //    List<Department> selectParentAll();
-
-
-    //查询部门负责人列表
-    //List<DepartmentChargeVO> selectManagerByDepartmentId(Long department_id);
-
-
 
 
 
@@ -187,7 +175,72 @@ public class DepartmentController {
 
 
 
+    @GetMapping("/stats")
+    public R getDepartmentStats(@RequestParam Long departmentId) {
+        try {
+            DepartmentStatsVO stats = departmentService.getDepartmentStats(departmentId);
+            return R.OK(stats);
+        } catch (BusinessException e) {
+            log.error("获取部门统计失败: {}", e.getMessage());
+            return R.FAIL();
+        } catch (Exception e) {
+            log.error("获取部门统计异常", e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
+        }
+    }
 
+    @GetMapping("/members")
+    public R getDepartmentMembers(@RequestParam Long departmentId) {
+        try {
+            List<DepartmentMemberVO> members = departmentService.getDepartmentMembers(departmentId);
+            return R.OK(members);
+        } catch (BusinessException e) {
+            log.error("获取部门成员失败: {}", e.getMessage());
+            return R.FAIL();
+        } catch (Exception e) {
+            log.error("获取部门成员异常", e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
+        }
+    }
+
+    @GetMapping("/member-workload")
+    public R<List<MemberWorkloadVO>> getMemberWorkload(Long departmentId) {
+        try {
+            List<MemberWorkloadVO> workload = departmentService.getMemberWorkload(departmentId);
+            return R.OK(workload);
+        } catch (BusinessException e) {
+            log.error("获取成员工作量失败: {}", e.getMessage());
+            return R.FAIL();
+        } catch (Exception e) {
+            log.error("获取成员工作量异常", e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
+        }
+    }
+
+    @GetMapping("/workload-stats")
+    public R<List<DepartmentWorkloadVO>> getWorkloadStats() {
+        try {
+            List<DepartmentWorkloadVO> stats = departmentService.getWorkloadStats();
+            return R.OK(stats);
+        } catch (Exception e) {
+            log.error("获取部门工作量统计异常", e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
+        }
+    }
+
+    @GetMapping("/detail-dept/{departmentId}")
+    public R getDepartmentDetail(@PathVariable Long departmentId) {
+        try {
+            DepartmentDetailVO detail = departmentService.getDepartmentDetail(departmentId);
+            return R.OK(detail);
+        } catch (BusinessException e) {
+            log.error("获取部门详情失败: {}", e.getMessage());
+            return R.builder().msg(e.getMessage()).code(e.getCode()).build();
+        } catch (Exception e) {
+            log.error("获取部门详情异常", e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
+        }
+    }
 
 
 

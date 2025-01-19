@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>工单系统 - 部门工作台</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/navbar.css" rel="stylesheet">
+    <link href="/css/notify.css" rel="stylesheet">
+    <link href="/pages/dept/css/department-dashboard.css" rel="stylesheet">
+</head>
+<body class="department-layout">
+    <!-- 导航栏 -->
+    <nav class="navbar-container" id="navbar"></nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content" id="main">
+        <!-- 页面标题和工具栏 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="page-title">部门工作台</h4>
+            <div class="toolbar">
+                <button class="btn btn-outline-primary me-2" id="refreshBtn">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                </button>
+            </div>
+        </div>
+
+        <!-- 统计卡片区域 -->
+        <div class="row stat-cards mb-4">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">待处理工单</h6>
+                        <h3 class="card-title" id="pendingCount">0</h3>
+                        <div class="stat-trend">
+                            <span class="trend-icon"><i class="bi bi-arrow-up"></i></span>
+                            <span class="trend-text">较昨日 +5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">处理中工单</h6>
+                        <h3 class="card-title" id="processingCount">0</h3>
+                        <div class="stat-trend">
+                            <span class="trend-icon"><i class="bi bi-arrow-down"></i></span>
+                            <span class="trend-text">较昨日 -2%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">本月完成</h6>
+                        <h3 class="card-title" id="completedCount">0</h3>
+                        <div class="stat-trend">
+                            <span class="trend-icon"><i class="bi bi-arrow-up"></i></span>
+                            <span class="trend-text">较上月 +10%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">平均满意度</h6>
+                        <h3 class="card-title" id="avgSatisfaction">0</h3>
+                        <div class="stat-trend positive">
+                            <span class="trend-icon"><i class="bi bi-star-fill"></i></span>
+                            <span class="trend-text">良好</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 搜索和筛选区 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form class="row g-3" id="searchForm">
+                    <div class="col-md-3">
+                        <input class="form-control" id="keyword" placeholder="搜索工单号/标题/内容"
+                               type="text">
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">所有状态</option>
+                            <option value="0">待处理</option>
+                            <option value="1">处理中</option>
+                            <option value="2">已完成</option>
+                            <option value="3">已关闭</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="priorityFilter">
+                            <option value="">所有优先级</option>
+                            <option value="0">普通</option>
+                            <option value="1">紧急</option>
+                            <option value="2">非常紧急</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="processorFilter">
+                            <option value="">所有处理人</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" type="submit">
+                            <i class="bi bi-search"></i> 搜索
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="row">
+            <!-- 左侧工单列表 -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">部门工单列表</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>工单编号</th>
+                                        <th>标题</th>
+                                        <th>处理人</th>
+                                        <th>状态</th>
+                                        <th>优先级</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ticketList">
+                                    <!-- 工单列表将通过JS动态加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- 分页控件 -->
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div class="page-info">
+                                共 <span id="totalCount">0</span> 条记录
+                            </div>
+                            <ul class="pagination mb-0" id="pagination"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧成员状态 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">成员工作状态</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="member-list" id="memberList">
+                            <!-- 成员列表将通过JS动态加载 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 工单分配模态框 -->
+    <div class="modal fade" id="assignModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">分配工单</h5>
+                    <button class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="assignForm">
+                        <div class="mb-3">
+                            <label class="form-label">选择处理人</label>
+                            <select class="form-select" id="assignProcessor" required>
+                                <option value="">请选择处理人</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">备注说明</label>
+                            <textarea class="form-control" id="assignNote" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">取消</button>
+                    <button class="btn btn-primary" id="confirmAssignBtn" type="button">确认分配</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工单详情侧边栏 -->
+    <div class="ticket-detail-panel" id="ticketDetail">
+        <!-- 详情内容将通过JS动态加载 -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/utils/notify-util.js"></script>
+    <script src="/js/utils/ticket-util.js"></script>
+    <script src="/js/utils/heartbeat-manager.js"></script>
+    <script src="/js/components/layout/navbar.js"></script>
+    <script src="/pages/dept/js/department-dashboard.js"></script>
+</body>
+</html>

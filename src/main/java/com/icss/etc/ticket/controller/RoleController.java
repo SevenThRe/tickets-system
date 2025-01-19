@@ -12,6 +12,7 @@ import com.icss.etc.ticket.entity.dto.PermissionDTO;
 import com.icss.etc.ticket.entity.dto.RoleDTO;
 import com.icss.etc.ticket.entity.vo.ChooseRolesVO;
 import com.icss.etc.ticket.enums.CodeEnum;
+import com.icss.etc.ticket.enums.Logical;
 import com.icss.etc.ticket.service.RoleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/roles")
-@RequireRoles("ADMIN")
+@RequireRoles(value = {"ADMIN","GOLDEN"}, logical = Logical.OR)
 public class RoleController {
     @Autowired
     private RoleService roleService;
