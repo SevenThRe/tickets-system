@@ -12,6 +12,7 @@ import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
 import com.icss.etc.ticket.entity.vo.ticket.DepartmentStatisticsVO;
 import com.icss.etc.ticket.entity.vo.ticket.MonthlyStatisticsVO;
+import com.icss.etc.ticket.entity.vo.ticket.TicketListVO;
 import com.icss.etc.ticket.enums.TicketStatus;
 import jakarta.validation.constraints.NotNull;
 import org.apache.ibatis.annotations.Param;
@@ -246,4 +247,9 @@ public interface TicketMapper {
      * 查询部门工单趋势统计
      */
     List<Map<String, Object>> selectDepartmentTicketTrends(@Param("departmentId") Long departmentId);
+
+    List<TicketListVO> getTicketListVO(@Param("query") TicketQueryDTO query);
+
+    Long countTicketsForDept(@Param("query") TicketQueryDTO query);
+
 }

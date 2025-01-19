@@ -7,6 +7,7 @@ import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
 import com.icss.etc.ticket.entity.vo.TicketRecordVO;
 import com.icss.etc.ticket.entity.vo.TodoStatsVO;
+import com.icss.etc.ticket.entity.vo.ticket.TicketListVO;
 import com.icss.etc.ticket.entity.vo.ticket.TicketStatisticsVO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.enums.OperationType;
@@ -19,19 +20,13 @@ import com.icss.etc.ticket.service.TicketService;
 import com.icss.etc.ticket.util.ExcelUtil;
 import com.icss.etc.ticket.util.PropertiesUtil;
 import com.icss.etc.ticket.util.SecurityUtils;
-import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.lang.reflect.Field;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -39,7 +34,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -454,6 +448,25 @@ public class TicketController {
             return R.FAIL();
         }
     }
+
+    /**
+     * 获取工单列表 部门工作台使用
+     * @param query 查询条件
+     * @return R<PageResult>
+     */
+    @GetMapping
+    public R<PageResult<TicketListVO>> getTicketListVO(TicketQueryDTO query) {
+        try {
+            PageResult<TicketListVO> result = ticketService.getTicketListVO(query);
+            return R.OK(result);
+        } catch (Exception e) {
+            log.error("查询工单列表失败", e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
+        }
+    }
+
+
+
 
 
 

@@ -33,7 +33,6 @@ class DepartmentDashboard {
             workloadStats: null,
             memberOnlineStatus: new Map() // 保存成员在线状态
 
-
         };
         const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
         this.heartbeatManager = new HeartbeatManager(userInfo.userId);
@@ -67,7 +66,8 @@ class DepartmentDashboard {
         };
 
 
-
+        this._initActionButtons();
+        this.MAX_RETRIES = 3; // 最大重试次数
         // 在线状态管理器
         this.heartbeatManager = new HeartbeatManager();
 
@@ -76,8 +76,13 @@ class DepartmentDashboard {
         this.checkWarningTimer = null;
         this.workloadTimer = null;
 
-        // 初始化组件
-        this.init();
+        this._showLoading();
+        this.init().catch(error => {
+            console.error('初始化失败:', error);
+            NotifyUtil.error('页面初始化失败，请刷新重试');
+        }).finally(() => {
+            this._hideLoading();
+        });
     }
 
 
@@ -85,60 +90,337 @@ class DepartmentDashboard {
      * 初始化方法
      */
     async init() {
-        try {
-            // 先加载用户信息和部门信息
-            await this._initUserAndDepartmentInfo();
+        let retries = 0;
+        const MAX_RETRY_DELAY = 5000;
 
-            // 加载主要数据
-            await Promise.all([
-                this._loadDepartmentStats(),
-                this._loadMembers(),
-                this._loadTickets(),
-                this._loadUserPermissions()
-            ]);
+        while (retries < this.MAX_RETRIES) {
+            try {
+                // 初始化用户和部门信息
+                const initSuccess = await this._initUserAndDepartmentInfo();
 
-            // 启动自动刷新和心跳检测
-            this._startAutoRefresh();
-            this._startHeartbeat();
+                // 严格检查初始化结果
+                if (!initSuccess || !this.state.departmentInfo?.departmentId) {
+                    throw new Error('初始化部门信息失败');
+                }
 
-            // 绑定事件
-            this._bindEvents();
+                // 确保有部门信息后再加载其他数据
+                await Promise.all([
+                    this._loadDepartmentStats(),
+                    this._loadMembers(),
+                    this._loadTickets()
+                ]);
 
-        } catch (error) {
-            console.error('初始化失败:', error);
-            NotifyUtil.error('页面初始化失败，请刷新重试');
+                this._startAutoRefresh();
+                this._startHeartbeat();
+                this._bindEvents();
+                return;
+
+            } catch (error) {
+                retries++;
+                console.error(`初始化失败 (${retries}/${this.MAX_RETRIES}):`, error);
+
+                if (retries === this.MAX_RETRIES) {
+                    NotifyUtil.error('初始化失败，请刷新页面重试');
+                    throw error;
+                }
+
+                await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, retries - 1), MAX_RETRY_DELAY)));
+            }
         }
     }
+
+    _initActionButtons() {
+        // 先解绑之前的事件
+        $('#processBtn, #commentBtn, #transferBtn, #closeBtn, #evaluateBtn').off('click');
+        // 重新绑定事件
+        $('#processBtn').on('click', () => {
+            if (this.state.checkPermission.canProcess) {
+                this._handleProcess();
+            }
+        });
+
+        $('#commentBtn').on('click', () => {
+            if (this.state.checkPermission.canComment) {
+                this._handleComment();
+            }
+        });
+
+        $('#transferBtn').on('click', () => {
+            if (this.state.checkPermission.canTransfer) {
+                this._handleTransfer();
+            }
+        });
+
+        $('#closeBtn').on('click', () => {
+            if (this.state.checkPermission.canClose) {
+                this._handleClose();
+            }
+        });
+
+        $('#evaluateBtn').on('click', () => {
+            if (this.state.checkPermission.canEvaluate) {
+                this._handleEvaluate();
+            }
+        });
+    }
+
+    /**
+     * 处理工单
+     */
+    async _handleProcess() {
+        if (!this.state.checkPermission.canProcess) {
+            NotifyUtil.warning('您没有处理该工单的权限');
+            return;
+        }
+
+        const content = $('#operationContent').val()?.trim();
+        if (!content) {
+            NotifyUtil.warning('请输入处理说明');
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: '/api/tickets/status',
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ticketId: this.state.currentTicket.ticketId,
+                    status: 'PROCESSING',
+                    operatorId: this.state.userInfo.userId,
+                    content: content,
+                    operationType: this.OPERATION_TYPE.HANDLE
+                })
+            });
+
+            if (response.code === 200) {
+                NotifyUtil.success('工单处理中');
+                $('#operationContent').val(''); // 清空输入框
+                await this._loadTicketDetail(this.state.currentTicket.ticketId);
+                await this._loadTickets();
+            }
+        } catch (error) {
+            console.error('处理失败:', error);
+            NotifyUtil.error('处理失败，请重试');
+        }
+    }
+
+    /**
+     * 添加评论
+     */
+    async _handleComment() {
+        if (!this.state.checkPermission.canComment) {
+            NotifyUtil.warning('您没有评论该工单的权限');
+            return;
+        }
+
+        const content = $('#operationContent').val()?.trim();
+        if (!content) {
+            NotifyUtil.warning('请输入评论内容');
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${this.state.currentTicket.ticketId}/records`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ticketId: this.state.currentTicket.ticketId,
+                    operatorId: this.state.userInfo.userId,
+                    operationType: this.OPERATION_TYPE.COMMENT,
+                    operationContent: content
+                })
+            });
+
+            if (response.code === 200) {
+                NotifyUtil.success('评论成功');
+                $('#operationContent').val('');
+                await this._loadTicketDetail(this.state.currentTicket.ticketId);
+            }
+        } catch (error) {
+            console.error('评论失败:', error);
+            NotifyUtil.error('评论失败，请重试');
+        }
+    }
+
+    /**
+     * 工单转交
+     */
+    async _handleTransfer() {
+        if (!this.state.checkPermission.canTransfer) {
+            NotifyUtil.warning('您没有转交该工单的权限');
+            return;
+        }
+
+        try {
+            // 加载部门列表
+            const response = await $.ajax({
+                url: '/api/departments/list',
+                method: 'GET'
+            });
+
+            if (response.code === 200) {
+                const options = response.data
+                    .map(dept => `<option value="${dept.departmentId}">${dept.departmentName}</option>`)
+                    .join('');
+
+                $('#transferDepartment')
+                    .html('<option value="">请选择部门</option>' + options);
+
+                // 重置处理人选择和说明
+                $('#transferProcessor')
+                    .html('<option value="">请先选择部门</option>')
+                    .prop('disabled', true);
+                $('#transferNote').val('');
+
+                // 显示模态框
+                if (this.modals.transferModal) {
+                    this.modals.transferModal.show();
+                }
+            }
+        } catch (error) {
+            console.error('加载部门列表失败:', error);
+            NotifyUtil.error('加载部门列表失败');
+        }
+    }
+
+    /**
+     * 确认转交
+     */
+    async _confirmTransfer() {
+        const departmentId = $('#transferDepartment').val();
+        const processorId = $('#transferProcessor').val();
+        const note = $('#transferNote').val().trim();
+
+        if (!departmentId) {
+            NotifyUtil.warning('请选择转交部门');
+            return;
+        }
+        if (!processorId) {
+            NotifyUtil.warning('请选择处理人');
+            return;
+        }
+        if (!note) {
+            NotifyUtil.warning('请输入转交说明');
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${this.state.currentTicket.ticketId}/transfer`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    departmentId,
+                    processorId,
+                    note,
+                    operatorId: this.state.userInfo.userId,
+                    operationType: this.OPERATION_TYPE.TRANSFER
+                })
+            });
+
+            if (response.code === 200) {
+                NotifyUtil.success('工单转交成功');
+                if (this.modals.transferModal) {
+                    this.modals.transferModal.hide();
+                }
+                await this._loadTicketDetail(this.state.currentTicket.ticketId);
+                await this._loadTickets();
+            }
+        } catch (error) {
+            console.error('转交失败:', error);
+            NotifyUtil.error('转交失败，请重试');
+        }
+    }
+
+    /**
+     * 工单关闭
+     */
+    async _handleClose() {
+        if (!this.state.checkPermission.canClose) {
+            NotifyUtil.warning('您没有关闭该工单的权限');
+            return;
+        }
+
+        const content = $('#operationContent').val()?.trim();
+        if (!content) {
+            NotifyUtil.warning('请输入关闭说明');
+            return;
+        }
+
+        if (!confirm('确定要关闭此工单吗？')) {
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/${this.state.currentTicket.ticketId}/close`,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    content: content,
+                    operatorId: this.state.userInfo.userId,
+                    ticketId: this.state.currentTicket.ticketId,
+                    operationType: this.OPERATION_TYPE.CLOSE
+                })
+            });
+
+            if (response.code === 200) {
+                NotifyUtil.success('工单已关闭');
+                $('#operationContent').val('');
+                await this._loadTicketDetail(this.state.currentTicket.ticketId);
+                await this._loadTickets();
+            }
+        } catch (error) {
+            console.error('关闭失败:', error);
+            NotifyUtil.error('关闭失败');
+        }
+    }
+
 
     /**
      * 初始化用户和部门信息
      */
     async _initUserAndDepartmentInfo() {
-        // 从localStorage获取基本信息
-        this.state.userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-        this.state.departmentInfo = JSON.parse(localStorage.getItem('departmentInfo') || '{}');
+        // 获取用户信息
+        const userInfoStr = localStorage.getItem('userInfo');
+        if (!userInfoStr) {
+            NotifyUtil.error('未获取到用户信息');
+            throw new Error('No user info');
+        }
 
-        if (!this.state.departmentInfo.departmentId) {
-            // 如果没有部门信息，需要获取用户的部门信息
-            try {
-                const response = await $.ajax({
-                    url: '/api/departments/detail',
-                    method: 'GET',
-                    data: {
-                        userId: this.state.userInfo.userId
-                    }
-                });
+        try {
+            this.state.userInfo = JSON.parse(userInfoStr);
 
-                if (response.code === 200) {
-                    this.state.departmentInfo = response.data;
-                    localStorage.setItem('departmentInfo', JSON.stringify(response.data));
-                } else {
-                    throw new Error('获取部门信息失败');
-                }
-            } catch (error) {
-                console.error('获取部门信息失败:', error);
-                throw error;
+            if (!this.state.userInfo.departmentId || this.state.userInfo.departmentId === 'undefined') {
+                NotifyUtil.error('用户未关联部门');
+                throw new Error('No department id');
             }
+
+            const response = await $.ajax({
+                url: `/api/departments/detail-dept/${this.state.userInfo.departmentId}`,
+                method: 'GET'
+            });
+
+            if (response.code === 200 && response.data) {
+                const { department, charge } = response.data;
+
+                if (!department || !department.departmentId) {
+                    throw new Error('部门信息不完整');
+                }
+
+                this.state.departmentInfo = department;
+                this.state.departmentCharge = charge;
+
+                localStorage.setItem('departmentInfo', JSON.stringify(department));
+                return true;
+            } else {
+                throw new Error(response.msg || '获取部门信息失败');
+            }
+        } catch (error) {
+            console.error('获取部门信息失败:', error);
+            throw error;
         }
     }
 
@@ -189,8 +471,13 @@ class DepartmentDashboard {
             if (this.searchTimer) clearTimeout(this.searchTimer);
             this.searchTimer = setTimeout(() => this._handleSearch(e), 500);
         });
+        $('#transferDepartment').on('change', async (e) => {
+            const departmentId = $(e.target).val();
+            await this._loadTransferProcessors(departmentId);
+        });
 
         // 工单分配确认
+        $('#confirmTransferBtn').on('click', () => this._confirmTransfer());
         $('#confirmAssignBtn').on('click', () => this._handleAssignTicket());
 
         // 自动分配按钮
@@ -211,25 +498,82 @@ class DepartmentDashboard {
             }
         });
     }
-
-    /**
-     * 加载部门统计数据
-     */
-    // 修改加载部门统计数据方法
-    async _loadDepartmentStats() {
-        if (!this.state.departmentInfo?.departmentId) {
+    async _loadTransferProcessors(departmentId) {
+        if (!departmentId) {
+            $('#transferProcessor')
+                .html('<option value="">请先选择部门</option>')
+                .prop('disabled', true);
             return;
         }
 
         try {
             const response = await $.ajax({
-                url: `/api/departments/stats`,
-                method: 'GET',
-                data: {
-                    departmentId: this.state.departmentInfo.departmentId
-                }
+                url: `/api/departments/members/${departmentId}`,
+                method: 'GET'
             });
 
+            if (response.code === 200) {
+                const options = response.data
+                    .map(user => `<option value="${user.userId}">${user.realName}</option>`)
+                    .join('');
+
+                $('#transferProcessor')
+                    .html('<option value="">请选择处理人</option>' + options)
+                    .prop('disabled', false);
+            }
+        } catch (error) {
+            console.error('加载处理人失败:', error);
+            NotifyUtil.error('加载处理人列表失败');
+        }
+    }
+    /**
+     * 加载部门统计数据
+     */
+    async _loadMembers() {
+        const departmentId = this.state.departmentInfo?.departmentId;
+        if (!departmentId) {
+            console.error('部门ID不存在');
+            return;
+        }
+
+        try {
+            const [membersResponse, workloadResponse] = await Promise.all([
+                $.ajax({
+                    url: `/api/departments/members/${departmentId}`,
+                    method: 'GET'
+                }),
+                $.ajax({
+                    url: `/api/departments/member-workload`,
+                    method: 'GET',
+                    data: { departmentId }
+                })
+            ]);
+
+            if (membersResponse.code === 200 && workloadResponse.code === 200) {
+                this.state.members = membersResponse.data;
+                this.state.memberWorkload = workloadResponse.data;
+                this._renderMemberList();
+                this._updateProcessorFilter();
+            }
+        } catch (error) {
+            console.error('加载部门成员数据失败:', error);
+            NotifyUtil.error('加载成员数据失败');
+        }
+    }
+
+    async _loadDepartmentStats() {
+        const departmentId = this.state.departmentInfo?.departmentId;
+        if (!departmentId) {
+            console.error('部门ID不存在');
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: '/api/departments/stats',
+                method: 'GET',
+                data: { departmentId }
+            });
             if (response.code === 200) {
                 this.state.stats = response.data;
                 this._updateStatsDisplay();
@@ -243,7 +587,9 @@ class DepartmentDashboard {
     }
 
     async _loadTickets() {
-        if (!this.state.departmentInfo?.departmentId) {
+        const departmentId = this.state.departmentInfo?.departmentId;
+        if (!departmentId) {
+            console.error('部门ID不存在');
             return;
         }
 
@@ -251,12 +597,12 @@ class DepartmentDashboard {
             const params = {
                 pageNum: this.state.pagination.current,
                 pageSize: this.state.pagination.pageSize,
-                departmentId: this.state.departmentInfo.departmentId,
+                departmentId,
                 ...this.state.filters
             };
 
             const response = await $.ajax({
-                url: '/api/tickets/department/list',
+                url: '/api/tickets',
                 method: 'GET',
                 data: params
             });
@@ -282,14 +628,14 @@ class DepartmentDashboard {
             return;
         }
 
-        const html = this.state.tickets.map(ticket => `
+            const html = this.state.tickets.map(ticket => `
         <tr>
             <td>${ticket.ticketId}</td>
             <td>
                 <div class="d-flex align-items-center">
-                    <span class="priority-indicator priority-${this._getPriorityClass(ticket.priority)}"></span>
+                    <span class="priority-indicator priority-${TicketUtil.getPriorityClass(ticket.priority)}"></span>
                     <div class="ticket-title-wrap">
-                        <span class="ticket-title">${this._escapeHtml(ticket.title)}</span>
+                        <span class="ticket-title">${TicketUtil.escapeHtml(ticket.title)}</span>
                         ${ticket.isUrgent ? '<span class="badge bg-danger ms-2">紧急</span>' : ''}
                         ${this._isNearDeadline(ticket) ? '<span class="badge bg-warning ms-2">即将超时</span>' : ''}
                     </div>
@@ -304,36 +650,104 @@ class DepartmentDashboard {
                 </div>
             </td>
             <td>
-                <span class="badge bg-${this._getStatusClass(ticket.status)}">
-                    ${this._getStatusText(ticket.status)}
+                <span class="badge bg-${TicketUtil.getStatusClass(ticket.status)}">
+                    ${TicketUtil.getStatusText(ticket.status)}
                 </span>
             </td>
             <td>
-                <span class="priority-badge priority-${this._getPriorityClass(ticket.priority)}">
-                    ${this._getPriorityText(ticket.priority)}
+                <span class="priority-badge priority-${TicketUtil.getPriorityClass(ticket.priority)}">
+                    ${TicketUtil.getPriorityText(ticket.priority)}
                 </span>
             </td>
-            <td>${this._formatDate(ticket.createTime)}</td>
+            <td>${TicketUtil.formatDate(ticket.createTime)}</td>
             <td>
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-primary view-ticket" 
-                            data-id="${ticket.ticketId}">
-                        <i class="bi bi-eye"></i> 查看
-                    </button>
-                    ${!ticket.processorId ? `
-                        <button class="btn btn-sm btn-outline-success assign-ticket" 
-                                data-id="${ticket.ticketId}">
-                            <i class="bi bi-person-plus"></i> 分配
-                        </button>
-                    ` : ''}
-                </div>
-            </td>
+                <button class="btn btn-sm btn-outline-primary view-ticket" data-id="${ticket.ticketId}">查看</button>
         </tr>
     `).join('');
 
         this.elements.ticketList.html(html);
         this.elements.totalCount.text(this.state.pagination.total);
     }
+    // 添加状态检查方法
+    async _checkOperationPermission(ticketId) {
+        try {
+            const response = await $.ajax({
+                url: `/api/tickets/checkOperation/${ticketId}`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ticketId: ticketId,
+                    userId: this.state.userInfo.userId
+                }),
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if(response.code === 200) {
+                this.state.checkPermission = response.data;
+                this._updateActionButtons();
+            }
+        } catch(error) {
+            console.error('检查操作权限失败:', error);
+            NotifyUtil.error('加载权限失败');
+        }
+    }
+
+// 更新按钮状态
+    _updateActionButtons() {
+        const { canProcess, canComment, canClose, canTransfer, canEvaluate } = this.state.checkPermission;
+
+        $('#processBtn').prop('disabled', !canProcess)
+            .toggleClass('btn-primary', canProcess)
+            .toggleClass('btn-secondary', !canProcess);
+
+        $('#commentBtn').prop('disabled', !canComment)
+            .toggleClass('btn-success', canComment)
+            .toggleClass('btn-secondary', !canComment);
+
+        $('#transferBtn').prop('disabled', !canTransfer)
+            .toggleClass('btn-warning', canTransfer)
+            .toggleClass('btn-secondary', !canTransfer);
+
+        $('#closeBtn').prop('disabled', !canClose)
+            .toggleClass('btn-danger', canClose)
+            .toggleClass('btn-secondary', !canClose);
+
+        $('#evaluateBtn').prop('disabled', !canEvaluate)
+            .toggleClass('btn-info', canEvaluate)
+            .toggleClass('btn-secondary', !canEvaluate);
+    }
+
+
+    _handleEvaluate() {
+        if (!this.state.checkPermission.canEvaluate) {
+            NotifyUtil.warning('您没有评价该工单的权限');
+            return;
+        }
+
+        const score = $('#evaluationScore').val();
+        const content = $('#evaluationContent').val()?.trim();
+
+        if (!score) {
+            NotifyUtil.warning('请选择评分');
+            return;
+        }
+        if (!content) {
+            NotifyUtil.warning('请输入评价内容');
+            return;
+        }
+
+        this._addTicketRecord({
+            ticketId: this.state.currentTicket.ticketId,
+            operatorId: this.state.userInfo.userId,
+            operationType: 'EVALUATE',
+            operationContent: content,
+            evaluationScore: parseInt(score),
+            evaluationContent: content
+        });
+    }
+
 
     _renderPagination() {
         const { current, total, pageSize } = this.state.pagination;
@@ -439,41 +853,6 @@ class DepartmentDashboard {
     `);
     }
 
-
-    /**
-     * 加载部门成员列表
-     */
-    async _loadMembers() {
-        try {
-            const [membersResponse, workloadResponse] = await Promise.all([
-                $.ajax({
-                    url: `/api/departments/members`,
-                    method: 'GET',
-                    data: {
-                        departmentId: this.state.departmentInfo.departmentId
-                    }
-                }),
-                $.ajax({
-                    url: `/api/departments/member-workload`,
-                    method: 'GET',
-                    data: {
-                        departmentId: this.state.departmentInfo.departmentId
-                    }
-                })
-            ]);
-
-            if (membersResponse.code === 200 && workloadResponse.code === 200) {
-                this.state.members = membersResponse.data;
-                this.state.memberWorkload = workloadResponse.data;
-                this._renderMemberList();
-                this._updateProcessorFilter();
-            }
-        } catch (error) {
-            console.error('加载部门成员数据失败:', error);
-            NotifyUtil.error('加载成员数据失败');
-        }
-    }
-
     _renderMemberList() {
         if (!this.state.members.length) {
             this.elements.memberList.html('<div class="empty-state">暂无成员数据</div>');
@@ -482,7 +861,7 @@ class DepartmentDashboard {
 
         const html = this.state.members.map(member => {
             const workload = this.state.memberWorkload?.find(w => w.userId === member.userId);
-            const isOnline = this.heartbeatManager.isOnline(member.userId);
+            const isOnline = this.isOnline(member.userId);
             return `
             <div class="member-card" data-id="${member.userId}">
                 <div class="member-info">
@@ -542,7 +921,7 @@ class DepartmentDashboard {
      */
     _updateProcessorFilter() {
         const options = this.state.members
-            .filter(member => this.heartbeatManager.isOnline(member.userId))
+            .filter(member => this.isOnline(member.userId))
             .map(member => {
                 const workload = this.state.memberWorkload?.find(w => w.userId === member.userId);
                 const currentWorkload = workload?.currentCount || 0;
@@ -675,16 +1054,30 @@ class DepartmentDashboard {
     _handleSearch(e) {
         e?.preventDefault();
 
-        const formData = new FormData(this.elements.searchForm[0]);
+        // 获取表单数据
+        const keyword = $('#keyword').val().trim();
+        const status = $('#statusFilter').val();
+        const priority = $('#priorityFilter').val();
+        const processorId = $('#processorFilter').val();
+
+        // 更新筛选条件
         this.state.filters = {
-            keyword: formData.get('keyword') || '',
-            status: formData.get('status') || '',
-            priority: formData.get('priority') || '',
-            processorId: formData.get('processorId') || ''
+            keyword: keyword || '',          // 搜索关键词
+            status: status || '',            // 工单状态
+            priority: priority || '',        // 优先级
+            processorId: processorId || ''   // 处理人ID
         };
 
+        // 重置页码到第一页
         this.state.pagination.current = 1;
-        this._loadTickets();
+
+        // 显示加载状态
+        TicketUtil.showLoading();
+
+        // 加载数据
+        this._loadTickets().finally(() => {
+            TicketUtil.hideLoading();
+        });
     }
 
     async _updateTicketStatus(ticketId, status, content) {
@@ -722,8 +1115,15 @@ class DepartmentDashboard {
      * 渲染处理记录时间线
      */
     _renderTicketTimeline(records) {
-        // 直接使用工具类的渲染方法
         TicketUtil.renderTimeline(records, 'ticketRecords');
+    }
+
+    _showLoading() {
+        TicketUtil.showLoading();
+    }
+
+    _hideLoading() {
+        TicketUtil.hideLoading();
     }
 
     /**
@@ -786,7 +1186,7 @@ class DepartmentDashboard {
      */
     _getAvailableProcessors() {
         return this.state.members.filter(member => {
-            if(!this.heartbeatManager.isOnline(member.userId)) return false;
+            if(!this.isOnline(member.userId)) return false;
 
             const workload = this.state.memberWorkload?.find(w => w.userId === member.userId);
             return !workload || workload.currentCount < this.CONSTANTS.WORKLOAD_LIMIT;
@@ -829,7 +1229,7 @@ class DepartmentDashboard {
 
         // 检查积压工单
         const pendingCount = this.state.stats.pendingCount || 0;
-        if(pendingCount > 10) {
+        if(pendingCount > 8) {
             warnings.push({
                 type: 'warning',
                 message: `当前有${pendingCount}个待处理工单，请及时分配`
@@ -895,14 +1295,7 @@ class DepartmentDashboard {
             <i class="bi ${this._getFileIconClass(attachment.fileName)}"></i>
             <span class="attachment-name">${TicketUtil.escapeHtml(attachment.fileName)}</span>
             <span class="attachment-size">${TicketUtil.formatFileSize(attachment.fileSize)}</span>
-            <div class="attachment-actions">
-                <button class="btn btn-sm btn-link" onclick="departmentDashboard.downloadAttachment('${attachment.filePath}')">
-                    <i class="bi bi-download"></i>
-                </button>
-                <button class="btn btn-sm btn-link" onclick="departmentDashboard.previewAttachment('${attachment.filePath}')">
-                    <i class="bi bi-eye"></i>
-                </button>
-            </div>
+            ...
         </div>
     `).join('');
     }
@@ -1010,7 +1403,9 @@ class DepartmentDashboard {
     }
 
     isOnline(userId) {
-        return this.heartbeatManager && this.heartbeatManager.getStatus(userId) === 'online';
+        return this.heartbeatManager &&
+            typeof this.heartbeatManager.getStatus === 'function' &&
+            this.heartbeatManager.getStatus(userId) === 'online';
     }
 
 
@@ -1080,16 +1475,6 @@ class DepartmentDashboard {
         ).join('');
     }
 
-    /**
-     * Loading状态管理
-     */
-    _showLoading() {
-        TicketUtil.showLoading();
-    }
-
-    _hideLoading() {
-        TicketUtil.hideLoading();
-    }
 
     /**
      * 资源清理

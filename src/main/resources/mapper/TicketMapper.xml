@@ -709,4 +709,105 @@
         GROUP BY DATE_FORMAT(t.create_time, '%Y-%m-%d')
         ORDER BY date DESC
     </select>
+
+    <select id="getTicketListVO" resultMap="TicketResultMap">
+        SELECT
+        t.ticket_id,
+        t.title,
+        t.content,
+        t.processor_id,
+        t.department_id,
+        t.priority,
+        t.status,
+        t.expect_finish_time,
+        t.actual_finish_time,
+        t.create_time,
+        t.update_time,
+        u.real_name as processor_name,
+        d.department_name,
+        c.real_name as creator_name
+        FROM t_ticket t
+        LEFT JOIN t_user u ON t.processor_id = u.user_id
+        LEFT JOIN t_department d ON t.department_id = d.department_id
+        LEFT JOIN t_user c ON t.create_by = c.user_id
+        <where>
+            t.is_deleted = 0
+            <if test="query.departmentId != null">
+                AND t.department_id = #{query.departmentId}
+            </if>
+            <if test="query.keyword != null and query.keyword != ''">
+                AND (
+                t.ticket_id LIKE CONCAT('%', #{query.keyword}, '%')
+                OR t.title LIKE CONCAT('%', #{query.keyword}, '%')
+                OR t.content LIKE CONCAT('%', #{query.keyword}, '%')
+                OR u.real_name LIKE CONCAT('%', #{query.keyword}, '%')
+                OR c.real_name LIKE CONCAT('%', #{query.keyword}, '%')
+                )
+            </if>
+            <if test="query.status != null">
+                AND t.status = #{query.status}
+            </if>
+            <if test="query.priority != null">
+                AND t.priority = #{query.priority}
+            </if>
+            <if test="query.processorId != null">
+                AND t.processor_id = #{query.processorId}
+            </if>
+        </where>
+        ORDER BY
+        CASE
+        WHEN t.priority = 2 THEN 0  -- 非常紧急
+        WHEN t.priority = 1 THEN 1  -- 紧急
+        ELSE 2                      -- 普通
+        END,
+        t.create_time DESC
+    </select>
+
+    <select id="countTicketsForDept" resultType="long">
+        SELECT COUNT(DISTINCT t.ticket_id)
+        FROM t_ticket t
+        LEFT JOIN t_user u ON t.processor_id = u.user_id
+        LEFT JOIN t_user c ON t.create_by = c.user_id
+        <where>
+            t.is_deleted = 0
+            <if test="query.departmentId != null">
+                AND t.department_id = #{query.departmentId}
+            </if>
+            <if test="query.keyword != null and query.keyword != ''">
+                AND (
+                t.ticket_id LIKE CONCAT('%', #{query.keyword}, '%')
+                OR t.title LIKE CONCAT('%', #{query.keyword}, '%')
+                OR t.content LIKE CONCAT('%', #{query.keyword}, '%')
+                OR u.real_name LIKE CONCAT('%', #{query.keyword}, '%')
+                OR c.real_name LIKE CONCAT('%', #{query.keyword}, '%')
+                )
+            </if>
+            <if test="query.status != null">
+                AND t.status = #{query.status}
+            </if>
+            <if test="query.priority != null">
+                AND t.priority = #{query.priority}
+            </if>
+            <if test="query.processorId != null">
+                AND t.processor_id = #{query.processorId}
+            </if>
+        </where>
+    </select>
+
+    <resultMap id="TicketResultMap" type="com.icss.etc.ticket.entity.vo.ticket.TicketListVO">
+        <id column="ticket_id" property="ticketId"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="processor_id" property="processorId"/>
+        <result column="processor_name" property="processorName"/>
+        <result column="department_id" property="departmentId"/>
+        <result column="department_name" property="departmentName"/>
+        <result column="priority" property="priority"/>
+        <result column="status" property="status"/>
+        <result column="expect_finish_time" property="expectFinishTime"/>
+        <result column="actual_finish_time" property="actualFinishTime"/>
+        <result column="creator_name" property="creatorName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
 </mapper>

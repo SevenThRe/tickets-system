@@ -9,6 +9,7 @@ import com.icss.etc.ticket.entity.vo.TicketRecordVO;
 import com.icss.etc.ticket.entity.vo.TodoStatsVO;
 import com.icss.etc.ticket.entity.vo.ticket.DepartmentStatisticsVO;
 import com.icss.etc.ticket.entity.vo.ticket.MonthlyStatisticsVO;
+import com.icss.etc.ticket.entity.vo.ticket.TicketListVO;
 import com.icss.etc.ticket.entity.vo.ticket.TicketStatisticsVO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.enums.OperationType;
@@ -646,6 +647,32 @@ public class TicketServiceImpl implements TicketService {
     public UserPermission checkOperationPermission(CheckOperationDTO checkOperationDTO) {
 
         return userRoleMapper.checkOperationPermission(checkOperationDTO);
+    }
+
+    @Override
+    public PageResult<TicketListVO> getTicketListVO(TicketQueryDTO query) {
+        // 参数校验
+        if (query.getPageNum() == null || query.getPageNum() < 1) {
+            query.setPageNum(1);
+        }
+        if (query.getPageSize() == null || query.getPageSize() < 1) {
+            query.setPageSize(10);
+        }
+        // 查询总数
+        Long total =  ticketMapper.countTicketsForDept(query);
+
+        if (total == 0) {
+            return new PageResult<>(Collections.emptyList(), 0L);
+        }
+
+        // 设置分页
+        PageHelper.startPage(query.getPageNum(), query.getPageSize());
+
+        // 查询列表
+        List<TicketListVO> list = ticketMapper.getTicketListVO(query);
+
+        return new PageResult<>(list, total);
+
     }
 
     /**

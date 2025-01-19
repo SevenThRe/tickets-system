@@ -79,6 +79,21 @@ class TicketUtil {
         return statusMap[status] || '未知状态';
     }
 
+    static getStatusClass(status) {
+        const statusMap = {
+            'PENDING': 'warning',
+            'PROCESSING': 'info',
+            'COMPLETED': 'success',
+            'CLOSED': 'secondary',
+            '0': 'warning',
+            '1': 'info',
+            '2': 'success',
+            '3': 'secondary'
+        };
+        return statusMap[status] || 'secondary';
+    }
+
+
     static getOperationText(operationType) {
         const operationMap = {
             0: '创建工单',

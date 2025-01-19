@@ -1,12 +1,14 @@
 package com.icss.etc.ticket.service;
 
 import com.github.pagehelper.PageInfo;
+import com.icss.etc.ticket.entity.PageResult;
 import com.icss.etc.ticket.entity.Ticket;
 import com.icss.etc.ticket.entity.TicketType;
 import com.icss.etc.ticket.entity.UserPermission;
 import com.icss.etc.ticket.entity.dto.ticket.*;
 import com.icss.etc.ticket.entity.vo.TicketDetailVO;
 import com.icss.etc.ticket.entity.vo.TodoStatsVO;
+import com.icss.etc.ticket.entity.vo.ticket.TicketListVO;
 import com.icss.etc.ticket.entity.vo.ticket.TicketStatisticsVO;
 import com.icss.etc.ticket.enums.TicketStatus;
 import jakarta.validation.constraints.NotNull;
@@ -161,4 +163,6 @@ public interface TicketService {
      * @return true：有权限，false：无权限
      */
     UserPermission checkOperationPermission(CheckOperationDTO checkOperationDTO);
+
+    PageResult<TicketListVO> getTicketListVO(TicketQueryDTO query);
 }

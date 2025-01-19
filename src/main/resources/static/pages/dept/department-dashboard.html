@@ -171,6 +171,53 @@
         </div>
     </main>
 
+    <!-- 操作区域 -->
+    <div class="operation-panel">
+        <!-- 公共操作说明输入框 -->
+        <div class="mb-3">
+            <label class="form-label">操作说明</label>
+            <textarea class="form-control" id="operationContent" rows="3"></textarea>
+        </div>
+
+        <!-- 按钮组 -->
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" disabled id="processBtn">
+                <i class="bi bi-play-fill"></i> 处理
+            </button>
+            <button class="btn btn-success" disabled id="commentBtn">
+                <i class="bi bi-chat-text"></i> 评论
+            </button>
+            <button class="btn btn-warning" disabled id="transferBtn">
+                <i class="bi bi-arrow-repeat"></i> 转交
+            </button>
+            <button class="btn btn-danger" disabled id="closeBtn">
+                <i class="bi bi-x-circle"></i> 关闭
+            </button>
+            <button class="btn btn-info" disabled id="evaluateBtn">
+                <i class="bi bi-star"></i> 评价
+            </button>
+        </div>
+
+        <!-- 评价表单 -->
+        <div class="mt-3" id="evaluationForm" style="display:none;">
+            <div class="mb-3">
+                <label class="form-label">评分</label>
+                <select class="form-select" id="evaluationScore">
+                    <option value="">请选择评分</option>
+                    <option value="1">1分</option>
+                    <option value="2">2分</option>
+                    <option value="3">3分</option>
+                    <option value="4">4分</option>
+                    <option value="5">5分</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">评价内容</label>
+                <textarea class="form-control" id="evaluationContent" rows="3"></textarea>
+            </div>
+        </div>
+    </div>
+
     <!-- 工单分配模态框 -->
     <div class="modal fade" id="assignModal" tabindex="-1">
         <div class="modal-dialog">

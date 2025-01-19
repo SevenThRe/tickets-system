@@ -55,6 +55,26 @@
     color: #dc3545;
 }
 
+.status-pending {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.status-processing {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.status-completed {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+.status-closed {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
 /* 成员卡片 */
 .member-list {
     display: flex;
@@ -182,16 +202,34 @@
     margin-right: 0.5rem;
 }
 
+/* 高优先级 */
 .priority-high {
     background-color: #dc3545;
+    color: white;
+}
+.priority-badge.priority-high {
+    background-color: #dc3545;
+    color: white;
 }
 
+/* 中等优先级 */
 .priority-medium {
     background-color: #ffc107;
+    color: black;
+}
+.priority-badge.priority-medium {
+    background-color: #ffc107;
+    color: black;
 }
 
+/* 低优先级 */
 .priority-low {
     background-color: #28a745;
+    color: white;
+}
+.priority-badge.priority-low {
+    background-color: #28a745;
+    color: white;
 }
 
 .priority-badge {
@@ -202,20 +240,6 @@
     font-weight: 500;
 }
 
-.priority-badge.priority-high {
-    background-color: #fde8e8;
-    color: #dc3545;
-}
-
-.priority-badge.priority-medium {
-    background-color: #fff8e6;
-    color: #d97706;
-}
-
-.priority-badge.priority-low {
-    background-color: #e6f4ea;
-    color: #28a745;
-}
 
 /* Loading遮罩 */
 .loading-overlay {
@@ -431,23 +455,23 @@
 }
 
 .status-pending {
-    background-color: #fff3e6;
-    color: #d97706;
+    background-color: #ffc107;
+    color: #000;
 }
 
 .status-processing {
-    background-color: #e6f3ff;
-    color: #0369a1;
+    background-color: #0dcaf0;
+    color: #fff;
 }
 
 .status-completed {
-    background-color: #e6f4ea;
-    color: #166534;
+    background-color: #198754;
+    color: #fff;
 }
 
 .status-closed {
-    background-color: #f3f4f6;
-    color: #4b5563;
+    background-color: #6c757d;
+    color: #fff;
 }
 
 /* 满意度评价样式 */
