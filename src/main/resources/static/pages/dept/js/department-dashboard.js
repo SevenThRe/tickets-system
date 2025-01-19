@@ -222,7 +222,7 @@ class DepartmentDashboard {
 
         try {
             const response = await $.ajax({
-                url: `/api/tickets/${this.state.currentTicket.ticketId}/records`,
+                url: `/api/records`,
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
@@ -941,114 +941,211 @@ class DepartmentDashboard {
     /**
      * 加载工单详情
      */
+    /**
+     * 加载工单详情
+     */
     async _loadTicketDetail(ticketId) {
+        if(!ticketId) {
+            NotifyUtil.error('无效的工单ID');
+            return;
+        }
+
         try {
+            this._showLoading();
+
+            // 获取工单详情
             const response = await $.ajax({
-                url: `/api/tickets/department/${ticketId}/detail`,
+                url: `/api/tickets/${ticketId}`,
                 method: 'GET'
             });
 
-            if (response.code === 200) {
+            if(response.code === 200 && response.data) {
                 this.state.currentTicket = response.data;
-                this._renderTicketDetail();
+
+                // 渲染详情页面
+                const detailHtml = this._generateTicketDetailHtml(response.data);
+                this.elements.ticketDetail.html(detailHtml);
+
+                // 加载处理记录
                 await this._loadTicketRecords(ticketId);
+
+                // 检查操作权限
+                await this._checkOperationPermission(ticketId);
+
+                // 显示面板
                 this.elements.ticketDetail.addClass('show');
+            } else {
+                throw new Error(response.msg || '获取工单详情失败');
             }
         } catch (error) {
             console.error('加载工单详情失败:', error);
-            NotifyUtil.error('加载详情失败');
+            NotifyUtil.error(error.message || '加载详情失败，请重试');
+            this.elements.ticketDetail.removeClass('show');
+        } finally {
+            this._hideLoading();
         }
+    }
+
+    _generateTicketDetailHtml(ticket) {
+        return `
+        <div class="ticket-detail-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="ticket-title">${TicketUtil.escapeHtml(ticket.title)}</div>
+                <button class="btn-close" id="closeDetailBtn"></button>
+            </div>
+            
+            <div class="ticket-meta mt-3">
+                <span class="badge bg-${TicketUtil.getStatusClass(ticket.status)}">
+                    ${TicketUtil.getStatusText(ticket.status)}
+                </span>
+                <span class="badge bg-${TicketUtil.getPriorityClass(ticket.priority)}">
+                    ${TicketUtil.getPriorityText(ticket.priority)}
+                </span>
+            </div>
+        </div>
+
+        <div class="ticket-info mt-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-item">
+                        <label>工单编号:</label>
+                        <span>${ticket.ticketId}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>创建时间:</label>
+                        <span>${this._formatDate(ticket.createTime)}</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-item">
+                        <label>处理人:</label>
+                        <span>${ticket.processorName || '未分配'}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>期望完成时间:</label>
+                        <span>${this._formatDate(ticket.expectFinishTime) || '-'}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ticket-content mt-4">
+            <label>工单内容</label>
+            <div class="content-box">
+                ${TicketUtil.escapeHtml(ticket.content)}
+            </div>
+        </div>
+
+        <div id="ticketTimeline" class="mt-4">
+            <!-- 处理记录将在这里动态加载 -->
+        </div>
+    `;
+    }
+    /**
+     * 渲染处理记录
+     */
+    _renderTicketRecords(records) {
+        if (!records || !records.length) {
+            $('#ticketTimeline').html('<div class="text-muted">暂无处理记录</div>');
+            return;
+        }
+
+        const html = records.map(record => `
+        <div class="timeline-item">
+            <div class="timeline-content">
+                <div class="timeline-time">${TicketUtil.formatDate(record.createTime)}</div>
+                <div class="timeline-title">
+                    <strong>${record.operatorName || '-'}</strong> 
+                    ${TicketUtil.getOperationText(record.operationType)}
+                </div>
+                ${record.operationContent ? `
+                    <div class="timeline-body">${record.operationContent}</div>
+                ` : ''}
+                ${record.evaluationScore ? `
+                    <div class="evaluation-content">
+                        <div class="rating-display">
+                            ${this._renderStars(record.evaluationScore)}
+                        </div>
+                        ${record.evaluationContent ? `
+                            <div class="evaluation-text">
+                                ${record.evaluationContent}
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+
+        $('#ticketTimeline').html(html);
     }
 
     /**
      * 加载工单处理记录
      */
+    /**
+     * 加载工单记录
+     */
     async _loadTicketRecords(ticketId) {
         try {
             const response = await $.ajax({
-                url: `/api/tickets/${ticketId}/records`,
+                url: `/api/records/detail/${ticketId}`,
                 method: 'GET'
             });
 
-            if(response.code === 200) {
-                this._renderTicketTimeline(response.data);
+            if (response.code === 200 && response.data) {
+                this._renderTicketRecords(response.data);
+            } else {
+                $('#ticketTimeline').html('<div class="text-muted">暂无处理记录</div>');
             }
-        } catch(error) {
-            console.error('加载处理记录失败:', error);
-            NotifyUtil.error('加载处理记录失败');
+        } catch (error) {
+            console.error('加载工单记录失败:', error);
+            $('#ticketTimeline').html('<div class="text-danger">加载记录失败</div>');
         }
     }
 
     /**
-     * 渲染工单详情
+     * 添加工单记录
      */
-    _renderTicketDetail() {
-        const ticket = this.state.currentTicket;
-        if(!ticket) return;
+    async _addTicketRecord(record) {
+        try {
+            const response = await $.ajax({
+                url: '/api/tickets/records',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    ticketId: record.ticketId,
+                    operatorId: record.operatorId,
+                    operationType: record.operationType,
+                    operationContent: record.content,
+                    evaluationScore: record.evaluationScore || null,
+                    evaluationContent: record.evaluationContent || null
+                })
+            });
 
-        const detailHtml = `
-        <div class="ticket-detail-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="ticket-badges">
-                    <span class="badge bg-${this._getStatusClass(ticket.status)}">
-                        ${this._getStatusText(ticket.status)}
-                    </span>
-                    <span class="badge bg-${this._getPriorityClass(ticket.priority)}">
-                        ${this._getPriorityText(ticket.priority)}
-                    </span>
-                    ${ticket.isUrgent ? '<span class="badge bg-danger">紧急</span>' : ''}
-                </div>
-                <button class="btn-close" id="closeDetailBtn"></button>
-            </div>
-            <h5 class="ticket-title mt-3">${this._escapeHtml(ticket.title)}</h5>
-        </div>
-        
-        <div class="ticket-info mt-4">
-            <div class="info-grid">
-                <div class="info-item">
-                    <label>工单编号</label>
-                    <div>${ticket.ticketId}</div>
-                </div>
-                <div class="info-item">
-                    <label>创建时间</label>
-                    <div>${this._formatDate(ticket.createTime)}</div>
-                </div>
-                <div class="info-item">
-                    <label>处理人</label>
-                    <div>${ticket.processorName || '未分配'}</div>
-                </div>
-                <div class="info-item">
-                    <label>期望完成时间</label>
-                    <div>${this._formatDate(ticket.expectFinishTime)}</div>
-                </div>
-            </div>
-            
-            <div class="ticket-content mt-4">
-                <label>工单内容</label>
-                <div class="content-box">
-                    ${this._escapeHtml(ticket.content)}
-                </div>
-            </div>
+            if (response.code === 200) {
+                NotifyUtil.success('操作成功');
+                await this._loadTicketDetail(record.ticketId);
+            }
+        } catch (error) {
+            console.error('添加记录失败:', error);
+            NotifyUtil.error('操作失败，请重试');
+        }
+    }
 
-            ${ticket.attachments?.length ? `
-                <div class="ticket-attachments mt-4">
-                    <label>附件</label>
-                    <div class="attachment-list">
-                        ${this._renderAttachments(ticket.attachments)}
-                    </div>
-                </div>
-            ` : ''}
-        </div>
-        
-        <div class="ticket-timeline mt-4">
-            <h6>处理记录</h6>
-            <div id="ticketRecords" class="timeline-container">
-                <!-- 处理记录将通过_renderTicketTimeline方法动态加载 -->
-            </div>
-        </div>
-    `;
 
-        this.elements.ticketDetail.html(detailHtml);
+
+
+
+    getTypeClass(typeName) {
+        const typeClasses = {
+            '系统故障': 'error',
+            '功能建议': 'suggestion',
+            '账号问题': 'account',
+            '权限申请': 'permission',
+            '系统咨询': 'consultation'
+        };
+        return typeClasses[typeName] || 'default';
     }
 
     _handleSearch(e) {
@@ -1469,12 +1566,45 @@ class DepartmentDashboard {
 
 
 
-    _renderSatisfactionStars(score) {
-        return Array(5).fill(0).map((_, index) =>
-            `<i class="bi bi-star${index < score ? '-fill' : ''} text-warning"></i>`
-        ).join('');
+    /**
+     * 更新评价表单显示状态
+     */
+    _updateEvaluationForm() {
+        const ticket = this.state.currentTicket;
+        const { canEvaluate } = this.state.checkPermission;
+
+        // 检查是否已评价
+        const hasEvaluation = ticket.records?.some(record =>
+            record.operationType === 'EVALUATE' || record.operationType === 7
+        );
+
+        // 显示/隐藏评价表单
+        const $evaluationForm = $('#evaluationForm');
+        if (canEvaluate && !hasEvaluation) {
+            $evaluationForm.show();
+            // 确保评价按钮可用
+            $('#evaluateBtn')
+                .prop('disabled', false)
+                .removeClass('btn-secondary')
+                .addClass('btn-info');
+        } else {
+            $evaluationForm.hide();
+            // 禁用评价按钮
+            $('#evaluateBtn')
+                .prop('disabled', true)
+                .removeClass('btn-info')
+                .addClass('btn-secondary');
+        }
     }
 
+    /**
+     * 渲染星星评分
+     */
+    _renderStars(score) {
+        return Array(5).fill(0)
+            .map((_, i) => `<i class="bi bi-star${i < score ? '-fill' : ''} text-warning"></i>`)
+            .join('');
+    }
 
     /**
      * 资源清理

@@ -117,8 +117,7 @@ class LoginPage {
         };
 
         const defaultPath = '/pages/common/profile.html';
-        const redirectPath = roleRedirects[userInfo.baseRoleCode] || defaultPath;
-        window.location.href = redirectPath;
+        window.location.href = roleRedirects[userInfo.baseRoleCode] || defaultPath;
     }
 
     /**

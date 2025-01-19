@@ -191,7 +191,7 @@ class TodoList {
                 // 更新统计卡片
                 $('#pendingCount').text(stats.pendingCount || 0);
                 $('#processingCount').text(stats.processingCount || 0);
-                $('#todayCompletedCount').text(stats.todayCompletedCount || 0);
+                $('#todayCompletedCount').text(stats.todayCompleted || 0);
 
                 // 如果有待办数大于0，添加提醒样式
                 if(stats.pendingCount > 0) {
@@ -452,19 +452,6 @@ class TodoList {
                 ...this.state.filters
             };
 
-            // // 如果有status数组，确保是数值类型
-            // if (Array.isArray(params.status)) {
-            //     params.status = params.status.map(s => {
-            //         switch(s) {
-            //             case 'PENDING': return 0;
-            //             case 'PROCESSING': return 1;
-            //             case 'COMPLETED': return 2;
-            //             case 'CLOSED': return 3;
-            //             default: return null;
-            //         }
-            //     }).filter(s => s !== null);
-            // }
-
             // 移除空值参数
             Object.keys(params).forEach(key => {
                 if (params[key] === null || params[key] === undefined || params[key] === '') {
@@ -642,22 +629,7 @@ class TodoList {
      * @private
      */
     async _updateStats() {
-        try {
-            const response = await $.ajax({
-                url: '/api/tickets/statistics',
-                method: 'GET',
-                data: { userId: this.userInfo.userId }
-            });
-
-            if (response.code === 200) {
-                const stats = response.data;
-                $('#pendingCount').text(stats.statusCount?.PENDING || 0);
-                $('#processingCount').text(stats.statusCount?.PROCESSING || 0);
-                $('#todayCompletedCount').text(stats.todayCompleted || 0);
-            }
-        } catch (error) {
-            console.error('获取统计数据失败:', error);
-        }
+        await this._loadStatistics();
     }
 
 

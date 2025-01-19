@@ -4,11 +4,11 @@ import com.icss.etc.ticket.entity.R;
 import com.icss.etc.ticket.entity.TicketRecord;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.service.TicketRecordService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 /**
  * {@code TicketRecordController}
@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RequestMapping("/records")
 @RestController
+@Slf4j
 public class TicketRecordController {
 
     @Autowired
@@ -30,16 +31,21 @@ public class TicketRecordController {
 
     /**
      * 添加备注信息
-     * @param ticketRecord 工单记录
+     * @param record 工单记录
      * @return 工单记录
      */
     @PostMapping
-    public R addTicketRecord(TicketRecord ticketRecord) {
-        int result = ticketRecordService.insertSelective(ticketRecord);
-        if (result > 0) {
-            return R.OK(result);
+    public R<Void> addRecord(TicketRecord record) {
+        try {
+            record.setCreateTime(LocalDateTime.now());
+            record.setIsDeleted(0);
+
+            int result = ticketRecordService.insertSelective(record);
+            return result > 0 ? R.OK() : R.FAIL();
+        } catch (Exception e) {
+            log.error("添加工单记录失败:", e);
+            return R.FAIL(CodeEnum.INTERNAL_ERROR);
         }
-        return R.FAIL(CodeEnum.INTERNAL_ERROR);
     }
 
 

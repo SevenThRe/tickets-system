@@ -206,9 +206,21 @@ public class TicketController {
     /**
      * 工单转交
      */
+    @Transactional
     @PostMapping("/{ticketId}/transfer")
-    public R<Void> transferTicket(@RequestBody @Valid TransferTicketRequest request) {
+    public R<Void> transferTicket( MultipartFile file, @RequestBody @Valid TransferTicketRequest request) {
         try {
+            if(file.getSize() > 0 || !file.isEmpty()) {
+                String filePath =
+                        fileService.uploadFile(Objects.requireNonNull(file),request.getTicketId()).substring("/api/files/".length());
+                attachmentMapper.insertSelective(
+                        Attachment.builder().ticketId(request.getTicketId())
+                                .createBy(request.getUpdateBy())
+                                .fileName(file.getOriginalFilename())
+                                .fileSize(file.getSize())
+                                .filePath(filePath).build()
+                );
+            }
             ticketService.transferTicket(request);
             return R.OK();
         } catch (BusinessException e) {

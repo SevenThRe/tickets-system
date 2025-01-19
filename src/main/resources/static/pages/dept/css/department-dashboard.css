@@ -480,7 +480,23 @@
     align-items: center;
     gap: 0.25rem;
 }
+.ticket-detail-panel {
+    position: fixed;
+    right: -100%;
+    top: 0;
+    width: 40%;
+    height: 100%;
+    background: #fff;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+    padding: 20px;
+    overflow-y: auto;
+    transition: right 0.3s ease;
+    z-index: 1050;
+}
 
+.ticket-detail-panel.show {
+    right: 0;
+}
 .satisfaction-stars {
     display: flex;
     gap: 0.125rem;

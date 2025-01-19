@@ -35,7 +35,7 @@ public interface TicketService {
     /**
      * 获取工单详情
      */
-    TicketDetailVO getTicketDetail(Long ticketId);
+    TicketDetailVO  getTicketDetail(Long ticketId);
 
     /**
      * 创建工单

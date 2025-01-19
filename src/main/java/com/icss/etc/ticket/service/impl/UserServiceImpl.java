@@ -227,7 +227,7 @@ public class UserServiceImpl implements UserService{
      */
     @PostConstruct
     public void init() {
-        AVATAR_PATH = propertiesUtil.getProperty("upload.avatarPath", "./src/main/resources/static/");
+        AVATAR_PATH = propertiesUtil.getProperty("upload.avatarPath", "./src/main/resources/static/images");
         DEFAULT_PASSWORD = propertiesUtil.getProperty("default.password", "123456");
     }
     public void saveAvatar(MultipartFile file, Long userId, String username) throws IOException {
@@ -238,9 +238,11 @@ public class UserServiceImpl implements UserService{
         }
 
         // 生成头像文件名
-        String fileName = this.getUserAvatarPath(username, userId);
-        String filePath = AVATAR_PATH + fileName;
 
+        String fileName = this.getUserAvatarPath(username, userId);
+
+        AVATAR_PATH = AVATAR_PATH.endsWith("\\") ? AVATAR_PATH : AVATAR_PATH + "\\";
+        String filePath = AVATAR_PATH + fileName;
         // 保存文件
         File dest = new File(filePath);
         try {

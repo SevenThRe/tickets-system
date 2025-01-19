@@ -13,6 +13,7 @@ import com.icss.etc.ticket.entity.vo.ticket.DepartmentWorkloadVO;
 import com.icss.etc.ticket.enums.CodeEnum;
 import com.icss.etc.ticket.exceptions.BusinessException;
 import com.icss.etc.ticket.service.DepartmentService;
+import com.icss.etc.ticket.service.TicketService;
 import com.icss.etc.ticket.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,8 @@ public class DepartmentController {
     private DepartmentService departmentService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private TicketService ticketService;
 
     /**
      * 新增部门
@@ -86,6 +89,8 @@ public class DepartmentController {
     public R getDepartmentById(@PathVariable("id") Long department_id){
         return R.OK(departmentService.getDepartmentDetail(department_id));
     }
+
+
 
 
 
@@ -240,6 +245,11 @@ public class DepartmentController {
             log.error("获取部门详情异常", e);
             return R.FAIL(CodeEnum.INTERNAL_ERROR);
         }
+    }
+
+    @GetMapping("/{id}/detail")
+    public R getDetailBylTicketId(@PathVariable("id") Long ticketId){
+        return R.OK(ticketService.getTicketDetail(ticketId));
     }
 
 
