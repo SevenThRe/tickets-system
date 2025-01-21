@@ -328,7 +328,7 @@ public class UserServiceImpl implements UserService{
             if(userRoleMapper.selectByPrimaryKey(userId, userViewBackDTO.getRoleId()) != null){
                 return i;
             }else {
-                i += userRoleMapper.insert(new UserRole(userId, userViewBackDTO.getRoleId()));
+                i += userRoleMapper.update(new UserRole(userId, userViewBackDTO.getRoleId()));
             }
             if (i != 2) {
                 throw new BusinessException(CodeEnum.UPDATE_FAILED);

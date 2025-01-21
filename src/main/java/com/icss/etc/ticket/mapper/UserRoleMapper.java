@@ -87,4 +87,6 @@ public interface UserRoleMapper {
      UserPermission checkOperationPermission(CheckOperationDTO checkOperationDTO);
 
     boolean hasManagePermission(@Param("userId") Long currentUserId, @Param("departmentId") Long departmentId);
+
+    int update(UserRole userRole);
 }

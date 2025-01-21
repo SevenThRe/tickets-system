@@ -206,4 +206,10 @@
     OR (r.base_role_code = 'DEPT' AND d.department_id = #{departmentId})
     or d.manager_id = #{userId}
     </select>
+
+  <update id="update">
+    update t_user_role
+    set role_id = #{roleId}
+    where user_id = #{userId}
+  </update>
 </mapper>
