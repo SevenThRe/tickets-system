@@ -2,17 +2,16 @@ package com.icss.etc.ticket.controller;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.icss.etc.ticket.entity.Permission;
-import com.icss.etc.ticket.entity.R;
-import com.icss.etc.ticket.entity.Role;
-import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.*;
 import com.icss.etc.ticket.entity.dto.PermissionDTO;
 import com.icss.etc.ticket.entity.dto.RPDTO;
 import com.icss.etc.ticket.entity.dto.RoleDTO;
 import com.icss.etc.ticket.service.PermissionService;
+import jakarta.validation.Valid;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -59,5 +58,11 @@ public class PermissionController {
     @RequestMapping("/selectPermissionByPermissionId/{roleId}")
     public R selectPermissionByPermissionId(@PathVariable("roleId")Long roleId) {
         return R.OK(permissionService.selectPermissionByRoleId(roleId));
+    }
+
+    @RequestMapping("/addPermission")
+    public R addPermission(RolePermission permission) {
+        int result = permissionService.addPermission(permission);
+        return result > 0 ? R.OK() : R.FAIL();
     }
 }

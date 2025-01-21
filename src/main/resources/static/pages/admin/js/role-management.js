@@ -187,7 +187,9 @@ function getList() {
         error: function (xhr, status, error) {
             if (xhr.status === 401) {
                 NotifyUtil.error('请登录！');
-                window.location.href = '/pages/auth/login.html';
+                setTimeout(function () {
+                    window.location.href = '/pages/auth/login.html';
+                },3000);
             } else {
                 // 可以添加其他错误处理逻辑，或者只是简单地显示错误信息
                 console.error("AJAX Error:", status, error);
@@ -247,8 +249,6 @@ $("#addPer").on('click', function () {
     showModal2();
 });
 
-
-// 这段代码的主要目的是创建一个防抖函数，可以将一个函数延迟执行，避免函数被频繁调用，从而降低系统的负担。下面是加上注释后的代码：
 function debounce(func, wait) {
     let timeout;
     return function (...args) {
@@ -282,16 +282,132 @@ $(document).ready(function () {
 
     $('#roleModal2').on('click', '.add-permission-btn', function () {
         let permissionId = $(this).data('permission-id');
-        // 在这里处理添加权限的逻辑，例如发送 AJAX 请求到服务器
-        console.log('添加权限:', permissionId);
-        // 注意：这里不应该直接调用 addPromission（拼写错误应该是 addPermission），
-        // 因为这个函数在您的代码中没有定义，而且它可能需要更复杂的逻辑。
-        // 如果需要，请定义这个函数并在这里调用它，传递 permissionId 作为参数。
+        $.ajax({
+            url: `/api/permissions/addPermission`,
+            data: {
+                roleId,
+                permissionId
+            },
+
+            headers: {"token": localStorage.getItem("token")},
+            success: function (result) {
+                NotifyUtil.error(result.msg);
+                if (result.code === 200) {
+                    window.location.reload();
+                }
+            },
+            error: function (xhr, status, error) {
+                if (xhr.status === 401) {
+                    NotifyUtil.error('请登录！');
+                    window.location.href = '/pages/auth/login.html';
+                } else {
+                    console.error("AJAX Error:", status, error);
+                    NotifyUtil.error("发生错误，请稍后再试。");
+                }
+            }
+        });
     });
 });
+$(function () {
+    // 初始化表单校验
+    const $roleForm = $("#roleForm");
+    const $roleForm1 = $("#roleForm1");
 
+    // 绑定字段变化事件
+    $roleForm.find("input, select").on("input change", function () {
+        const fieldName = $(this).attr("name");
+        validateForm("#roleForm", fieldName);
+    });
+
+    $roleForm1.find("input, select").on("input change", function () {
+        const fieldName = $(this).attr("name");
+        validateForm("#roleForm1", fieldName);
+    });
+
+    // 绑定表单提交事件
+    $("#saveRoleBtn").on("click", function () {
+        if (validateForm("#roleForm")) {
+            addRole();
+        }
+    });
+
+    $("#saveRoleBtn2").on("click", function () {
+        if (validateForm("#roleForm1")) {
+            updateRole();
+        }
+    });
+});
+/**
+ * 验证表单
+ * @param {string} formSelector - 表单选择器
+ * @param {string} fieldName - 字段名称（可选）
+ * @returns {boolean} - 验证结果
+ */
+function validateForm(formSelector, fieldName) {
+    const $form = $(formSelector);
+    let isValid = true;
+
+    const validationRules = {
+        roleCode: {
+            required: true,
+            pattern: /^[A-Z][A-Z0-9_]{2,19}$/,
+            message: "角色编码格式不正确（大写字母开头，仅允许大写字母、数字和下划线，3-20位）"
+        },
+        roleName: {
+            required: true,
+            maxLength: 50,
+            message: "角色名称不能为空，且长度不能超过50个字符"
+        },
+        baseRoleSelect: {
+            required: true,
+            message: "请选择基础角色类型"
+        }
+    };
+
+    const validateField = (fieldName) => {
+        const $field = $form.find(`[name="${fieldName}"]`);
+        const value = $field.val()?.trim() || '';
+
+        // 清除之前的校验状态
+        $field.removeClass("is-invalid is-valid");
+        $field.next(".invalid-feedback").remove();
+
+        // 检查字段是否在规则中定义
+        const rules = validationRules[fieldName];
+        if (!rules) {
+            console.warn(`No validation rules defined for field: ${fieldName}`);
+            return;
+        }
+
+        // 校验逻辑
+        if (rules.required && !value) {
+            $field.addClass("is-invalid");
+            $field.after(`<div class="invalid-feedback">${rules.message}</div>`);
+            isValid = false;
+        } else if (rules.pattern && !rules.pattern.test(value)) {
+            $field.addClass("is-invalid");
+            $field.after(`<div class="invalid-feedback">${rules.message}</div>`);
+            isValid = false;
+        } else if (rules.maxLength && value.length > rules.maxLength) {
+            $field.addClass("is-invalid");
+            $field.after(`<div class="invalid-feedback">${rules.message}</div>`);
+            isValid = false;
+        } else {
+            $field.addClass("is-valid");
+        }
+    };
+
+    if (fieldName) {
+        validateField(fieldName);
+    } else {
+        Object.keys(validationRules).forEach(validateField);
+    }
+
+    return isValid;
+}
 //修改
 function updateRole() {
+
     let P = $("#roleForm1").serialize();
     console.log(P);
     $.ajax({
@@ -332,18 +448,20 @@ function delRole(id) {
 //增加的模态层
 function showroleModal() {
     $("#roleModal").modal('show');
-    $("#roleModal :input").val("");
+    $("#roleForm")[0].reset(); // 重置表单
+    $("#roleModalTitle").text("新建角色");
 }
 
 //修改的模态层
 function updateRoleModal(e) {
     $("#roleModal1").modal('show');
+    $("#roleId1").val(e.roleId);
     $("#baseRoleSelect1").val(e.baseRoleCode);
     $("#roleCodeInput1").val(e.roleCode);
     $("#roleName1").val(e.roleName);
     $("#description1").val(e.description);
-    $("#status1").val(e.status);
-    $("#roleId1").val(e.roleId);
+    $("#status1").prop("checked", e.status === 1);
+    $("#roleModalTitle1").text("修改角色");
 }
 
 //增加

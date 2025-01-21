@@ -31,6 +31,11 @@ public class AuthController {
     @Autowired
     private SystemConfigService systemConfigService;
 
+    /**
+     * 注册
+     * @param user 用户信息
+     * @return R
+     */
     @PostMapping("/register")
     public R register(@RequestBody RegisteredDTO user) {
         if (!systemConfigService.getSystemConfig().getGeneral().getOpenRegister()){
@@ -48,6 +53,11 @@ public class AuthController {
         }
     }
 
+    /**
+     * 登录
+     * @param user 用户信息
+     * @return R
+     */
     @RequestMapping("/login")
     public R login(@RequestBody AuthDTO user) {
         UserViewBackDTO u = userService.login(user.username());
@@ -67,6 +77,11 @@ public class AuthController {
         }
     }
 
+    /**
+     * 登出
+     * @param user 用户信息
+     * @return R
+     */
     @RequestMapping("/logout")
     public R logout(User user) {
         Long userId = user.getUserId();

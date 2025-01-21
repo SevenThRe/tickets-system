@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.RolePermission;
+import com.icss.etc.ticket.entity.dto.RPDTO;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -32,4 +34,6 @@ public interface PermissionMapper {
     Set<String> selectUserPermissions(Long userId);
 
     Set<String> selectUserRoles(Long userId);
+
+    int addPermission(RolePermission permission);
 }

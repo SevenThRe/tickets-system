@@ -295,4 +295,9 @@
         INNER JOIN t_user_role ur ON r.role_id = ur.role_id
         WHERE ur.user_id = #{userId}
     </select>
+
+  <insert id="addPermission" parameterType="com.icss.etc.ticket.entity.RolePermission">
+    insert into t_role_permission (role_id, permission_id)
+    values (#{roleId}, #{permissionId})
+    </insert>
 </mapper>

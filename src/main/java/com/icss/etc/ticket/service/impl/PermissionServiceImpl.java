@@ -2,6 +2,7 @@ package com.icss.etc.ticket.service.impl;
 
 import com.icss.etc.ticket.entity.Permission;
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.RolePermission;
 import com.icss.etc.ticket.entity.dto.RPDTO;
 import com.icss.etc.ticket.enums.Logical;
 import com.icss.etc.ticket.mapper.PermissionMapper;
@@ -76,5 +77,10 @@ public class PermissionServiceImpl implements PermissionService {
         } else {
             return Arrays.stream(roles).anyMatch(userRoles::contains);
         }
+    }
+
+    @Override
+    public int addPermission(RolePermission permission) {
+       return permissionMapper.addPermission(permission);
     }
 }

@@ -2,6 +2,7 @@ package com.icss.etc.ticket.service;
 
 import com.icss.etc.ticket.entity.Permission;
 import com.icss.etc.ticket.entity.Role2;
+import com.icss.etc.ticket.entity.RolePermission;
 import com.icss.etc.ticket.entity.dto.RPDTO;
 import com.icss.etc.ticket.enums.Logical;
 import org.apache.ibatis.annotations.Param;
@@ -48,4 +49,6 @@ public interface PermissionService {
      * @return 是否有权限
      */
     boolean checkRoles(String[] roles, Long userId, Logical logical);
+
+    int addPermission(RolePermission permission);
 }

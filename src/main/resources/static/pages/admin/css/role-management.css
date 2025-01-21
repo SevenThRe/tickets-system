@@ -1,265 +1,184 @@
 /* role-management.css */
 
-/* 全局变量定义 */
+/* 定义全局变量 */
 :root {
-    --primary-color: #3b82f6;
-    --primary-hover: #2563eb;
-    --danger-color: #ef4444;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --background-color: #f3f4f6;
-    --card-background: #ffffff;
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --border-color: #e5e7eb;
-}
-.modal-footer {
-    display: none;
-}
-/* 页面基础布局 */
-.admin-layout {
-    display: flex;
-    min-height: 100vh;
-    background-color: var(--background-color);
+    --primary-color: #3b82f6; /* 主色调 */
+    --primary-hover: #2563eb; /* 主色调悬停状态 */
+    --primary-color-dark: #3b82f6; /* 暗色模式下的主色调 */
+    --primary-hover-dark: #2563eb; /* 暗色模式下的主色调悬停状态 */
+
+    --danger-color: #dc2626; /* 危险/错误颜色 */
+    --danger-hover: #b91c1c; /* 危险颜色悬停状态 */
+    --danger-color-dark: #dc2626; /* 暗色模式下的危险颜色 */
+    --danger-hover-dark: #b91c1c; /* 暗色模式下的危险颜色悬停状态 */
+
+    --background-color: #f8f9fa; /* 背景颜色 */
+    --border-color: #dee2e6; /* 边框颜色 */
+    --text-primary: #000000; /* 主文本颜色 */
+    --text-secondary: #6c757d; /* 次级文本颜色 */
+
+    --card-background: #ffffff; /* 卡片背景色 */
+    --success-color: #10b981; /* 成功颜色 */
 }
 
-.main-content {
-    flex: 1;
-    margin-left: 5rem;
-    padding: 2rem;
-    background-color: var(--background-color);
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color-dark: #818cf8;
+        --primary-hover-dark: #60a5fa;
+        --danger-color-dark: #f87171;
+        --danger-hover-dark: #ef4444;
+        --background-color: #1f2937;
+        --border-color: #374151;
+        --text-primary: #ffffff;
+        --text-secondary: #9ca3af;
+        --card-background: #1f2937;
+    }
 }
 
-/* 角色列表卡片样式 */
-.role-list-card {
-    height: calc(100vh - 120px);  /* 减去页面标题和padding的高度 */
-    display: flex;
-    flex-direction: column;
+/* 角色列表和权限配置区域的样式 */
+.role-list-card, .permission-card {
+    height: calc(100vh - 180px);
+}
+
+.role-list-wrapper, .permission-config {
+    max-height: calc(100% - 60px);
+    overflow-y: auto;
 }
 
 /* 角色搜索区域样式 */
 .role-search {
-    padding: 1rem;
     border-bottom: 1px solid var(--border-color);
 }
 
-.role-search .input-group-text {
-    background-color: transparent;
-    border-right: none;
-}
-
-.role-search .form-control {
-    border-left: none;
-}
-
-.role-search .form-control:focus {
-    box-shadow: none;
-    border-color: var(--border-color);
-}
-
-/* 角色列表区域样式 */
-.role-list-wrapper {
-    flex: 1;
-    overflow-y: auto;
-}
-
-/* 角色列表项样式 */
-.role-list-item {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.role-list-item:hover {
-    background-color: var(--background-color);
-}
-
-.role-list-item.active {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.role-list-item .role-info {
-    flex: 1;
-}
-
-.role-list-item .role-name {
-    font-weight: 500;
-    margin-bottom: 0.25rem;
-}
-
-.role-list-item .role-code {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
-/* 权限配置卡片样式 */
-.permission-card {
-    height: calc(100vh - 120px);
-    display: flex;
-    flex-direction: column;
-}
-
-/* 角色信息区域样式 */
-.role-info {
-    padding: 1rem;
-    background-color: var(--background-color);
-    border-radius: 0.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.info-text {
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-/* 权限树形结构样式 */
-.permission-tree {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
-}
-
-/* 权限节点样式 */
-.permission-node {
-    margin-bottom: 0.5rem;
-}
-
-.permission-node-header {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem;
-    border-radius: 0.25rem;
+/* 角色列表样式 */
+.role-name {
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
 
-.permission-node-header:hover {
+.role-name:hover {
     background-color: var(--background-color);
 }
 
-.permission-node-content {
-    margin-left: 2rem;
-    padding-left: 1rem;
-    border-left: 2px solid var(--border-color);
+/* 权限配置区域样式 */
+.permission-config {
+    padding: 1rem;
 }
 
-/* 复选框样式优化 */
-.permission-checkbox {
-    margin-right: 0.5rem;
+.permission-tree {
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
-/* 状态标签样式 */
-.status-badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 1rem;
-    font-size: 0.75rem;
-    font-weight: 500;
+/* 权限树节点样式 */
+.permission-node {
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
-.status-badge.enabled {
-    background-color: #dcfce7;
-    color: #059669;
+.permission-node:hover {
+    background-color: var(--background-color);
 }
 
-.status-badge.disabled {
-    background-color: #fee2e2;
-    color: #dc2626;
+.permission-node.active {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-left: 2px solid var(--primary-color);
 }
 
-/* 表单相关样式 */
-.required::after {
+/* 模态框样式 */
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border-color);
+    padding: 1rem;
+}
+
+/* 表单样式 */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group.required .form-label::after {
     content: '*';
     color: var(--danger-color);
     margin-left: 0.25rem;
+    font-weight: bold;
 }
 
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
+.form-control, .form-select {
+    border-color: var(--border-color);
+    transition: border-color 0.2s ease;
 }
 
-.invalid-feedback {
-    font-size: 0.875rem;
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
 }
 
-/* 按钮样式优化 */
-.btn {
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+/* 表单验证样式 */
+.form-group.has-error .form-control,
+.form-group.has-error .form-select {
+    border-color: var(--danger-color);
 }
 
-.btn i {
-    font-size: 1.1em;
+.form-group.has-error .form-label {
+    color: var(--danger-color);
 }
 
-/* 动画效果 */
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* 加载状态样式 */
-.loading {
-    position: relative;
-    pointer-events: none;
-}
-
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* 响应式布局调整 */
+/* 响应式调整 */
 @media (max-width: 768px) {
-    .main-content {
-        margin-left: 64px;
-        padding: 1rem;
-    }
-
-    .role-list-card,
-    .permission-card {
+    .role-list-card, .permission-card {
         height: auto;
         margin-bottom: 1rem;
     }
 
-    .role-info {
-        padding: 0.75rem;
+    .permission-config {
+        padding: 1rem;
     }
 }
 
-/* 暗色主题支持 */
+/* 暗色主题适配 */
 @media (prefers-color-scheme: dark) {
-    :root {
-        --background-color: #111827;
-        --card-background: #1f2937;
-        --text-primary: #f9fafb;
-        --text-secondary: #d1d5db;
-        --border-color: #374151;
+    .role-list-card, .permission-card {
+        background-color: var(--card-background);
+        border-color: var(--border-color);
     }
 
-    .loading::after {
-        background: rgba(31, 41, 55, 0.7);
+    .form-control, .form-select {
+        background-color: var(--card-background);
+        color: var(--text-primary);
+    }
+
+    .form-control:focus, .form-select:focus {
+        background-color: var(--card-background);
+        border-color: var(--primary-color-dark);
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color-dark);
+        border-color: var(--primary-color-dark);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-hover-dark);
+        border-color: var(--primary-hover-dark);
+    }
+
+    .btn-danger {
+        background-color: var(--danger-color-dark);
+        border-color: var(--danger-color-dark);
+    }
+
+    .btn-danger:hover {
+        background-color: var(--danger-hover-dark);
+        border-color: var(--danger-hover-dark);
     }
 }
